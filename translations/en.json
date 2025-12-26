@@ -1,0 +1,22 @@
+{
+    "config": {
+        "abort": {
+            "already_configured": "Device is already configured"
+        },
+        "error": {
+            "unknown": "Unexpected error"
+        },
+        "step": {
+            "user": {
+                "data": {
+                    "name": "Name",
+                    "task_frequency_value": "Task Frequency",
+                    "task_frequency_type": "Task Frequency Type",
+                    "notification_frequency": "Notification Frequency (days)",
+                    "assignees": "Assignees (comma separated)",
+                    "icon": "Icon"
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,18 @@
+{
+  "domain": "task_tracker",
+  "name": "Task Tracker",
+  "codeowners": [
+    "@gensyn"
+  ],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/gensyn/task_tracker",
+  "issue_tracker": "https://github.com/gensyn/task_tracker/issues",
+  "homekit": {},
+  "iot_class": "calculated",
+  "quality_scale": "bronze",
+  "requirements": [],
+  "ssdp": [],
+  "zeroconf": [],
+  "version": "0.0.1"
+}

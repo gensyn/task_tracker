@@ -1,0 +1,51 @@
+mark_as_done:
+  name: Mark task as done
+  description: >
+    Sets the last done date of the task to today.
+  fields:
+    entity_id:
+      name: Entity ID
+      description: The ID of the task to be marked as done.
+      required: true
+      selector:
+        entity:
+          domain: sensor
+set_last_done_date:
+  name: Set last done date of a task
+  description: >
+    Sets the last done date of the task to a specific date.
+  fields:
+    entity_id:
+      name: Entity ID
+      description: The ID of the docker sensor to be started.
+      required: true
+      selector:
+        entity:
+          domain: sensor
+    year:
+      name: Year
+      description: The year to set the last done date to.
+      required: true
+      selector:
+        number:
+          min: 2020
+          max: 2100
+          step: 1
+    month:
+      name: Month
+      description: The month to set the last done date to.
+      required: true
+      selector:
+        number:
+          min: 1
+          max: 12
+          step: 1
+    day:
+      name: Day
+      description: The day to set the last done date to.
+      required: true
+      selector:
+        number:
+          min: 1
+          max: 31
+          step: 1
