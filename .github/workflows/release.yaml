@@ -4,6 +4,9 @@ on:
   release:
     types: [published]
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -25,7 +28,8 @@ jobs:
           zip task_tracker.zip -r ./ -x "*.git*"
 
       - name: "Upload ZIP to Release"
-        uses: actions/upload-artifact@v4
+        uses: softprops/action-gh-release@v2
         with:
-          name: task_tracker
-          path: task_tracker.zip
+          files: task_tracker.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
