@@ -81,26 +81,46 @@
         },
         "ui": {
             "status": {
-                "name": "Status",
-                "done": "Erledigt",
-                "due": "Fällig",
-                "overdue": "Überfällig",
-                "inactive": "Inaktiv"
+                "name": "Status"
+            },
+            "done": {
+                "name": "Erledigt"
+            },
+            "due": {
+                "name": "Fällig"
+            },
+            "overdue": {
+                "name": "Überfällig"
+            },
+            "inactive": {
+                "name": "Inaktiv"
             },
             "interval": {
-                "name": "Intervall",
-                "singular": {
-                    "day": "Tag",
-                    "week": "Woche",
-                    "month": "Monat",
-                    "year": "Jahr"
-                },
-                "plural": {
-                    "day": "Tage",
-                    "week": "Wochen",
-                    "month": "Monate",
-                    "year": "Jahre"
-                }
+                "name": "Intervall"
+            },
+            "day_singular": {
+                "name": "Tag"
+            },
+            "week_singular": {
+                "name": "Woche"
+            },
+            "month_singular": {
+                "name": "Monat"
+            },
+            "year_singular": {
+                "name": "Jahr"
+            },
+            "day_plural": {
+                "name": "Tage"
+            },
+            "week_plural": {
+                "name": "Wochen"
+            },
+            "month_plural": {
+                "name": "Monate"
+            },
+            "year_plural": {
+                "name": "Jahre"
             },
             "last_done": {
                 "name": "Zuletzt&nbsp;erledigt"
@@ -108,9 +128,11 @@
             "due_date": {
                 "name": "Fällig&nbsp;am"
             },
-            "due":{
-                "due_in": "Fällig&nbsp;in",
-                "overdue_by": "Überfällig&nbsp;seit"
+            "due_in":{
+                "name": "Fällig&nbsp;in"
+            },
+            "overdue_by":{
+                "name": "Überfällig&nbsp;seit"
             },
             "mark_as_done": {
                 "name": "Als erledigt markieren"

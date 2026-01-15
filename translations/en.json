@@ -84,26 +84,46 @@
         },
         "ui": {
             "status": {
-                "name": "Status",
-                "done": "Done",
-                "due": "Due",
-                "overdue": "Overdue",
-                "inactive": "Inactive"
+                "name": "Status"
+            },
+            "done": {
+                "name": "Done"
+            },
+            "due": {
+                "name": "Due"
+            },
+            "overdue": {
+                "name": "Overdue"
+            },
+            "inactive": {
+                "name": "Inactive"
             },
             "interval": {
-                "name": "Interval",
-                "singular": {
-                    "day": "Day",
-                    "week": "Week",
-                    "month": "Month",
-                    "year": "Year"
-                },
-                "plural": {
-                    "day": "Days",
-                    "week": "Weeks",
-                    "month": "Months",
-                    "year": "Years"
-                }
+                "name": "Interval"
+            },
+            "day_singular": {
+                "name": "Day"
+            },
+            "week_singular": {
+                "name": "Week"
+            },
+            "month_singular": {
+                "name": "Month"
+            },
+            "year_singular": {
+                "name": "Year"
+            },
+            "day_plural": {
+                "name": "Days"
+            },
+            "week_plural": {
+                "name": "Weeks"
+            },
+            "month_plural": {
+                "name": "Months"
+            },
+            "year_plural": {
+                "name": "Years"
             },
             "last_done": {
                 "name": "Last&nbsp;done"
@@ -111,9 +131,11 @@
             "due_date": {
                 "name": "Due&nbsp;date"
             },
-            "due":{
-                "due_in": "Due&nbsp;in",
-                "overdue_by": "Overdue&nbsp;by"
+            "due_in":{
+                "name": "Due&nbsp;in"
+            },
+            "overdue_by":{
+                "name": "Overdue&nbsp;by"
             },
             "mark_as_done": {
                 "name": "Mark as done"

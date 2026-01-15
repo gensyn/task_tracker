@@ -6,7 +6,7 @@ class TaskTracker extends HTMLElement {
   }
 
   _t(key) {
-    return this._hass.localize(`component.task_tracker.entity.ui.${key}`);
+    return this._hass.localize(`component.task_tracker.entity.ui.${key}.name`);
   }
 
   set hass(hass) {
@@ -47,19 +47,19 @@ class TaskTracker extends HTMLElement {
           <div class="card-content">
             <table id="task-table">
               <tr>
-                <td>${this._t("status.name")}</td>
+                <td>${this._t("status")}</td>
                 <td id="status-cell"></td>
               </tr>
               <tr>
-                <td>${this._t("interval.name")}</td>
+                <td>${this._t("interval")}</td>
                 <td id="task-interval-cell"></td>
               </tr>
               <tr>
-                <td>${this._t("last_done.name")}</td>
+                <td>${this._t("last_done")}</td>
                 <td id="last-done-cell"></td>
               </tr>
               <tr>
-                <td>${this._t("due_date.name")}</td>
+                <td>${this._t("due_date")}</td>
                 <td id="due-date-cell"></td>
               </tr>
               <tr>
@@ -79,18 +79,18 @@ class TaskTracker extends HTMLElement {
 
     if (this._entity !== entity || this._entity.attributes !== entity.attributes) {
       const stateStr = entity ? entity.state : "unavailable";
-      root.querySelector("#status-cell").innerHTML = this._t(`status.${stateStr}`);
+      root.querySelector("#status-cell").innerHTML = this._t(stateStr);
 
       const card = root.querySelector("#card");
       card.className = stateStr;
 
       const icon = root.querySelector("#icon");
-      icon.title = this._t("mark_as_done.name");
+      icon.title = this._t("mark_as_done");
 
       const taskIntervalVal = entity.attributes.task_interval_value;
       const taskIntervalType = entity.attributes.task_interval_type;
       const taskIntervalSingularPlural = taskIntervalVal === 1 ? 'singular' : 'plural';
-      const taskIntervalTypeTranslated = this._t(`interval.${taskIntervalSingularPlural}.${taskIntervalType}`)
+      const taskIntervalTypeTranslated = this._t(`${taskIntervalType}_${taskIntervalSingularPlural}`)
       const taskIntervalCell = root.querySelector("#task-interval-cell");
       taskIntervalCell.innerHTML = `${taskIntervalVal}&nbsp;${taskIntervalTypeTranslated}`;
 
@@ -107,13 +107,13 @@ class TaskTracker extends HTMLElement {
       const dueLabelCell = root.querySelector("#due-label-cell");
       const dueCell = root.querySelector("#due-cell");
         if (entity.attributes.due_in > 0) {
-            dueLabelCell.innerHTML = this._t('due.due_in');
+            dueLabelCell.innerHTML = this._t('due_in');
         } else {
-            dueLabelCell.innerHTML = this._t('due.overdue_by');
+            dueLabelCell.innerHTML = this._t('overdue_by');
         }
       const dueNum = entity.attributes.due_in > 0 ? entity.attributes.due_in : entity.attributes.overdue_by;
       const dueSingularPlural = dueNum === 1 ? 'singular' : 'plural';
-      const dueDayTranslated = this._t(`interval.${dueSingularPlural}.day`)
+      const dueDayTranslated = this._t(`day_${dueSingularPlural}`)
       dueCell.innerHTML = `${dueNum}&nbsp;${dueDayTranslated}`;
 
       this._entity = entity;

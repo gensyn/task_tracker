@@ -1,19 +1,19 @@
 {
   "domain": "task_tracker",
   "name": "Task Tracker",
+  "after_dependencies": ["http", "lovelace", "local_todo"],
   "codeowners": [
     "@gensyn"
   ],
   "config_flow": true,
   "dependencies": [],
   "documentation": "https://github.com/gensyn/task_tracker",
-  "issue_tracker": "https://github.com/gensyn/task_tracker/issues",
   "homekit": {},
   "iot_class": "calculated",
+  "issue_tracker": "https://github.com/gensyn/task_tracker/issues",
   "quality_scale": "bronze",
   "requirements": [],
   "ssdp": [],
-  "zeroconf": [],
   "version": "1.0.0",
-  "after_dependencies": ["http", "lovelace", "local_todo"]
+  "zeroconf": []
 }
