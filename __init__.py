@@ -8,17 +8,19 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform, CONF_ICON, CONF_ENTITY_ID
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.exceptions import ServiceValidationError, HomeAssistantError
-from homeassistant.helpers import entity_registry
+from homeassistant.helpers import entity_registry, config_validation as cv
 from homeassistant.helpers.event import async_track_time_change
 from homeassistant.helpers.typing import ConfigType
 from .const import DOMAIN, CONF_TASK_INTERVAL_VALUE, CONF_DAY, CONF_TASK_INTERVAL_TYPE, CONF_NOTIFICATION_INTERVAL, \
-    CONF_TODO_OFFSET_DAYS, CONF_TAGS, CONF_ACTIVE, CONF_YEAR, CONF_MONTH, CONF_TODO_LISTS, SERVICE_MARK_AS_DONE, \
+    CONF_TODO_OFFSET_DAYS, CONF_TAGS, CONF_ACTIVE, CONF_TODO_LISTS, SERVICE_MARK_AS_DONE, \
     SERVICE_MARK_AS_DONE_SCHEMA, SERVICE_SET_LAST_DONE_DATE, SERVICE_SET_LAST_DONE_DATE_SCHEMA, CONF_DATE
 from .frontend import TaskTrackerCardRegistration
 from .sensor import TaskTrackerSensor
 
 _PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.BUTTON]
 _LOGGER = logging.getLogger(__name__)
+
+CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
@@ -69,6 +71,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     await cards.async_register()
 
     return True
+
 
 async def async_update_entities(entity_ids: list[str], hass: HomeAssistant) -> dict | None:
     """Update the entity."""

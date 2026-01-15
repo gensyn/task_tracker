@@ -17,8 +17,7 @@
                 },
                 "data_description": {
                     "task_interval_value": "Time after which the task becomes due again.",
-                    "task_interval_type": "The unit of time for the task interval.",
-                    "notification_interval": "Interval in days after which notifications are sent again."
+                    "task_interval_type": "The unit of time for the task interval."
                 }
             }
         }

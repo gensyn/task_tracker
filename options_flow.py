@@ -59,7 +59,7 @@ class TaskTrackerOptionsFlow(OptionsFlowWithReload):
 
 
 async def get_todo_lists(hass: HomeAssistant) -> list[tuple[str, str]]:
-    """Return entity_ids for all entities whose registry entry domain matches integration_domain."""
+    """Return entity_ids and friendly names for all todo lists of the domain Local Todo."""
     registry = entity_registry.async_get(hass)
     return [(entry.entity_id, hass.states.get(entry.entity_id).attributes.get("friendly_name", entry.entity_id)) for entry in registry.entities.values() if entry.platform == LOCAL_TODO_DOMAIN and entry.entity_id.startswith("todo.")]
 
