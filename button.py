@@ -1,63 +1,50 @@
-"""Platform for sensor integration."""
+"""Platform for button integration."""
 from __future__ import annotations
 
-from logging import getLogger
-
 from homeassistant.components.button import ButtonEntity
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform, CONF_NAME
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import generate_entity_id
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.util import slugify
+from logging import getLogger
+
 from .const import DOMAIN, CONST_UNKNOWN
 from .sensor import TaskTrackerSensor
 
 LOGGER = getLogger(__name__)
 
 
-def setup_platform(
-        hass: HomeAssistant,
-        config: ConfigType,
-        add_entities: AddEntitiesCallback,
-        discovery_info: DiscoveryInfoType | None = None
-) -> None:
-    """Set up the sensor platform."""
-    pass
-
-
 async def async_setup_entry(
         hass: HomeAssistant,
-        entry: ConfigType,
+        entry: ConfigEntry,
         async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up sensor platform from a config entry."""
-    async_add_entities([TaskTrackerButton(entry.data[CONF_NAME], hass)])
+    async_add_entities([TaskTrackerButton(entry.data[CONF_NAME], entry.entry_id, hass)])
 
 
 class TaskTrackerButton(ButtonEntity):
-    """Representation of a generic DockerButton."""
+    """Button to complete a task."""
 
-    _attr_has_entity_name = False
+    _attr_has_entity_name = True
     _attr_should_poll = False
-    _attr_native_value = CONST_UNKNOWN
+    _attr_translation_key = "mark_as_done"
 
-    def __init__(self, entry_name: str, hass: HomeAssistant) -> None:
+    def __init__(self, entry_name: str, entry_id: str, hass: HomeAssistant) -> None:
         """Initialize the button."""
-        self.device_id = f"task_tracker_{slugify(entry_name)}"
-        self.name = entry_name.capitalize()
-        self.hass = hass
+        self.device_id = f"{DOMAIN}_{entry_id}"
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, self.device_id)},
             manufacturer="Gensyn",
             model="Task Tracker",
-            name=self.name,
+            name=entry_name,
         )
-        self._attr_name = f"{self.name} Mark as done"
-        self._attr_unique_id = f"{self.device_id}_mark_as_done"
-        self.entity_id = generate_entity_id("button.{}_mark_as_done", f"{self.device_id}", hass=self.hass)
+        self._attr_unique_id = f"{entry_id}_mark_as_done"
+        self.entity_id = generate_entity_id("button.task_tracker_{}_mark_as_done", slugify(entry_name), hass=hass)
 
     async def async_press(self) -> None:
         sensor: TaskTrackerSensor = await get_sensor(self.hass, self.device_entry.id)

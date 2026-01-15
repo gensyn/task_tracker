@@ -107,12 +107,12 @@ class TaskTrackerCardRegistration:
         if self.lovelace.mode == "storage":
             for module in TASK_TRACKER_CARDS:
                 url = f"{URL_BASE}/{module.get('filename')}"
-                wiser_resources = [
+                task_tracker_resources = [
                     resource
                     for resource in self.lovelace.resources.async_items()
                     if str(resource["url"]).startswith(url)
                 ]
-                for resource in wiser_resources:
+                for resource in task_tracker_resources:
                     await self.lovelace.resources.async_delete_item(resource.get("id"))
 
     async def async_remove_gzip_files(self):
@@ -121,7 +121,7 @@ class TaskTrackerCardRegistration:
 
     def remove_gzip_files(self):
         """Remove cached gzip files."""
-        path = self.hass.config.path("custom_components/wiser/frontend")
+        path = self.hass.config.path("custom_components/task_tracker/frontend")
 
         gzip_files = [
             filename for filename in os.listdir(path) if filename.endswith(".gz")

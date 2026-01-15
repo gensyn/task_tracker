@@ -1,0 +1,146 @@
+{
+    "config": {
+        "abort": {
+            "already_configured": "Device ist bereits konfiguriert"
+        },
+        "error": {
+            "unknown": "Unerwarteter Fehler"
+        },
+        "step": {
+            "user": {
+                "title": "Task Tracker",
+                "description": "Task erstellen.",
+                "data": {
+                    "name": "Name",
+                    "task_interval_value": "Taskintervall",
+                    "task_interval_type": "Einheit des Taskintervalls"
+                },
+                "data_description": {
+                    "task_interval_value": "Die Zeit, nach der die Task wieder fällig wird.",
+                    "task_interval_type": "Die Zeiteinheit für das Taskintervall."
+                }
+            }
+        }
+    },
+    "options": {
+        "error": {
+            "unknown": "Unerwarteter Fehler"
+        },
+        "step": {
+            "init": {
+                "title": "Task Tracker",
+                "description": "Task bearbeiten.",
+                "data": {
+                    "task_interval_value": "Taskintervall",
+                    "task_interval_type": "Einheit des Taskintervalls",
+                    "notification_interval": "Benachrichtigungsintervall (Tage)",
+                    "todo_lists": "Todo-Listen",
+                    "todo_offset_days": "Todo-Listen Offset (Tage)",
+                    "tags": "Tags",
+                    "icon": "Icon",
+                    "active": "Aktiv"
+                },
+                "data_description": {
+                    "task_interval_value": "Die Zeit, nach der die Task wieder fällig wird.",
+                    "task_interval_type": "Die Zeiteinheit für das Taskintervall.",
+                    "notification_interval": "Die Zeit in Tagen, nach dem Benachrichtigungen erneut gesendet werden.",
+                    "todo_lists": "Die Todo-Listen, zu denen diese Task hinzugefügt wird.",
+                    "todo_offset_days": "Die Anzahl der Tage vor Fälligkeit der Task, um einen Todo-Eintrag zu erstellen.",
+                    "tags": "Tags zur Kategorisierung der Task, getrennt durch Kommas.",
+                    "icon": "Icon zur Darstellung der Task.",
+                    "active": "Task aktivieren oder deaktivieren."
+                }
+            }
+        }
+    },
+    "selector": {
+        "task_interval": {
+          "options": {
+            "day": "Tag",
+            "week": "Woche",
+            "month": "Monat",
+            "year": "Jahr"
+          }
+        }
+    },
+    "entity": {
+        "sensor": {
+            "status": {
+                "state": {
+                    "done": "Erledigt",
+                    "due": "Fällig",
+                    "overdue": "Überfällig",
+                    "inactive": "Inaktiv"
+                }
+            }
+        },
+        "button": {
+            "mark_as_done": {
+                "name": "Als erledigt markieren"
+            }
+        },
+        "ui": {
+            "status": {
+                "name": "Status",
+                "done": "Erledigt",
+                "due": "Fällig",
+                "overdue": "Überfällig",
+                "inactive": "Inaktiv"
+            },
+            "interval": {
+                "name": "Intervall",
+                "singular": {
+                    "day": "Tag",
+                    "week": "Woche",
+                    "month": "Monat",
+                    "year": "Jahr"
+                },
+                "plural": {
+                    "day": "Tage",
+                    "week": "Wochen",
+                    "month": "Monate",
+                    "year": "Jahre"
+                }
+            },
+            "last_done": {
+                "name": "Zuletzt&nbsp;erledigt"
+            },
+            "due_date": {
+                "name": "Fällig&nbsp;am"
+            },
+            "due":{
+                "due_in": "Fällig&nbsp;in",
+                "overdue_by": "Überfällig&nbsp;seit"
+            },
+            "mark_as_done": {
+                "name": "Als erledigt markieren"
+            }
+        }
+    },
+    "services": {
+        "mark_as_done": {
+            "name": "Als erledigt markieren",
+            "description": "Setzt das Zuletzt-Erledigt-Datum der Task auf das aktuelle Datum.",
+            "fields": {
+                "entity_id": {
+                    "name": "Entity ID",
+                    "description": "Die ID der Task, die als erledigt markiert werden soll."
+                }
+            }
+        },
+        "set_last_done_date": {
+            "name": "Zuletzt-Erledigt-Datum setzen",
+            "description": "Setzt das Zuletzt-Erledigt-Datum der Task auf ein bestimmtes Datum.",
+            "fields": {
+                "entity_id": {
+                    "name": "Entity ID",
+                    "description": "Die ID der Task, die angepasst werden soll."
+                },
+                "date": {
+                    "name": "Datum",
+                    "description": "Das neue Zuletzt-Erledigt-Datum."
+                }
+            }
+        }
+    }
+}

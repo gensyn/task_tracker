@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
-
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult, ConfigEntry
 from homeassistant.const import CONF_NAME
 from homeassistant.core import callback
+from typing import Any
+
 from .const import DOMAIN, STEP_USER_DATA_SCHEMA
 from .options_flow import TaskTrackerOptionsFlow, validate_options
 
@@ -18,6 +18,7 @@ class TaskTrackerConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Task Tracker."""
 
     VERSION = 1
+    MINOR_VERSION = 2
 
     async def async_step_user(
             self, user_input: dict[str, Any] | None = None

@@ -1,21 +1,150 @@
 {
-  "config": {
-    "step": {
-      "user": {
-        "data": {
-          "host": "[%key:common::config_flow::data::host%]",
-          "username": "[%key:common::config_flow::data::username%]",
-          "password": "[%key:common::config_flow::data::password%]"
+    "config": {
+        "abort": {
+            "already_configured": "Device is already configured"
+        },
+        "error": {
+            "unknown": "Unexpected error"
+        },
+        "step": {
+            "user": {
+                "title": "Task Tracker",
+                "description": "Create task.",
+                "data": {
+                    "name": "Name",
+                    "task_interval_value": "Task Interval",
+                    "task_interval_type": "Task Interval Unit"
+                },
+                "data_description": {
+                    "task_interval_value": "Time after which the task becomes due again.",
+                    "task_interval_type": "The unit of time for the task interval.",
+                    "notification_interval": "Interval in days after which notifications are sent again."
+                }
+            }
         }
-      }
     },
-    "error": {
-      "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
-      "invalid_auth": "[%key:common::config_flow::error::invalid_auth%]",
-      "unknown": "[%key:common::config_flow::error::unknown%]"
+    "options": {
+        "abort": {
+            "already_configured": "Device is already configured"
+        },
+        "error": {
+            "unknown": "Unexpected error"
+        },
+        "step": {
+            "init": {
+                "title": "Task Tracker",
+                "description": "Configure task.",
+                "data": {
+                    "task_interval_value": "Task Interval",
+                    "task_interval_type": "Task Interval Unit",
+                    "notification_interval": "Notification Interval (days)",
+                    "todo_lists": "Todo-Lists",
+                    "todo_offset_days": "Todo-List Offset (days)",
+                    "tags": "Tags",
+                    "icon": "Icon",
+                    "active": "Active"
+                },
+                "data_description": {
+                    "task_interval_value": "Time after which the task becomes due again.",
+                    "task_interval_type": "The unit of time for the task interval.",
+                    "notification_interval": "The time in days after which notifications are sent again.",
+                    "todo_lists": "Todo-Lists, to which this task will be added.",
+                    "todo_offset_days": "The number of days before the task is due, to add the task to the Todo-List(s).",
+                    "tags": "Tags to categorize the task, separated by commas.",
+                    "icon": "Icon to represent the task.",
+                    "active": "Enable or disable the task."
+                }
+            }
+        }
     },
-    "abort": {
-      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]"
+    "selector": {
+        "task_interval": {
+          "options": {
+            "day": "Day",
+            "week": "Week",
+            "month": "Month",
+            "year": "Year"
+          }
+        }
+    },
+    "entity": {
+        "sensor": {
+            "status": {
+                "state": {
+                    "done": "Done",
+                    "due": "Due",
+                    "overdue": "Overdue",
+                    "inactive": "Inactive"
+                }
+            }
+        },
+        "button": {
+            "mark_as_done": {
+                "name": "Mark as done"
+            }
+        },
+        "ui": {
+            "status": {
+                "name": "Status",
+                "done": "Done",
+                "due": "Due",
+                "overdue": "Overdue",
+                "inactive": "Inactive"
+            },
+            "interval": {
+                "name": "Interval",
+                "singular": {
+                    "day": "Day",
+                    "week": "Week",
+                    "month": "Month",
+                    "year": "Year"
+                },
+                "plural": {
+                    "day": "Days",
+                    "week": "Weeks",
+                    "month": "Months",
+                    "year": "Years"
+                }
+            },
+            "last_done": {
+                "name": "Last&nbsp;done"
+            },
+            "due_date": {
+                "name": "Due&nbsp;date"
+            },
+            "due":{
+                "due_in": "Due&nbsp;in",
+                "overdue_by": "Overdue&nbsp;by"
+            },
+            "mark_as_done": {
+                "name": "Mark as done"
+            }
+        }
+    },
+    "services": {
+        "mark_as_done": {
+            "name": "Mark as done",
+            "description": "Sets the last done date of the task to today.",
+            "fields": {
+                "entity_id": {
+                    "name": "Entity ID",
+                    "description": "The ID of the task to be marked as done."
+                }
+            }
+        },
+        "set_last_done_date": {
+            "name": "Set last done date",
+            "description": "Sets the last done date of the task to a specific date.",
+            "fields": {
+                "entity_id": {
+                    "name": "Entity ID",
+                    "description": "The ID of the task to be updated."
+                },
+                "date": {
+                    "name": "Date",
+                    "description": "The new last done date."
+                }
+            }
+        }
     }
-  }
 }
