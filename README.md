@@ -49,6 +49,11 @@ Through the cog icon you have access to the task's settings.
 
 This custom component also adds a custom card to Lovelace which can be used to display a task.
 
+```
+- type: custom:task-tracker-card
+  entity: sensor.task_tracker_mow_the_lawn
+```
+
 ![Due card](assets/4_due.png)
 ![Inactive card](assets/5_inactive.png)
 ![Done card](assets/6_done.png)
@@ -69,6 +74,90 @@ This custom component adds the following services in the domain `task_tracker`:
 * `mark_as_done`: Marks the task as done, updating the last done date to today.
 * `set_last_done_date`: Sets the last done date to a new value specified by the parameter `date`. This is
   useful to fill the initial last done date when creating tasks or to correct mistakes.
+
+### Example automation
+
+This automation sends a notification at 8 am every day for all tasks that are due and where the notification interval is
+met. The recipients are determined based on the tags of each task.
+
+```
+alias: Task Tracker
+description: "Notify about due tasks"
+triggers:
+  - trigger: time
+    at: "8:00:00"
+conditions: []
+actions:
+  - variables:
+      tasks: |-
+        [  {%- for entity_id in integration_entities('task_tracker') %}
+          {%- if "sensor." in entity_id and states[entity_id].state == "due" %}
+            {%- set last_done = as_datetime(states[entity_id].attributes.last_done) if 'last_done' in states[entity_id].attributes else None %}
+            {%- set overdue_by = states[entity_id].attributes.overdue_by if 'overdue_by' in states[entity_id].attributes else None %}
+            {%- set notification_interval = states[entity_id].attributes.notification_interval if 'notification_interval' in states[entity_id].attributes else None %}
+            {%- if last_done is not none and overdue_by is not none and notification_interval is not none %}
+              {%- if overdue_by % notification_interval == 0 %}
+                "{{ entity_id }}"{% if not loop.last %},{% endif %}
+              {%- endif %}
+            {%- endif %}
+          {%- endif %}
+        {%- endfor %}  ]
+  - repeat:
+      for_each: "{{ tasks }}"
+      sequence:
+        - alias: Chandler
+          if:
+            - condition: template
+              value_template: "{{ 'chandler' in states[repeat.item].attributes.tags }}"
+          then:
+            - action: notify.mobile_app_chandler
+              metadata: {}
+              data:
+                title: "{{ states[repeat.item].attributes.friendly_name }}"
+                message: >-
+                  {%- set last_done =
+                  as_datetime(states[repeat.item].attributes.last_done).replace(tzinfo=now().tzinfo)
+                  %}
+
+                  {%- set overdue_by =
+                  states[repeat.item].attributes.overdue_by %}
+
+                  due since {{ 'today' if overdue_by == 0 else
+                  ('yesterday' if overdue_by == 1 else overdue_by) }} {{
+                  'days' if overdue_by > 1 }}
+                data:
+                  tag: "{{ repeat.item }}"
+                  color: green
+                  group: "{{ repeat.item }}"
+                  notification_icon: "{{ states[repeat.item].attributes.icon }}"
+        - alias: Joey
+          if:
+            - condition: template
+              value_template: "{{ 'joey' in states[repeat.item].attributes.tags }}"
+          then:
+            - action: notify.mobile_app_joey
+              metadata: {}
+              data:
+                title: "{{ states[repeat.item].attributes.friendly_name }}"
+                message: >-
+                  {%- set last_done =
+                  as_datetime(states[repeat.item].attributes.last_done).replace(tzinfo=now().tzinfo)
+                  %}
+
+                  {%- set overdue_by =
+                  states[repeat.item].attributes.overdue_by %}
+
+                  due since {{ 'today' if overdue_by == 0 else
+                  ('yesterday' if overdue_by == 1 else overdue_by) }} {{
+                  'days' if overdue_by > 1 }}
+                data:
+                  tag: "{{ repeat.item }}"
+                  color: green
+                  group: "{{ repeat.item }}"
+                  notification_icon: "{{ states[repeat.item].attributes.icon }}"
+          enabled: true
+mode: single
+```
 
 ## Further development
 
