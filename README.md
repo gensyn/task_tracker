@@ -1,88 +1,164 @@
-# Task Tracker
+# 📋 Task Tracker
 
-This custom component allows you to create recurring tasks, tracks when they were last done and shows you when they will
-be due again. The tasks can also be automatically added to local todo lists.
+[![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/custom-components/hacs)
+[![GitHub release](https://img.shields.io/github/release/gensyn/task_tracker.svg)](https://github.com/gensyn/task_tracker/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## Installation
+A powerful Home Assistant custom component for managing recurring tasks with automatic tracking and todo list integration.
 
-The easiest way is to install this custom component through [HACS](https://hacs.xyz). Alternatively you can download or
-clone this repository to your Home Assistant `config` folder to `custom_components/task_tracker`.
+---
 
-## Documentation
+## ✨ Features
 
-### Task creation
+- ✅ **Recurring Task Management** - Create tasks with customizable intervals (days, weeks, months, years)
+- 📅 **Automatic Due Date Tracking** - Never forget when a task needs to be done
+- 📝 **Todo List Integration** - Automatically sync with Home Assistant's Local Todo lists
+- 🎨 **Custom Lovelace Card** - Beautiful task display in Lovelace
+- 🏷️ **Tagging System** - Organize tasks with custom tags for filtering and automation
+- 🔔 **Notification Support** - Built-in attributes for creating smart notification automations
+- ⏸️ **Task Activation Control** - Pause tasks when needed without deleting them
 
-To create a new task in Home Assistant, go to `Settings > Devices & Services` and click on `Add integration`. Search for
-`Task Tracker` and click on it. A dialog will appear where you can enter the data for the task.
+---
+
+## 🚀 Installation
+
+### HACS (Recommended)
+
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=gensyn&repository=task_tracker&category=integration)
+
+1. Click the badge above or search for **Task Tracker** in HACS
+2. Click **Download**
+3. Restart Home Assistant
+4. Add the integration via `Settings > Devices & Services > Add Integration`
+
+### Manual Installation
+
+1. Download or clone this repository
+2. Copy the `custom_components/task_tracker` folder to your Home Assistant `config/custom_components` directory
+3. Restart Home Assistant
+4. Add the integration via `Settings > Devices & Services > Add Integration`
+
+---
+
+## 📖 Documentation
+
+### 🆕 Task Creation
+
+To create a new task: 
+
+1. Navigate to `Settings > Devices & Services`
+2. Click `Add Integration`
+3. Search for **Task Tracker**
+4. Fill in the task details:
+   - **Name** - Display name for your task
+   - **Task Interval** - How often the task repeats (combined with interval unit)
+   - **Task Interval Unit** - Day, week, month or year
 
 ![Create task](assets/1_create.png)
 
-* The name is used to display the task.
-* The task interval in combination with the task interval unit is used to determine when the task will be due again
-  after it was done.
+---
 
-### Task options
+### ⚙️ Task Options
 
-After creating a task, you will find a new entry on the integration page.
+Access task settings through the cog icon ⚙️ on the integration page. 
 
 ![Integration page](assets/2_integration.png)
 
-Through the cog icon you have access to the task's settings.
+#### Available Options
 
 ![Task settings](assets/3_options.png)
 
-* The option `active` allows you to pause tasks - the task's sensor will then have the state `inactive`.
-* The task interval and unit can be changed here as well.
-* The Material Design Icon will be used for the status sensor and is also available as an attribute to be used in
-  notifications.
-* Tags allow you to add arbitrary keywords to a task which can be filtered for in automations/templates. You could for
-  example add assignees here or the time when you want to receive a notification for the task. You must filter for these
-  tags yourself, though.
-* You can pick todo lists form the `Local Todo` integration to which the task will be added automatically when it is
-  due. You can pick multiple lists here.
-* The todo list offset allows you to add the task to the todo list a certain time before it is due. This way you can
-  prepare for upcoming tasks.
-* The notification interval doesn't do anything in and of itself, but can be used in automations/templates to finetune
-  when a notification for a task should be sent.
+| Option | Description                                                                               |
+|--------|-------------------------------------------------------------------------------------------|
+| **Active** | Pause tasks when disabled (sensor shows `inactive` state)                                 |
+| **Task Interval & Unit** | Modify how often the task repeats                                                         |
+| **Material Design Icon** | Choose an icon for the sensor (available as attribute for notifications)                  |
+| **Tags** | Add keywords for filtering in automations/templates (e.g., assignees, notification times) |
+| **Todo Lists** | Select Local Todo lists for automatic task addition when due                              |
+| **Todo List Offset** | Add task to lists `n` days before due date                                                |
+| **Notification Interval** | Reference value for automation/template notification timing                               |
 
-### Lovelace card
+> **Note:** Tags and notification intervals require you to implement filtering logic in your own automations. 
 
-This custom component also adds a custom card to Lovelace which can be used to display a task.
+---
 
-```
+### 🎴 Lovelace Card
+
+Display tasks beautifully with the included custom card.  Click the ✓ icon to mark tasks complete.
+
+```yaml
 - type: custom:task-tracker-card
   entity: sensor.task_tracker_mow_the_lawn
 ```
 
-![Due card](assets/4_due.png)
-![Inactive card](assets/5_inactive.png)
-![Done card](assets/6_done.png)
+#### Card States
 
-The check icon in the upper right corner can be clicked to mark the task as done.
+<table>
+<tr>
+<td><img src="assets/4_due.png" alt="Due card"/><br/><b>Due</b></td>
+<td><img src="assets/5_inactive.png" alt="Inactive card"/><br/><b>Inactive</b></td>
+<td><img src="assets/6_done.png" alt="Done card"/><br/><b>Done</b></td>
+</tr>
+</table>
 
-### Todo list synchronization
+---
 
-A task will be added to the linked todo lists `n` days before it is due, where `n` is the todo list offset set in
-the task options. If the task is marked as done, the corresponding todo item will be removed from the
-lists. If the task is marked as completed in the todo list, it will be marked as done 5 seconds later. This gives you
-time to change your mind if you completed the item by accident. Inactive tasks will not be added to the todo lists.
+### 🔄 Todo List Synchronization
 
-### Services
+Task Tracker seamlessly integrates with Home Assistant's Local Todo lists: 
 
-This custom component adds the following services in the domain `task_tracker`:
+- **Auto-Add**:  Tasks appear `n` days before due (based on todo list offset)
+- **Auto-Remove**: Completed tasks are removed from todo lists
+- **Bi-directional Sync**:  Completing a todo item marks the task done after 5 seconds (grace period for accidental clicks)
+- **Smart Filtering**:  Inactive tasks won't be added to todo lists
 
-* `mark_as_done`: Marks the task as done, updating the last done date to today.
-* `set_last_done_date`: Sets the last done date to a new value specified by the parameter `date`. This is
-  useful to fill the initial last done date when creating tasks or to correct mistakes.
+---
 
-### Example automation
+### 🔧 Services
 
-This automation sends a notification at 8 am every day for all tasks that are due and where the notification interval is
-met. The recipients are determined based on the tags of each task.
+Task Tracker provides the following services in the `task_tracker` domain:
 
+#### `task_tracker.mark_as_done`
+
+Marks a task as completed by setting the last done date to today and recalculating the next due date.
+
+**Example:**
+```yaml
+action: task_tracker.mark_as_done
+target:
+  entity_id: sensor.task_tracker_mow_the_lawn
 ```
+<br />
+
+#### `task_tracker.set_last_done_date`
+Sets the last done date to a specific value. Useful for:
+- Recording tasks completed outside Home Assistant
+- Correcting mistakes
+- Setting initial state when adding existing recurring tasks
+
+**Parameters:**
+- `date` (required) - The last done date in `YYYY-MM-DD` format
+
+**Example:**
+```yaml
+action: task_tracker.set_last_done_date
+target:
+  entity_id: sensor.task_tracker_mow_the_lawn
+data:
+  date: "2026-01-01"
+```
+
+> **Note:** After setting the last done date, the task's next due date will be automatically recalculated based on your configured interval.
+
+---
+
+### 🤖 Example Automation
+
+Daily notification at 8 AM for due tasks, with assignee-based routing:
+
+```yaml
 alias: Task Tracker
-description: "Notify about due tasks"
+description: Notify about due tasks
 triggers:
   - trigger: time
     at: "8:00:00"
@@ -105,63 +181,55 @@ actions:
   - repeat:
       for_each: "{{ tasks }}"
       sequence:
-        - alias: Chandler
+        - alias: Notify User
           if:
             - condition: template
-              value_template: "{{ 'chandler' in states[repeat.item].attributes.tags }}"
+              value_template: "{{ 'user_tag' in states[repeat.item].attributes.tags }}"
           then:
-            - action: notify.mobile_app_chandler
-              metadata: {}
+            - action: notify.mobile_app_user
               data:
                 title: "{{ states[repeat.item].attributes.friendly_name }}"
                 message: >-
-                  {%- set last_done =
-                  as_datetime(states[repeat.item].attributes.last_done).replace(tzinfo=now().tzinfo)
-                  %}
-
-                  {%- set overdue_by =
-                  states[repeat.item].attributes.overdue_by %}
-
-                  due since {{ 'today' if overdue_by == 0 else
-                  ('yesterday' if overdue_by == 1 else overdue_by) }} {{
-                  'days' if overdue_by > 1 }}
+                  {%- set overdue_by = states[repeat.item].attributes.overdue_by
+                  %} due since {{ 'today' if overdue_by == 0 else ('yesterday'
+                  if overdue_by == 1 else overdue_by ~ ' days') }}
                 data:
                   tag: "{{ repeat.item }}"
                   color: green
                   group: "{{ repeat.item }}"
                   notification_icon: "{{ states[repeat.item].attributes.icon }}"
-        - alias: Joey
-          if:
-            - condition: template
-              value_template: "{{ 'joey' in states[repeat.item].attributes.tags }}"
-          then:
-            - action: notify.mobile_app_joey
-              metadata: {}
-              data:
-                title: "{{ states[repeat.item].attributes.friendly_name }}"
-                message: >-
-                  {%- set last_done =
-                  as_datetime(states[repeat.item].attributes.last_done).replace(tzinfo=now().tzinfo)
-                  %}
-
-                  {%- set overdue_by =
-                  states[repeat.item].attributes.overdue_by %}
-
-                  due since {{ 'today' if overdue_by == 0 else
-                  ('yesterday' if overdue_by == 1 else overdue_by) }} {{
-                  'days' if overdue_by > 1 }}
-                data:
-                  tag: "{{ repeat.item }}"
-                  color: green
-                  group: "{{ repeat.item }}"
-                  notification_icon: "{{ states[repeat.item].attributes.icon }}"
-          enabled: true
 mode: single
+
 ```
 
-## Further development
+---
 
-If there is demand, I might consider these changes for upcoming releases:
+## 🚧 Future Development
 
-* The notification interval is something I find useful - maybe most people don't need it or someone has a better idea.
-* Further translations if people are willing to contribute to their language
+Have ideas or feature requests? I'm open to suggestions!  Here are some features under consideration:
+
+- 💭 **Notification Interval Refinement** - Gather feedback on current implementation or explore alternatives
+- 🌍 **Additional Translations** - Community contributions welcome for your language
+- 🎯 **Your Ideas** - Open an issue to suggest new features! 
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Feel free to: 
+- 🐛 Report bugs via [Issues](https://github.com/gensyn/task_tracker/issues)
+- 💡 Suggest features
+- 🌐 Contribute translations
+- 📝 Improve documentation
+
+---
+
+## 📄 License
+
+This project is licensed under the terms specified in the [MIT License](https://mit-license.org/).
+
+---
+
+## ⭐ Support
+
+If you find Task Tracker useful, please consider giving it a star on GitHub! It helps others discover the project. 
