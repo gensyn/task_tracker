@@ -34,7 +34,7 @@ A powerful Home Assistant custom component for managing recurring tasks with aut
 ### Manual Installation
 
 1. Download or clone this repository
-2. Copy the `custom_components/task_tracker` folder to your Home Assistant `config/custom_components` directory
+2. Copy the `task_tracker` folder to your Home Assistant `config/custom_components` directory
 3. Restart Home Assistant
 4. Add the integration via `Settings > Devices & Services > Add Integration`
 
@@ -199,14 +199,13 @@ actions:
                   group: "{{ repeat.item }}"
                   notification_icon: "{{ states[repeat.item].attributes.icon }}"
 mode: single
-
 ```
 
 ---
 
 ## 🚧 Future Development
 
-Have ideas or feature requests? I'm open to suggestions!  Here are some features under consideration:
+Have ideas or feature requests? I'm open to suggestions!
 
 - 💭 **Notification Interval Refinement** - Gather feedback on current implementation or explore alternatives
 - 🌍 **Additional Translations** - Community contributions welcome for your language

@@ -15,8 +15,8 @@ jobs:
 
       - name: "Move files to where hassfest expects them"
         run: |
-          mkdir -p custom_components/task_tracker
-          find . -maxdepth 1 -not -name 'custom_components' -not -name '.' -exec mv {} custom_components/task_tracker/ \;
+          mkdir -p custom_components/${GITHUB_REPOSITORY#*/}
+          find . -maxdepth 1 -not -name 'custom_components' -not -name '.' -exec mv {} custom_components/${GITHUB_REPOSITORY#*/}/ \;
 
       - name: "Run hassfest"
         uses: home-assistant/actions/hassfest@master
