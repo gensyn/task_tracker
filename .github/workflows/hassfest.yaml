@@ -15,7 +15,7 @@ jobs:
 
       - name: "Move files to where hassfest expects them"
         run: |
-          echo ${GITHUB_REPOSITORY#*/}
+          echo "${GITHUB_REPOSITORY#*/}"
           mkdir -p custom_components/${GITHUB_REPOSITORY#*/}
           find . -maxdepth 1 -not -name 'custom_components' -not -name '.' -exec mv {} custom_components/${GITHUB_REPOSITORY#*/}/ \;
 
