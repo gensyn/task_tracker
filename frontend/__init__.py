@@ -5,7 +5,8 @@ import os
 from pathlib import Path
 
 from homeassistant.components.http import StaticPathConfig
-from homeassistant.components.lovelace import LovelaceData
+from homeassistant.components.lovelace import MODE_STORAGE, LovelaceData
+from homeassistant.const import MAJOR_VERSION, MINOR_VERSION
 from homeassistant.core import HomeAssistant
 
 from ..const import URL_BASE, TASK_TRACKER_CARDS  # noqa: TID252
@@ -20,11 +21,16 @@ class TaskTrackerCardRegistration:
         """Initialise."""
         self.hass = hass
         self.lovelace: LovelaceData = self.hass.data.get("lovelace")
+        # Backwards compatability after/before 2026.2
+        if MAJOR_VERSION >= 2026 and MINOR_VERSION >= 2:
+            self.resource_mode = self.lovelace.resource_mode
+        else:
+            self.resource_mode = self.lovelace.mode
 
     async def async_register(self):
         """Register view_assist path."""
         await self._async_register_path()
-        if self.lovelace.mode == "storage":
+        if self.lovelace and self.resource_mode == MODE_STORAGE:
             await self._async_register_modules()
 
     # install card resources
@@ -104,7 +110,7 @@ class TaskTrackerCardRegistration:
 
     async def async_unregister(self):
         """Unload lovelace module resource."""
-        if self.lovelace.mode == "storage":
+        if self.resource_mode == MODE_STORAGE:
             for module in TASK_TRACKER_CARDS:
                 url = f"{URL_BASE}/{module.get('filename')}"
                 task_tracker_resources = [
