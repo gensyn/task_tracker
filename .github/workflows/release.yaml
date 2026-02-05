@@ -25,11 +25,11 @@ jobs:
 
       - name: "Create zip"
         run: |
-          zip ${GITHUB_REPOSITORY#*/}.zip -r ./ -x "*.git*"
+          zip task_tracker.zip -r ./ -x "*.git*"
 
       - name: "Upload ZIP to Release"
         uses: softprops/action-gh-release@v2
         with:
-          files: ${GITHUB_REPOSITORY#*/}.zip
+          files: task_tracker.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
