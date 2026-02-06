@@ -22,7 +22,7 @@ class TaskTrackerCardRegistration:
         self.hass = hass
         self.lovelace: LovelaceData = self.hass.data.get("lovelace")
         # Backwards compatability after/before 2026.2
-        if MAJOR_VERSION >= 2026 and MINOR_VERSION >= 2:
+        if MAJOR_VERSION > 2026  or (MAJOR_VERSION == 2026 and MINOR_VERSION >= 2):
             self.resource_mode = self.lovelace.resource_mode
         else:
             self.resource_mode = self.lovelace.mode
@@ -30,7 +30,7 @@ class TaskTrackerCardRegistration:
     async def async_register(self):
         """Register view_assist path."""
         await self._async_register_path()
-        if self.lovelace and self.resource_mode == MODE_STORAGE:
+        if self.resource_mode == MODE_STORAGE:
             await self._async_register_modules()
 
     # install card resources
