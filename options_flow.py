@@ -95,7 +95,7 @@ async def validate_options(user_input: dict[str, Any]) -> dict[str, Any]:
     if user_input.get(CONF_NOTIFICATION_INTERVAL, 0) < 1:
         user_input[CONF_NOTIFICATION_INTERVAL] = 1
 
-    options = {
+    return {
         CONF_ACTIVE: user_input[CONF_ACTIVE],
         CONF_TASK_INTERVAL_VALUE: user_input[CONF_TASK_INTERVAL_VALUE],
         CONF_TASK_INTERVAL_TYPE: user_input[CONF_TASK_INTERVAL_TYPE],
@@ -105,5 +105,3 @@ async def validate_options(user_input: dict[str, Any]) -> dict[str, Any]:
         CONF_TODO_OFFSET_DAYS: user_input[CONF_TODO_OFFSET_DAYS],
         CONF_NOTIFICATION_INTERVAL: user_input[CONF_NOTIFICATION_INTERVAL],
     }
-
-    return options
