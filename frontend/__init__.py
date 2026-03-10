@@ -1,4 +1,4 @@
-"""View Assist Javascript module registration."""
+"""Task Tracker JavaScript module registration."""
 
 import logging
 import os
@@ -6,9 +6,7 @@ from pathlib import Path
 
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.components.lovelace import MODE_STORAGE, LovelaceData
-from homeassistant.const import MAJOR_VERSION, MINOR_VERSION
 from homeassistant.core import HomeAssistant
-
 from ..const import URL_BASE, TASK_TRACKER_CARDS  # noqa: TID252
 
 _LOGGER = logging.getLogger(__name__)
@@ -21,10 +19,10 @@ class TaskTrackerCardRegistration:
         """Initialise."""
         self.hass = hass
         self.lovelace: LovelaceData = self.hass.data.get("lovelace")
-        # Backwards compatability after/before 2026.2
-        if MAJOR_VERSION > 2026  or (MAJOR_VERSION == 2026 and MINOR_VERSION >= 2):
+        if hasattr(self.lovelace, "resource_mode"):
             self.resource_mode = self.lovelace.resource_mode
         else:
+            # Backwards compatibility before 2026.2
             self.resource_mode = self.lovelace.mode
 
     async def async_register(self):
@@ -38,7 +36,7 @@ class TaskTrackerCardRegistration:
         """Register resource path if not already registered."""
         try:
             await self.hass.http.async_register_static_paths(
-                [StaticPathConfig(URL_BASE, Path(__file__).parent, False)]
+                [StaticPathConfig(URL_BASE, str(Path(__file__).parent), False)]
             )
             _LOGGER.debug("Registered resource path from %s", Path(__file__).parent)
         except RuntimeError:
@@ -66,7 +64,7 @@ class TaskTrackerCardRegistration:
                     card_registered = True
                     # check version
                     if self._get_resource_version(resource["url"]) != module.get(
-                        "version"
+                            "version"
                     ):
                         # Update card version
                         _LOGGER.debug(
@@ -136,10 +134,10 @@ class TaskTrackerCardRegistration:
         for file in gzip_files:
             try:
                 if (
-                    Path.stat(f"{path}/{file}").st_mtime
-                    < Path.stat(f"{path}/{file.replace('.gz', '')}").st_mtime
+                        Path.stat(Path(f"{path}/{file}")).st_mtime
+                        < Path.stat(Path(f"{path}/{file.replace('.gz', '')}")).st_mtime
                 ):
                     _LOGGER.debug("Removing older gzip file - %s", file)
-                    Path.unlink(f"{path}/{file}")
+                    Path.unlink(Path(f"{path}/{file}"))
             except OSError:
                 pass
