@@ -124,7 +124,7 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
             self.async_on_remove(
                 self.hass.bus.async_listen(
                     EVENT_STATE_CHANGED,
-                    self.async_override_entity_changed,
+                    self.async_update,
                     self._filter_override_changes,
                 )
             )
@@ -216,10 +216,6 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
         override_entities = {e for e in
                              [self.active_override, self.task_interval_override, self.todo_offset_override] if e}
         return event_data["entity_id"] in override_entities
-
-    async def async_override_entity_changed(self, event: Any) -> None:
-        """Triggered when an override entity changes state."""
-        await self.async_update()
 
     async def async_todo_list_changed(self, event: Any) -> None:
         if self.mark_as_done_scheduled:
