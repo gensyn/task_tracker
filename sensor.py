@@ -24,7 +24,7 @@ from homeassistant.util import slugify
 from homeassistant.util.dt import UTC
 from .const import DOMAIN, CONF_TASK_INTERVAL_VALUE, CONF_NOTIFICATION_INTERVAL, CONF_TAGS, CONF_ACTIVE, CONF_WEEK, \
     CONF_MONTH, CONF_YEAR, CONST_DUE, CONST_INACTIVE, CONST_DONE, CONF_TASK_INTERVAL_TYPE, CONF_TODO_OFFSET_DAYS, \
-    CONF_TODO_LISTS, CONF_DAY
+    CONF_TODO_LISTS, CONF_DAY, CONF_ACTIVE_OVERRIDE, CONF_TASK_INTERVAL_OVERRIDE, CONF_TODO_OFFSET_OVERRIDE
 
 LOGGER = getLogger(__name__)
 
@@ -41,7 +41,10 @@ async def async_setup_entry(
         [TaskTrackerSensor(data[CONF_NAME], options[CONF_TASK_INTERVAL_VALUE], options[CONF_TASK_INTERVAL_TYPE],
                            options[CONF_NOTIFICATION_INTERVAL], options[CONF_TODO_LISTS],
                            options[CONF_TODO_OFFSET_DAYS], options[CONF_TAGS],
-                           options[CONF_ACTIVE], options[CONF_ICON], entry.entry_id, hass)])
+                           options[CONF_ACTIVE], options[CONF_ICON], entry.entry_id, hass,
+                           options.get(CONF_ACTIVE_OVERRIDE),
+                           options.get(CONF_TASK_INTERVAL_OVERRIDE),
+                           options.get(CONF_TODO_OFFSET_OVERRIDE))])
 
 
 class TaskTrackerSensor(RestoreSensor, SensorEntity):
@@ -53,7 +56,10 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
 
     def __init__(self, entry_name: str, task_interval_value: int, task_interval_type: str,
                  notification_interval: int, todo_lists: list[str], todo_offset_days: int, tags: str, active: bool,
-                 icon: str, entry_id: str, hass: HomeAssistant) -> None:
+                 icon: str, entry_id: str, hass: HomeAssistant,
+                 active_override: str | None = None,
+                 task_interval_override: str | None = None,
+                 todo_offset_override: str | None = None) -> None:
         """Initialize the sensor with a service name."""
         self.task_interval_value: int = task_interval_value
         self.task_interval_type: str = task_interval_type
@@ -70,6 +76,12 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
         self.due_date: date = date(1970, 1, 1)
         self.due_in: int = 0
         self.mark_as_done_scheduled: Callable[[], None] | None = None
+        self.active_override: str | None = active_override
+        self.task_interval_override: str | None = task_interval_override
+        self.todo_offset_override: str | None = todo_offset_override
+        # Effective values after applying overrides; initialised to configured values
+        self._effective_active: bool = active
+        self._effective_todo_offset_days: int = todo_offset_days
 
         device_id = f"{DOMAIN}_{self.entry_id}"
         self._attr_name = None
@@ -107,6 +119,16 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
             )
         )
 
+        # Subscribe to override entity state changes
+        if any([self.active_override, self.task_interval_override, self.todo_offset_override]):
+            self.async_on_remove(
+                self.hass.bus.async_listen(
+                    EVENT_STATE_CHANGED,
+                    self.async_override_entity_changed,
+                    self._filter_override_changes,
+                )
+            )
+
         if self.hass.state == CoreState.running:
             await self.async_update()
         else:
@@ -118,34 +140,63 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
     async def async_update(self, _=None) -> None:
         self._attr_native_value = CONST_DONE
 
-        if self.task_interval_type == CONF_WEEK:
-            self.due_date = self.last_done + relativedelta(weeks=self.task_interval_value)
-        elif self.task_interval_type == CONF_MONTH:
-            self.due_date = self.last_done + relativedelta(months=self.task_interval_value)
-        elif self.task_interval_type == CONF_YEAR:
-            self.due_date = self.last_done + relativedelta(years=self.task_interval_value)
+        effective_active = self.active
+        if self.active_override:
+            override_state = self.hass.states.get(self.active_override)
+            if override_state is not None and override_state.state not in ("unavailable", "unknown"):
+                effective_active = override_state.state == "on"
+
+        effective_task_interval_value = self.task_interval_value
+        effective_task_interval_type = self.task_interval_type
+        if self.task_interval_override:
+            override_state = self.hass.states.get(self.task_interval_override)
+            if override_state is not None and override_state.state not in ("unavailable", "unknown"):
+                try:
+                    effective_task_interval_value = max(1, int(float(override_state.state)))
+                    effective_task_interval_type = CONF_DAY
+                except (ValueError, TypeError):
+                    pass
+
+        effective_todo_offset_days = self.todo_offset_days
+        if self.todo_offset_override:
+            override_state = self.hass.states.get(self.todo_offset_override)
+            if override_state is not None and override_state.state not in ("unavailable", "unknown"):
+                try:
+                    effective_todo_offset_days = max(0, int(float(override_state.state)))
+                except (ValueError, TypeError):
+                    pass
+
+        if effective_task_interval_type == CONF_WEEK:
+            self.due_date = self.last_done + relativedelta(weeks=effective_task_interval_value)
+        elif effective_task_interval_type == CONF_MONTH:
+            self.due_date = self.last_done + relativedelta(months=effective_task_interval_value)
+        elif effective_task_interval_type == CONF_YEAR:
+            self.due_date = self.last_done + relativedelta(years=effective_task_interval_value)
         else:
-            self.due_date = self.last_done + relativedelta(days=self.task_interval_value)
+            self.due_date = self.last_done + relativedelta(days=effective_task_interval_value)
 
         self.due_in: int = (self.due_date - date.today()).days if self.due_date > date.today() else 0
         overdue_by: int = (date.today() - self.due_date).days if self.due_date < date.today() else 0
 
-        if not self.active:
+        if not effective_active:
             self._attr_native_value = CONST_INACTIVE
         elif self.due_in == 0:
             self._attr_native_value = CONST_DUE
+
+        self._effective_active: bool = effective_active
+        self._effective_todo_offset_days: int = effective_todo_offset_days
 
         self._attr_extra_state_attributes: dict[str, str | int | list] = {
             "last_done": str(self.last_done),
             "due_date": str(self.due_date),
             "due_in": self.due_in,
             "overdue_by": overdue_by,
-            "task_interval_value": self.task_interval_value,
-            "task_interval_type": self.task_interval_type,
+            "task_interval_value": effective_task_interval_value,
+            "task_interval_type": effective_task_interval_type,
             "icon": self.icon,
             "tags": self.tags,
             "todo_lists": self.todo_lists,
-            "todo_offset_days": self.todo_offset_days,
+            "todo_offset_days": effective_todo_offset_days,
             "notification_interval": self.notification_interval,
         }
         self.async_write_ha_state()
@@ -158,6 +209,17 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
         Also filter out events where the number of open items did not decrease."""
         return event_data["entity_id"] in self.todo_lists and event_data.get("old_state") and event_data.get(
             "new_state") and event_data["new_state"].state < event_data["old_state"].state
+
+    @callback
+    def _filter_override_changes(self, event_data: EventStateChangedData) -> bool:
+        """Listen only for state changes in override entities."""
+        override_entities = {e for e in
+                             [self.active_override, self.task_interval_override, self.todo_offset_override] if e}
+        return event_data["entity_id"] in override_entities
+
+    async def async_override_entity_changed(self, event: Any) -> None:
+        """Triggered when an override entity changes state."""
+        await self.async_update()
 
     async def async_todo_list_changed(self, event: Any) -> None:
         if self.mark_as_done_scheduled:
@@ -185,7 +247,7 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
     async def async_sync_todo_list(self, todo_list: str) -> None:
         existing_item: dict | None = await self.async_get_item_from_todo_list(todo_list)
 
-        if self.active and self.due_in <= self.todo_offset_days:
+        if self._effective_active and self.due_in <= self._effective_todo_offset_days:
             # there is supposed to be an item in the todo list
             if existing_item is None:
                 # The item does not exist, so we need to add it

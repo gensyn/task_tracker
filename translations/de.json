@@ -33,22 +33,28 @@
                 "data": {
                     "task_interval_value": "Taskintervall",
                     "task_interval_type": "Einheit des Taskintervalls",
+                    "task_interval_override": "Taskintervall überschreiben",
                     "notification_interval": "Benachrichtigungsintervall (Tage)",
                     "todo_lists": "Todo-Listen",
                     "todo_offset_days": "Todo-Listen Offset (Tage)",
+                    "todo_offset_override": "Todo-Listen Offset überschreiben (Tage)",
                     "tags": "Tags",
                     "icon": "Icon",
-                    "active": "Aktiv"
+                    "active": "Aktiv",
+                    "active_override": "Aktiv überschreiben"
                 },
                 "data_description": {
                     "task_interval_value": "Die Zeit, nach der die Task wieder fällig wird.",
                     "task_interval_type": "Die Zeiteinheit für das Taskintervall.",
+                    "task_interval_override": "input_number (Wert in Tagen) zur Überschreibung des Taskintervalls auswählen.",
                     "notification_interval": "Die Zeit in Tagen, nach dem Benachrichtigungen erneut gesendet werden.",
                     "todo_lists": "Die Todo-Listen, zu denen diese Task hinzugefügt wird.",
                     "todo_offset_days": "Die Anzahl der Tage vor Fälligkeit der Task, um einen Todo-Eintrag zu erstellen.",
+                    "todo_offset_override": "input_number (Wert in Tagen) zur Überschreibung des Todo-Listen Offsets auswählen.",
                     "tags": "Tags zur Kategorisierung der Task, getrennt durch Kommas.",
                     "icon": "Icon zur Darstellung der Task.",
-                    "active": "Task aktivieren oder deaktivieren."
+                    "active": "Task aktivieren oder deaktivieren.",
+                    "active_override": "input_boolean zur Überschreibung des Aktiv-Status auswählen."
                 }
             }
         }

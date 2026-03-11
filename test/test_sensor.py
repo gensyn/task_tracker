@@ -29,6 +29,9 @@ def make_sensor(
     icon="mdi:calendar",
     entry_id="abc123",
     hass=None,
+    active_override=None,
+    task_interval_override=None,
+    todo_offset_override=None,
 ):
     if hass is None:
         hass = MagicMock()
@@ -44,6 +47,9 @@ def make_sensor(
         icon=icon,
         entry_id=entry_id,
         hass=hass,
+        active_override=active_override,
+        task_interval_override=task_interval_override,
+        todo_offset_override=todo_offset_override,
     )
 
 
@@ -315,3 +321,151 @@ class TestTaskTrackerSensorSetLastDoneDate(unittest.IsolatedAsyncioTestCase):
         with patch.object(sensor, "async_update", new_callable=AsyncMock) as mock_update:
             await sensor.async_set_last_done_date(date(2024, 1, 1))
         mock_update.assert_called_once()
+
+
+class TestTaskTrackerSensorActiveOverride(unittest.IsolatedAsyncioTestCase):
+
+    async def _run_update(self, sensor):
+        with patch.object(sensor, "async_write_ha_state"):
+            with patch.object(sensor, "async_sync_todo_list", new_callable=AsyncMock):
+                await sensor.async_update()
+
+    async def test_active_override_on_makes_task_active(self):
+        hass = MagicMock()
+        override_state = MagicMock()
+        override_state.state = "on"
+        hass.states.get.return_value = override_state
+        sensor = make_sensor(active=False, active_override="input_boolean.my_switch")
+        sensor.hass = hass
+        sensor.last_done = date(1970, 1, 1)
+        await self._run_update(sensor)
+        self.assertNotEqual(sensor._attr_native_value, CONST_INACTIVE)
+
+    async def test_active_override_off_makes_task_inactive(self):
+        hass = MagicMock()
+        override_state = MagicMock()
+        override_state.state = "off"
+        hass.states.get.return_value = override_state
+        sensor = make_sensor(active=True, active_override="input_boolean.my_switch")
+        sensor.hass = hass
+        sensor.last_done = date(1970, 1, 1)
+        await self._run_update(sensor)
+        self.assertEqual(sensor._attr_native_value, CONST_INACTIVE)
+
+    async def test_active_override_unavailable_falls_back_to_config(self):
+        hass = MagicMock()
+        override_state = MagicMock()
+        override_state.state = "unavailable"
+        hass.states.get.return_value = override_state
+        sensor = make_sensor(active=True, active_override="input_boolean.my_switch")
+        sensor.hass = hass
+        sensor.last_done = date(1970, 1, 1)
+        await self._run_update(sensor)
+        self.assertNotEqual(sensor._attr_native_value, CONST_INACTIVE)
+
+    async def test_active_override_none_does_not_override(self):
+        sensor = make_sensor(active=False, active_override=None)
+        sensor.last_done = date(1970, 1, 1)
+        await self._run_update(sensor)
+        self.assertEqual(sensor._attr_native_value, CONST_INACTIVE)
+
+
+class TestTaskTrackerSensorTaskIntervalOverride(unittest.IsolatedAsyncioTestCase):
+
+    async def _run_update(self, sensor):
+        with patch.object(sensor, "async_write_ha_state"):
+            with patch.object(sensor, "async_sync_todo_list", new_callable=AsyncMock):
+                await sensor.async_update()
+
+    async def test_task_interval_override_changes_due_date(self):
+        hass = MagicMock()
+        override_state = MagicMock()
+        override_state.state = "30"
+        hass.states.get.return_value = override_state
+        sensor = make_sensor(task_interval_value=7,
+                             task_interval_override="input_number.my_interval")
+        sensor.hass = hass
+        sensor.last_done = date(2024, 1, 1)
+        await self._run_update(sensor)
+        self.assertEqual(sensor.due_date, date(2024, 1, 31))
+
+    async def test_task_interval_override_uses_days(self):
+        hass = MagicMock()
+        override_state = MagicMock()
+        override_state.state = "14"
+        hass.states.get.return_value = override_state
+        sensor = make_sensor(task_interval_value=7, task_interval_type=CONF_WEEK,
+                             task_interval_override="input_number.my_interval")
+        sensor.hass = hass
+        sensor.last_done = date(2024, 1, 1)
+        await self._run_update(sensor)
+        # Override forces CONF_DAY: 14 days = Jan 15
+        self.assertEqual(sensor.due_date, date(2024, 1, 15))
+
+    async def test_task_interval_override_minimum_is_one(self):
+        hass = MagicMock()
+        override_state = MagicMock()
+        override_state.state = "0"
+        hass.states.get.return_value = override_state
+        sensor = make_sensor(task_interval_value=7,
+                             task_interval_override="input_number.my_interval")
+        sensor.hass = hass
+        sensor.last_done = date(2024, 1, 1)
+        await self._run_update(sensor)
+        self.assertEqual(sensor.due_date, date(2024, 1, 2))
+
+    async def test_task_interval_override_unavailable_falls_back_to_config(self):
+        hass = MagicMock()
+        override_state = MagicMock()
+        override_state.state = "unavailable"
+        hass.states.get.return_value = override_state
+        sensor = make_sensor(task_interval_value=7,
+                             task_interval_override="input_number.my_interval")
+        sensor.hass = hass
+        sensor.last_done = date(2024, 1, 1)
+        await self._run_update(sensor)
+        self.assertEqual(sensor.due_date, date(2024, 1, 8))
+
+    async def test_task_interval_override_none_does_not_override(self):
+        sensor = make_sensor(task_interval_value=7, task_interval_override=None)
+        sensor.last_done = date(2024, 1, 1)
+        await self._run_update(sensor)
+        self.assertEqual(sensor.due_date, date(2024, 1, 8))
+
+
+class TestTaskTrackerSensorTodoOffsetOverride(unittest.IsolatedAsyncioTestCase):
+
+    async def _run_update(self, sensor):
+        with patch.object(sensor, "async_write_ha_state"):
+            with patch.object(sensor, "async_sync_todo_list", new_callable=AsyncMock):
+                await sensor.async_update()
+
+    async def test_todo_offset_override_changes_attributes(self):
+        hass = MagicMock()
+        override_state = MagicMock()
+        override_state.state = "5"
+        hass.states.get.return_value = override_state
+        sensor = make_sensor(todo_offset_days=0,
+                             todo_offset_override="input_number.my_offset")
+        sensor.hass = hass
+        sensor.last_done = date.today()
+        await self._run_update(sensor)
+        self.assertEqual(sensor._attr_extra_state_attributes["todo_offset_days"], 5)
+
+    async def test_todo_offset_override_unavailable_falls_back_to_config(self):
+        hass = MagicMock()
+        override_state = MagicMock()
+        override_state.state = "unavailable"
+        hass.states.get.return_value = override_state
+        sensor = make_sensor(todo_offset_days=3,
+                             todo_offset_override="input_number.my_offset")
+        sensor.hass = hass
+        sensor.last_done = date.today()
+        await self._run_update(sensor)
+        self.assertEqual(sensor._attr_extra_state_attributes["todo_offset_days"], 3)
+
+    async def test_todo_offset_override_none_does_not_override(self):
+        sensor = make_sensor(todo_offset_days=3, todo_offset_override=None)
+        sensor.last_done = date.today()
+        await self._run_update(sensor)
+        self.assertEqual(sensor._attr_extra_state_attributes["todo_offset_days"], 3)

@@ -36,22 +36,28 @@
                 "data": {
                     "task_interval_value": "Task Interval",
                     "task_interval_type": "Task Interval Unit",
+                    "task_interval_override": "Task Interval Override",
                     "notification_interval": "Notification Interval (days)",
                     "todo_lists": "Todo-Lists",
                     "todo_offset_days": "Todo-List Offset (days)",
+                    "todo_offset_override": "Todo-List Offset Override (days)",
                     "tags": "Tags",
                     "icon": "Icon",
-                    "active": "Active"
+                    "active": "Active",
+                    "active_override": "Active Override"
                 },
                 "data_description": {
                     "task_interval_value": "Time after which the task becomes due again.",
                     "task_interval_type": "The unit of time for the task interval.",
+                    "task_interval_override": "Select an input_number (value in days) to override the Task Interval.",
                     "notification_interval": "The time in days after which notifications are sent again.",
                     "todo_lists": "Todo-Lists, to which this task will be added.",
                     "todo_offset_days": "The number of days before the task is due, to add the task to the Todo-List(s).",
+                    "todo_offset_override": "Select an input_number (value in days) to override the Todo-List Offset.",
                     "tags": "Tags to categorize the task, separated by commas.",
                     "icon": "Icon to represent the task.",
-                    "active": "Enable or disable the task."
+                    "active": "Enable or disable the task.",
+                    "active_override": "Select an input_boolean to override the Active setting."
                 }
             }
         }

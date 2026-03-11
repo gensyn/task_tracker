@@ -12,6 +12,7 @@ from task_tracker.options_flow import validate_options
 from task_tracker.const import (
     CONF_ACTIVE, CONF_TASK_INTERVAL_VALUE, CONF_TASK_INTERVAL_TYPE, CONF_ICON,
     CONF_TAGS, CONF_TODO_LISTS, CONF_TODO_OFFSET_DAYS, CONF_NOTIFICATION_INTERVAL, CONF_DAY,
+    CONF_ACTIVE_OVERRIDE, CONF_TASK_INTERVAL_OVERRIDE, CONF_TODO_OFFSET_OVERRIDE,
 )
 
 
@@ -177,3 +178,72 @@ class TestValidateOptions(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result[CONF_TODO_LISTS], ["todo.list1"])
         self.assertEqual(result[CONF_TODO_OFFSET_DAYS], 3)
         self.assertEqual(result[CONF_NOTIFICATION_INTERVAL], 2)
+
+    async def test_active_override_defaults_to_none(self):
+        result = await validate_options({
+            CONF_TASK_INTERVAL_VALUE: 7,
+            CONF_TASK_INTERVAL_TYPE: CONF_DAY,
+        })
+        self.assertIsNone(result[CONF_ACTIVE_OVERRIDE])
+
+    async def test_active_override_preserved(self):
+        result = await validate_options({
+            CONF_TASK_INTERVAL_VALUE: 7,
+            CONF_TASK_INTERVAL_TYPE: CONF_DAY,
+            CONF_ACTIVE_OVERRIDE: "input_boolean.my_switch",
+        })
+        self.assertEqual(result[CONF_ACTIVE_OVERRIDE], "input_boolean.my_switch")
+
+    async def test_active_override_empty_string_becomes_none(self):
+        result = await validate_options({
+            CONF_TASK_INTERVAL_VALUE: 7,
+            CONF_TASK_INTERVAL_TYPE: CONF_DAY,
+            CONF_ACTIVE_OVERRIDE: "",
+        })
+        self.assertIsNone(result[CONF_ACTIVE_OVERRIDE])
+
+    async def test_task_interval_override_defaults_to_none(self):
+        result = await validate_options({
+            CONF_TASK_INTERVAL_VALUE: 7,
+            CONF_TASK_INTERVAL_TYPE: CONF_DAY,
+        })
+        self.assertIsNone(result[CONF_TASK_INTERVAL_OVERRIDE])
+
+    async def test_task_interval_override_preserved(self):
+        result = await validate_options({
+            CONF_TASK_INTERVAL_VALUE: 7,
+            CONF_TASK_INTERVAL_TYPE: CONF_DAY,
+            CONF_TASK_INTERVAL_OVERRIDE: "input_number.my_interval",
+        })
+        self.assertEqual(result[CONF_TASK_INTERVAL_OVERRIDE], "input_number.my_interval")
+
+    async def test_task_interval_override_empty_string_becomes_none(self):
+        result = await validate_options({
+            CONF_TASK_INTERVAL_VALUE: 7,
+            CONF_TASK_INTERVAL_TYPE: CONF_DAY,
+            CONF_TASK_INTERVAL_OVERRIDE: "",
+        })
+        self.assertIsNone(result[CONF_TASK_INTERVAL_OVERRIDE])
+
+    async def test_todo_offset_override_defaults_to_none(self):
+        result = await validate_options({
+            CONF_TASK_INTERVAL_VALUE: 7,
+            CONF_TASK_INTERVAL_TYPE: CONF_DAY,
+        })
+        self.assertIsNone(result[CONF_TODO_OFFSET_OVERRIDE])
+
+    async def test_todo_offset_override_preserved(self):
+        result = await validate_options({
+            CONF_TASK_INTERVAL_VALUE: 7,
+            CONF_TASK_INTERVAL_TYPE: CONF_DAY,
+            CONF_TODO_OFFSET_OVERRIDE: "input_number.my_offset",
+        })
+        self.assertEqual(result[CONF_TODO_OFFSET_OVERRIDE], "input_number.my_offset")
+
+    async def test_todo_offset_override_empty_string_becomes_none(self):
+        result = await validate_options({
+            CONF_TASK_INTERVAL_VALUE: 7,
+            CONF_TASK_INTERVAL_TYPE: CONF_DAY,
+            CONF_TODO_OFFSET_OVERRIDE: "",
+        })
+        self.assertIsNone(result[CONF_TODO_OFFSET_OVERRIDE])
