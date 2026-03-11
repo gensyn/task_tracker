@@ -58,9 +58,9 @@ SERVICE_SET_LAST_DONE_DATE_SCHEMA = vol.Schema(
 
 STEP_USER_DATA_SCHEMA = vol.Schema(
     {
-        vol.Required(CONF_NAME): str,
-        vol.Required(CONF_TASK_INTERVAL_VALUE, default=7): int,
-        vol.Required(CONF_TASK_INTERVAL_TYPE, default=CONF_DAY): selector({
+        vol.Required(CONF_NAME, description={"translation_key": "name"}): str,
+        vol.Required(CONF_TASK_INTERVAL_VALUE, default=7, description={"translation_key": "task_interval_value"}): int,
+        vol.Required(CONF_TASK_INTERVAL_TYPE, default=CONF_DAY, description={"translation_key": "task_interval_type"}): selector({
             CONF_SELECT: {
                 CONF_OPTIONS: [CONF_DAY, CONF_WEEK, CONF_MONTH, CONF_YEAR],
                 CONF_MODE: CONF_DROPDOWN,

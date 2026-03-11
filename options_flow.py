@@ -18,40 +18,40 @@ class TaskTrackerOptionsFlow(OptionsFlowWithReload):
 
         STEP_INIT_SCHEMA = vol.Schema(
             {
-                vol.Optional(CONF_ACTIVE): bool,
-                vol.Optional(CONF_ACTIVE_OVERRIDE): selector({
+                vol.Optional(CONF_ACTIVE, description={"translation_key": "active"}): bool,
+                vol.Optional(CONF_ACTIVE_OVERRIDE, description={"translation_key": "active_override"}): selector({
                     "entity": {
                         "domain": "input_boolean",
                     }
                 }),
-                vol.Required(CONF_TASK_INTERVAL_VALUE, default=7): int,
-                vol.Required(CONF_TASK_INTERVAL_TYPE): selector({
+                vol.Required(CONF_TASK_INTERVAL_VALUE, default=7, description={"translation_key": "task_interval_value"}): int,
+                vol.Required(CONF_TASK_INTERVAL_TYPE, description={"translation_key": "task_interval_type"}): selector({
                     CONF_SELECT: {
                         CONF_OPTIONS: [CONF_DAY, CONF_WEEK, CONF_MONTH, CONF_YEAR],
                         CONF_MODE: CONF_DROPDOWN,
                         "translation_key": "task_interval",
                     }
                 }),
-                vol.Optional(CONF_TASK_INTERVAL_OVERRIDE): selector({
+                vol.Optional(CONF_TASK_INTERVAL_OVERRIDE, description={"translation_key": "task_interval_override"}): selector({
                     "entity": {
                         "domain": "input_number",
                     }
                 }),
-                vol.Optional(CONF_ICON, default="mdi:calendar-question"): str,
-                vol.Optional(CONF_TAGS): str,
-                vol.Optional(CONF_TODO_LISTS): selector({
+                vol.Optional(CONF_ICON, default="mdi:calendar-question", description={"translation_key": "icon"}): str,
+                vol.Optional(CONF_TAGS, description={"translation_key": "tags"}): str,
+                vol.Optional(CONF_TODO_LISTS, description={"translation_key": "todo_lists"}): selector({
                     "entity": {
                         "domain": "todo",
                         "multiple": True,
                     }
                 }),
-                vol.Optional(CONF_TODO_OFFSET_DAYS, default=0): int,
-                vol.Optional(CONF_TODO_OFFSET_OVERRIDE): selector({
+                vol.Optional(CONF_TODO_OFFSET_DAYS, default=0, description={"translation_key": "todo_offset_days"}): int,
+                vol.Optional(CONF_TODO_OFFSET_OVERRIDE, description={"translation_key": "todo_offset_override"}): selector({
                     "entity": {
                         "domain": "input_number",
                     }
                 }),
-                vol.Optional(CONF_NOTIFICATION_INTERVAL, default=1): int,
+                vol.Optional(CONF_NOTIFICATION_INTERVAL, default=1, description={"translation_key": "notification_interval"}): int,
             }
         )
 
