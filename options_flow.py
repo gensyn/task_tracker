@@ -2,11 +2,8 @@ from typing import Any
 
 import voluptuous as vol
 
-from homeassistant.components.local_todo.const import DOMAIN as LOCAL_TODO_DOMAIN
 from homeassistant.config_entries import OptionsFlowWithReload, ConfigFlowResult
 from homeassistant.const import CONF_ICON, CONF_OPTIONS, CONF_MODE
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers import entity_registry
 from homeassistant.helpers.selector import selector
 from .const import CONF_TASK_INTERVAL_VALUE, CONF_NOTIFICATION_INTERVAL, CONF_TAGS, CONF_ACTIVE, \
     CONF_TASK_INTERVAL_TYPE, CONF_TODO_OFFSET_DAYS, CONF_SELECT, CONF_DAY, CONF_WEEK, CONF_MONTH, CONF_YEAR, \
@@ -18,7 +15,6 @@ class TaskTrackerOptionsFlow(OptionsFlowWithReload):
             self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         """Manage the options."""
-        todo_lists = await get_todo_lists(self.hass)
 
         STEP_INIT_SCHEMA = vol.Schema(
             {
@@ -44,10 +40,8 @@ class TaskTrackerOptionsFlow(OptionsFlowWithReload):
                 vol.Optional(CONF_ICON, default="mdi:calendar-question"): str,
                 vol.Optional(CONF_TAGS): str,
                 vol.Optional(CONF_TODO_LISTS): selector({
-                    CONF_SELECT: {
-                        CONF_OPTIONS: [{"value": todo[0], "label": todo[1]} for todo in todo_lists],
-                        CONF_MODE: CONF_DROPDOWN,
-                        "translation_key": "task_interval",
+                    "entity": {
+                        "domain": "todo",
                         "multiple": True,
                     }
                 }),
@@ -72,14 +66,6 @@ class TaskTrackerOptionsFlow(OptionsFlowWithReload):
         options = await validate_options(user_input)
 
         return self.async_create_entry(data=options)
-
-
-async def get_todo_lists(hass: HomeAssistant) -> list[tuple[str, str]]:
-    """Return entity_ids and friendly names for all todo lists of the domain Local Todo."""
-    registry = entity_registry.async_get(hass)
-    return [(entry.entity_id, hass.states.get(entry.entity_id).attributes.get("friendly_name", entry.entity_id)) for
-            entry in registry.entities.values() if
-            entry.platform == LOCAL_TODO_DOMAIN and entry.entity_id.startswith("todo.")]
 
 
 async def validate_options(user_input: dict[str, Any]) -> dict[str, Any]:
