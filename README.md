@@ -71,14 +71,19 @@ Access task settings through the cog icon ⚙️ on the integration page.
 | Option | Description                                                                               |
 |--------|-------------------------------------------------------------------------------------------|
 | **Active** | Pause tasks when disabled (sensor shows `inactive` state)                                 |
+| **Active Override** | Select an `input_boolean` helper to override the Active setting at runtime               |
 | **Task Interval & Unit** | Modify how often the task repeats                                                         |
+| **Task Interval Override** | Select an `input_number` helper (value in days) to override the Task Interval at runtime |
 | **Material Design Icon** | Choose an icon for the sensor (available as attribute for notifications)                  |
 | **Tags** | Add keywords for filtering in automations/templates (e.g., assignees, notification times) |
-| **Todo Lists** | Select Local Todo lists for automatic task addition when due                              |
+| **Todo Lists** | Select Todo lists for automatic task addition when due                                    |
 | **Todo List Offset** | Add task to lists `n` days before due date                                                |
+| **Todo List Offset Override** | Select an `input_number` helper (value in days) to override the Todo List Offset at runtime |
 | **Notification Interval** | Reference value for automation/template notification timing                               |
 
-> **Note:** Tags and notification intervals require you to implement filtering logic in your own automations. 
+> **Note:** Tags and notification intervals require you to implement filtering logic in your own automations.
+>
+> **Override fields:** When an override helper is selected, its current value takes precedence over the configured option. If the helper is `unavailable` or `unknown`, the configured value is used as a fallback. Override values react to helper state changes in real time, allowing non-admin users to adjust task behaviour through dashboard tiles or scripts without needing access to integration settings.
 
 ---
 
