@@ -24,6 +24,7 @@ CONF_YEAR = "year"
 CONF_DATE = "date"
 CONF_VALUE = "value"
 CONF_LABEL = "label"
+CONF_SHOW_PANEL = "show_panel"
 
 
 CONST_DUE = "due"
@@ -39,6 +40,13 @@ TASK_TRACKER_CARDS = [
         "version": "1.0.0",
     }
 ]
+TASK_TRACKER_PANEL = {
+    "webcomponent_name": "task-tracker-panel",
+    "frontend_url_path": "task-tracker",
+    "filename": "task-tracker-panel.js",
+    "sidebar_title": "Task Tracker",
+    "sidebar_icon": "mdi:calendar-check",
+}
 
 SERVICE_MARK_AS_DONE = "mark_as_done"
 SERVICE_SET_LAST_DONE_DATE = "set_last_done_date"

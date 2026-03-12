@@ -6,8 +6,10 @@ from pathlib import Path
 
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.components.lovelace import MODE_STORAGE, LovelaceData
+from homeassistant.components.panel_custom import async_register_panel
 from homeassistant.core import HomeAssistant
-from ..const import URL_BASE, TASK_TRACKER_CARDS  # noqa: TID252
+from homeassistant.exceptions import HomeAssistantError
+from ..const import URL_BASE, TASK_TRACKER_CARDS, TASK_TRACKER_PANEL  # noqa: TID252
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -25,11 +27,13 @@ class TaskTrackerCardRegistration:
             # Backwards compatibility before 2026.2
             self.resource_mode = self.lovelace.mode
 
-    async def async_register(self):
+    async def async_register(self, show_panel: bool = True):
         """Register view_assist path."""
         await self._async_register_path()
         if self.resource_mode == MODE_STORAGE:
             await self._async_register_modules()
+        if show_panel:
+            await self._async_register_panel()
 
     # install card resources
     async def _async_register_path(self):
@@ -105,6 +109,22 @@ class TaskTrackerCardRegistration:
         if version := url.split("?")[1].replace("v=", ""):
             return version
         return 0
+
+    async def _async_register_panel(self):
+        """Register the Task Tracker sidebar panel."""
+        try:
+            await async_register_panel(
+                self.hass,
+                webcomponent_name=TASK_TRACKER_PANEL["webcomponent_name"],
+                frontend_url_path=TASK_TRACKER_PANEL["frontend_url_path"],
+                module_url=f"{URL_BASE}/{TASK_TRACKER_PANEL['filename']}",
+                sidebar_title=TASK_TRACKER_PANEL["sidebar_title"],
+                sidebar_icon=TASK_TRACKER_PANEL["sidebar_icon"],
+                require_admin=False,
+            )
+            _LOGGER.debug("Registered Task Tracker panel")
+        except HomeAssistantError:
+            _LOGGER.debug("Task Tracker panel already registered")
 
     async def async_unregister(self):
         """Unload lovelace module resource."""
