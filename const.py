@@ -24,6 +24,7 @@ CONF_YEAR = "year"
 CONF_DATE = "date"
 CONF_VALUE = "value"
 CONF_LABEL = "label"
+CONF_SHOW_PANEL = "show_panel"
 
 
 CONST_DUE = "due"

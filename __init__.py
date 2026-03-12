@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import logging
 
+import voluptuous as vol
+
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform, CONF_ICON, CONF_ENTITY_ID
 from homeassistant.core import HomeAssistant, ServiceCall
@@ -14,14 +16,23 @@ from homeassistant.helpers.typing import ConfigType
 from .const import DOMAIN, CONF_TASK_INTERVAL_VALUE, CONF_DAY, CONF_TASK_INTERVAL_TYPE, CONF_NOTIFICATION_INTERVAL, \
     CONF_TODO_OFFSET_DAYS, CONF_TAGS, CONF_ACTIVE, CONF_TODO_LISTS, SERVICE_MARK_AS_DONE, \
     SERVICE_MARK_AS_DONE_SCHEMA, SERVICE_SET_LAST_DONE_DATE, SERVICE_SET_LAST_DONE_DATE_SCHEMA, CONF_DATE, \
-    CONF_ACTIVE_OVERRIDE, CONF_TASK_INTERVAL_OVERRIDE, CONF_TODO_OFFSET_OVERRIDE
+    CONF_ACTIVE_OVERRIDE, CONF_TASK_INTERVAL_OVERRIDE, CONF_TODO_OFFSET_OVERRIDE, CONF_SHOW_PANEL
 from .frontend import TaskTrackerCardRegistration
 from .sensor import TaskTrackerSensor
 
 _PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.BUTTON]
 _LOGGER = logging.getLogger(__name__)
 
-CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)
+CONFIG_SCHEMA = vol.Schema(
+    {
+        DOMAIN: vol.Schema(
+            {
+                vol.Optional(CONF_SHOW_PANEL, default=True): bool,
+            }
+        )
+    },
+    extra=vol.ALLOW_EXTRA,
+)
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
@@ -68,8 +79,10 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         schema=SERVICE_SET_LAST_DONE_DATE_SCHEMA,
     )
 
+    show_panel = config.get(DOMAIN, {}).get(CONF_SHOW_PANEL, True)
+
     cards = TaskTrackerCardRegistration(hass)
-    await cards.async_register()
+    await cards.async_register(show_panel=show_panel)
 
     return True
 

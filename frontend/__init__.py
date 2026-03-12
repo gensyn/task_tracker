@@ -27,12 +27,13 @@ class TaskTrackerCardRegistration:
             # Backwards compatibility before 2026.2
             self.resource_mode = self.lovelace.mode
 
-    async def async_register(self):
+    async def async_register(self, show_panel: bool = True):
         """Register view_assist path."""
         await self._async_register_path()
         if self.resource_mode == MODE_STORAGE:
             await self._async_register_modules()
-        await self._async_register_panel()
+        if show_panel:
+            await self._async_register_panel()
 
     # install card resources
     async def _async_register_path(self):
