@@ -14,6 +14,7 @@ A powerful Home Assistant custom component for managing recurring tasks with aut
 - 📅 **Automatic Due Date Tracking** - Never forget when a task needs to be done
 - 📝 **Todo List Integration** - Automatically sync with Home Assistant's Local Todo lists
 - 🎨 **Custom Lovelace Card** - Beautiful task display in Lovelace
+- 📊 **Sidebar Panel** - Auto-registered dashboard showing all tasks at a glance with state filtering
 - 🏷️ **Tagging System** - Organize tasks with custom tags for filtering and automation
 - 🔔 **Notification Support** - Built-in attributes for creating smart notification automations
 - ⏸️ **Task Activation Control** - Pause tasks when needed without deleting them
@@ -105,6 +106,34 @@ Display tasks beautifully with the included custom card.  Click the ✓ icon to 
 <td><img src="assets/6_done.png" alt="Done card"/><br/><b>Done</b></td>
 </tr>
 </table>
+
+---
+
+### 📊 Sidebar Panel
+
+A **Task Tracker** entry is automatically added to your Home Assistant sidebar when the integration is installed — no manual dashboard setup required.
+
+The panel shows all tasks in one place with live state filtering:
+
+| Filter | Shows |
+|--------|-------|
+| **All** | Every task |
+| **Due** | Tasks that are due or overdue |
+| **Done** | Tasks completed within their current interval |
+| **Inactive** | Tasks with the *Active* option turned off |
+
+Each task card displays the same information as the Lovelace card (status, interval, last done date, due date, days until due / overdue by) and includes a ✓ button to mark the task as done immediately.
+
+#### Disabling the sidebar panel
+
+If you do not want the panel to appear in the sidebar, add the following to your `configuration.yaml` and restart Home Assistant:
+
+```yaml
+task_tracker:
+  show_panel: false
+```
+
+> **Note:** Individual users can also hide or reorder sidebar items without changing any configuration via **Profile → Sidebar customization** in Home Assistant.
 
 ---
 
