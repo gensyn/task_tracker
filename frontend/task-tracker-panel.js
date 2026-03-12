@@ -22,9 +22,13 @@ class TaskTrackerPanel extends HTMLElement {
   }
 
   _getAllTasks() {
-    return Object.values(this._hass.states).filter((entity) =>
-      entity.entity_id.startsWith("sensor.task_tracker_")
-    );
+    return Object.values(this._hass.states)
+      .filter((entity) => entity.entity_id.startsWith("sensor.task_tracker_"))
+      .sort((a, b) => {
+        const nameA = (a.attributes.friendly_name || a.entity_id).toLowerCase();
+        const nameB = (b.attributes.friendly_name || b.entity_id).toLowerCase();
+        return nameA.localeCompare(nameB);
+      });
   }
 
   _getFilteredTasks() {
