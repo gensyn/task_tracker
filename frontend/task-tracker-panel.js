@@ -105,24 +105,37 @@ class TaskTrackerPanel extends HTMLElement {
     if (!this._hass) return;
 
     const allTasks = this._getAllTasks();
-    const filteredTasks = this._getFilteredTasks();
 
     const counts = {
-      all: allTasks.length,
       due: allTasks.filter((t) => t.state === "due").length,
       done: allTasks.filter((t) => t.state === "done").length,
       inactive: allTasks.filter((t) => t.state === "inactive").length,
     };
 
-    const filterButtons = ["all", "due", "done", "inactive"]
-      .map(
-        (f) =>
-          `<button class="filter-btn${this._filter === f ? " active" : ""}"
-                   data-filter="${f}">
-            ${this._t(f)} (${counts[f]})
-           </button>`
-      )
-      .join("");
+    const activeStates = ["due", "done", "inactive"].filter(
+      (s) => counts[s] > 0
+    );
+
+    // Reset filter if the currently selected state has no tasks
+    if (this._filter !== "all" && counts[this._filter] === 0) {
+      this._filter = "all";
+    }
+
+    const filteredTasks = this._getFilteredTasks();
+
+    // Only show filters when tasks span more than one state
+    const showFilters = activeStates.length > 1;
+    const filterButtons = showFilters
+      ? ["all", ...activeStates]
+          .map(
+            (f) =>
+              `<button class="filter-btn${this._filter === f ? " active" : ""}"
+                       data-filter="${f}">
+                ${this._t(f)}${f !== "all" ? ` (${counts[f]})` : ""}
+               </button>`
+          )
+          .join("")
+      : "";
 
     const taskGrid = filteredTasks.length
       ? filteredTasks.map((t) => this._renderTaskCard(t)).join("")
@@ -235,7 +248,7 @@ class TaskTrackerPanel extends HTMLElement {
         }
       </style>
       <h1>Task Tracker</h1>
-      <div class="filters">${filterButtons}</div>
+      ${showFilters ? `<div class="filters">${filterButtons}</div>` : ""}
       <div class="task-grid">${taskGrid}</div>
     `;
 
