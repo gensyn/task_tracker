@@ -113,6 +113,8 @@ Display tasks beautifully with the included custom card.  Click the ✓ icon to 
 
 A **Task Tracker** entry is automatically added to your Home Assistant sidebar when the integration is installed — no manual dashboard setup required.
 
+![Task Tracker Panel](assets/7_panel.png)
+
 The panel shows all tasks in one place with live state filtering:
 
 | Filter | Shows |
