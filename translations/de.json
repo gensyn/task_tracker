@@ -142,6 +142,12 @@
             },
             "mark_as_done": {
                 "name": "Als erledigt markieren"
+            },
+            "all": {
+                "name": "Alle"
+            },
+            "no_tasks_found": {
+                "name": "Keine Tasks gefunden."
             }
         }
     },

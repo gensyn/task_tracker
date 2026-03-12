@@ -119,14 +119,14 @@ class TaskTrackerPanel extends HTMLElement {
         (f) =>
           `<button class="filter-btn${this._filter === f ? " active" : ""}"
                    data-filter="${f}">
-            ${f === "all" ? "All" : this._t(f)} (${counts[f]})
+            ${this._t(f)} (${counts[f]})
            </button>`
       )
       .join("");
 
     const taskGrid = filteredTasks.length
       ? filteredTasks.map((t) => this._renderTaskCard(t)).join("")
-      : `<p class="no-tasks">No tasks found.</p>`;
+      : `<p class="no-tasks">${this._t("no_tasks_found")}</p>`;
 
     this.shadowRoot.innerHTML = `
       <style>
