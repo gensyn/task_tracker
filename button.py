@@ -1,6 +1,8 @@
 """Platform for button integration."""
 from __future__ import annotations
 
+from logging import getLogger
+
 from homeassistant.components.button import ButtonEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform, CONF_NAME
@@ -10,9 +12,8 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import generate_entity_id
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import slugify
-from logging import getLogger
 
-from .const import DOMAIN, CONST_UNKNOWN
+from .const import DOMAIN
 from .sensor import TaskTrackerSensor
 
 LOGGER = getLogger(__name__)

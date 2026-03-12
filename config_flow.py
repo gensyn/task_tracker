@@ -39,7 +39,7 @@ class TaskTrackerConfigFlow(ConfigFlow, domain=DOMAIN):
     @staticmethod
     @callback
     def async_get_options_flow(
-            config_entry: ConfigEntry,
+            _config_entry: ConfigEntry,
     ) -> TaskTrackerOptionsFlow:
         """Create the options flow."""
         return TaskTrackerOptionsFlow()

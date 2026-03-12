@@ -1,7 +1,7 @@
 {
   "domain": "task_tracker",
   "name": "Task Tracker",
-  "after_dependencies": ["http", "lovelace", "local_todo", "panel_custom"],
+  "after_dependencies": ["http", "lovelace", "local_todo"],
   "codeowners": [
     "@gensyn"
   ],
