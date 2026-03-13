@@ -22,7 +22,7 @@ class TaskTracker extends HTMLElement {
           ha-card {
             color: black;
             background-color: #ec7063;
-            --ha-card-header-color: black;
+            overflow: hidden;
           }
           ha-card.done {
             background-color: #7dcea0;
@@ -30,20 +30,61 @@ class TaskTracker extends HTMLElement {
           ha-card.inactive {
             background-color: #5dade2;
           }
-          ha-icon {
-            color: var(--state-icon-color);
-            cursor: pointer;
-            position: absolute;
-            top: 28px;
-            right: 18px;
+          .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
           }
-          td:nth-child(2) {
-            width: 99%;
+          .task-name {
+            flex: 1;
+            margin-right: 8px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: black;
+          }
+          .mark-done-btn {
+            background: rgba(255,255,255,0.35);
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+          }
+          .mark-done-btn:hover {
+            background: rgba(255,255,255,0.55);
+          }
+          .card-content {
+            padding: 16px 16px 12px;
+          }
+          table {
+            width: 100%;
+            border-collapse: collapse;
+          }
+          td {
+            padding: 3px 0;
+            font-size: 1rem;
+          }
+          td:last-child {
             text-align: right;
+            padding-left: 8px;
           }
         </style>
-        <ha-card id="card" header="${friendly_name}">
-          <ha-icon id="icon" icon="mdi:check"></ha-icon>
+        <ha-card id="card">
+          <div class="card-header">
+            <span class="task-name" id="task-name">${friendly_name}</span>
+            <button class="mark-done-btn" id="mark-done-btn">&#10003;</button>
+          </div>
           <div class="card-content">
             <table id="task-table">
               <tr>
@@ -71,8 +112,8 @@ class TaskTracker extends HTMLElement {
         </ha-card>
       `;
 
-      const icon = root.querySelector("#icon");
-      icon.addEventListener("click", () => this._markAsDone());
+      const btn = root.querySelector("#mark-done-btn");
+      btn.addEventListener("click", () => this._markAsDone());
 
       this.content = root.querySelector("div");
     }
@@ -84,8 +125,9 @@ class TaskTracker extends HTMLElement {
       const card = root.querySelector("#card");
       card.className = stateStr;
 
-      const icon = root.querySelector("#icon");
-      icon.title = this._t("mark_as_done");
+      const btn = root.querySelector("#mark-done-btn");
+      btn.title = this._t("mark_as_done");
+      btn.setAttribute("aria-label", this._t("mark_as_done"));
 
       const taskIntervalVal = entity.attributes.task_interval_value;
       const taskIntervalType = entity.attributes.task_interval_type;

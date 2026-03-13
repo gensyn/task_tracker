@@ -4,11 +4,21 @@ class TaskTrackerPanel extends HTMLElement {
     super();
     this.attachShadow({ mode: "open" });
     this._filter = "all";
+    this._narrow = false;
   }
 
   set hass(hass) {
     this._hass = hass;
     this._render();
+  }
+
+  set narrow(value) {
+    this._narrow = value;
+    this._render();
+  }
+
+  set header(value) {
+    this._header = value;
   }
 
   set panel(panel) {
@@ -149,12 +159,25 @@ class TaskTrackerPanel extends HTMLElement {
       <style>
         :host {
           display: block;
-          padding: 16px;
         }
-        h1 {
-          margin: 0 0 16px 0;
-          font-size: 1.5rem;
-          color: var(--primary-text-color, #212121);
+        .toolbar {
+          display: flex;
+          align-items: center;
+          background-color: var(--app-header-background-color, var(--primary-color));
+          color: var(--app-header-text-color, white);
+          height: var(--header-height, 56px);
+          padding: 0 16px;
+        }
+        .toolbar-title {
+          font-size: 1.25rem;
+          font-weight: 500;
+          flex: 1;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .content {
+          padding: 16px;
         }
         .filters {
           display: flex;
@@ -213,6 +236,7 @@ class TaskTrackerPanel extends HTMLElement {
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
+          font-size: 1.2rem;
         }
         .mark-done-btn {
           background: rgba(255,255,255,0.35);
@@ -240,7 +264,7 @@ class TaskTrackerPanel extends HTMLElement {
         }
         td {
           padding: 3px 0;
-          font-size: 0.875rem;
+          font-size: 1rem;
         }
         td:last-child {
           text-align: right;
@@ -251,10 +275,23 @@ class TaskTrackerPanel extends HTMLElement {
           font-style: italic;
         }
       </style>
-      <h1>Task Tracker</h1>
-      ${showFilters ? `<div class="filters">${filterButtons}</div>` : ""}
-      <div class="task-grid">${taskGrid}</div>
+      <div class="toolbar">
+        ${this._narrow ? "<ha-menu-button></ha-menu-button>" : ""}
+        <div class="toolbar-title">Task Tracker</div>
+      </div>
+      <div class="content">
+        ${showFilters ? `<div class="filters">${filterButtons}</div>` : ""}
+        <div class="task-grid">${taskGrid}</div>
+      </div>
     `;
+
+    if (this._narrow) {
+      const menuButton = this.shadowRoot.querySelector("ha-menu-button");
+      if (menuButton) {
+        menuButton.hass = this._hass;
+        menuButton.narrow = this._narrow;
+      }
+    }
 
     this.shadowRoot.querySelectorAll(".filter-btn").forEach((btn) => {
       btn.addEventListener("click", () => this._setFilter(btn.dataset.filter));
