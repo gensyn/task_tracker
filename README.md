@@ -93,8 +93,8 @@ Access task settings through the cog icon ⚙️ on the integration page.
 Display tasks beautifully with the included custom card.  Click the ✓ icon to mark tasks complete.
 
 ```yaml
-- type: custom:task-tracker-card
-  entity: sensor.task_tracker_mow_the_lawn
+type: custom:task-tracker-card
+entity: sensor.task_tracker_mow_the_lawn
 ```
 
 #### Card States
