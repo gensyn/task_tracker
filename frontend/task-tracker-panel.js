@@ -236,6 +236,7 @@ class TaskTrackerPanel extends HTMLElement {
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
+          font-size: 1.2rem;
         }
         .mark-done-btn {
           background: rgba(255,255,255,0.35);
@@ -263,7 +264,7 @@ class TaskTrackerPanel extends HTMLElement {
         }
         td {
           padding: 3px 0;
-          font-size: 0.875rem;
+          font-size: 1rem;
         }
         td:last-child {
           text-align: right;

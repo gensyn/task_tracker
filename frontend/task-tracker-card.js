@@ -35,7 +35,7 @@ class TaskTracker extends HTMLElement {
             justify-content: space-between;
             align-items: center;
             padding: 12px 16px;
-            font-size: 1rem;
+            font-size: 1.2rem;
             font-weight: 600;
             border-bottom: 1px solid rgba(0,0,0,0.1);
           }
@@ -45,6 +45,7 @@ class TaskTracker extends HTMLElement {
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+            color: black;
           }
           .mark-done-btn {
             background: rgba(255,255,255,0.35);
@@ -64,7 +65,7 @@ class TaskTracker extends HTMLElement {
             background: rgba(255,255,255,0.55);
           }
           .card-content {
-            padding: 8px 16px 12px;
+            padding: 16px 16px 12px;
           }
           table {
             width: 100%;
@@ -72,7 +73,7 @@ class TaskTracker extends HTMLElement {
           }
           td {
             padding: 3px 0;
-            font-size: 0.875rem;
+            font-size: 1rem;
           }
           td:last-child {
             text-align: right;
