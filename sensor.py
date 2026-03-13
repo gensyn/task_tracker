@@ -1,6 +1,7 @@
 """Platform for sensor integration."""
 from __future__ import annotations
 
+import asyncio
 import re
 from datetime import timedelta, datetime, date
 from functools import partial
@@ -8,7 +9,6 @@ from logging import getLogger
 from typing import Any, Callable
 
 from dateutil.relativedelta import relativedelta
-
 from homeassistant.components.sensor import (
     SensorEntity, RestoreSensor,
 )
@@ -22,6 +22,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_call_later
 from homeassistant.util import slugify
 from homeassistant.util.dt import UTC
+
 from .const import DOMAIN, CONF_TASK_INTERVAL_VALUE, CONF_NOTIFICATION_INTERVAL, CONF_TAGS, CONF_ACTIVE, CONF_WEEK, \
     CONF_MONTH, CONF_YEAR, CONST_DUE, CONST_INACTIVE, CONST_DONE, CONF_TASK_INTERVAL_TYPE, CONF_TODO_OFFSET_DAYS, \
     CONF_TODO_LISTS, CONF_DAY, CONF_ACTIVE_OVERRIDE, CONF_TASK_INTERVAL_OVERRIDE, CONF_TODO_OFFSET_OVERRIDE
@@ -134,10 +135,12 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
         else:
             # Delay the first update until Home Assistant is fully started so startup is not blocked
             self.hass.bus.async_listen_once(
-                EVENT_HOMEASSISTANT_STARTED, self.async_update
+                EVENT_HOMEASSISTANT_STARTED,
+                lambda _event: asyncio.run_coroutine_threadsafe(self.async_update_ha_state(force_refresh=True),
+                                                                self.hass.loop)
             )
 
-    async def async_update(self, _=None) -> None:
+    async def async_update(self) -> None:
         self._attr_native_value = CONST_DONE
 
         effective_active = self.active
@@ -199,7 +202,6 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
             "todo_offset_days": effective_todo_offset_days,
             "notification_interval": self.notification_interval,
         }
-        self.async_write_ha_state()
         for todo_list in self.todo_lists:
             await self.async_sync_todo_list(todo_list)
 
