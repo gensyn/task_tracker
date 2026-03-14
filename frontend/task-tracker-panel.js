@@ -8,8 +8,22 @@ class TaskTrackerPanel extends HTMLElement {
   }
 
   set hass(hass) {
+    const oldHass = this._hass;
     this._hass = hass;
-    this._render();
+    if (!oldHass || this._tasksChanged(oldHass.states, hass.states)) {
+      this._render();
+    }
+  }
+
+  _tasksChanged(oldStates, newStates) {
+    const isTask = (id) => id.startsWith("sensor.task_tracker_");
+    const oldTaskIds = Object.keys(oldStates).filter(isTask);
+    const newTaskIds = Object.keys(newStates).filter(isTask);
+    if (oldTaskIds.length !== newTaskIds.length) return true;
+    return (
+      newTaskIds.some((id) => oldStates[id] !== newStates[id]) ||
+      oldTaskIds.some((id) => oldStates[id] !== newStates[id])
+    );
   }
 
   set narrow(value) {
