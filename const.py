@@ -37,7 +37,7 @@ TASK_TRACKER_CARDS = [
     {
         "name": "Task Tracker Card",
         "filename": "task-tracker-card.js",
-        "version": "1.0.0",
+        "version": "2.0.0",
     }
 ]
 TASK_TRACKER_PANEL = {

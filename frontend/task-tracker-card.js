@@ -11,155 +11,7 @@ class TaskTracker extends HTMLElement {
 
   set hass(hass) {
     this._hass = hass;
-    const root = this.shadowRoot;
-    const entityId = this.config.entity;
-    const entity = this._hass.states[entityId];
-    const friendly_name = entity ? entity.attributes.friendly_name : entityId;
-
-    if (!this.content) {
-      root.innerHTML = `
-        <style>
-          ha-card {
-            color: black;
-            background-color: #ec7063;
-            overflow: hidden;
-          }
-          ha-card.done {
-            background-color: #7dcea0;
-          }
-          ha-card.inactive {
-            background-color: #5dade2;
-          }
-          .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 16px;
-            font-size: 1.2rem;
-            font-weight: 600;
-            border-bottom: 1px solid rgba(0,0,0,0.1);
-          }
-          .task-name {
-            flex: 1;
-            margin-right: 8px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            color: black;
-          }
-          .mark-done-btn {
-            background: rgba(255,255,255,0.35);
-            border: none;
-            border-radius: 50%;
-            width: 32px;
-            height: 32px;
-            font-size: 1.1rem;
-            cursor: pointer;
-            flex-shrink: 0;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            transition: background 0.2s;
-          }
-          .mark-done-btn:hover {
-            background: rgba(255,255,255,0.55);
-          }
-          .card-content {
-            padding: 16px 16px 12px;
-          }
-          table {
-            width: 100%;
-            border-collapse: collapse;
-          }
-          td {
-            padding: 3px 0;
-            font-size: 1rem;
-          }
-          td:last-child {
-            text-align: right;
-            padding-left: 8px;
-          }
-        </style>
-        <ha-card id="card">
-          <div class="card-header">
-            <span class="task-name" id="task-name">${friendly_name}</span>
-            <button class="mark-done-btn" id="mark-done-btn">&#10003;</button>
-          </div>
-          <div class="card-content">
-            <table id="task-table">
-              <tr>
-                <td>${this._t("status")}</td>
-                <td id="status-cell"></td>
-              </tr>
-              <tr>
-                <td>${this._t("interval")}</td>
-                <td id="task-interval-cell"></td>
-              </tr>
-              <tr>
-                <td>${this._t("last_done")}</td>
-                <td id="last-done-cell"></td>
-              </tr>
-              <tr>
-                <td>${this._t("due_date")}</td>
-                <td id="due-date-cell"></td>
-              </tr>
-              <tr>
-                <td id="due-label-cell"></td>
-                <td id="due-cell"></td>
-              </tr>
-            </table>
-          </div>
-        </ha-card>
-      `;
-
-      const btn = root.querySelector("#mark-done-btn");
-      btn.addEventListener("click", () => this._markAsDone());
-
-      this.content = root.querySelector("div");
-    }
-
-    if (this._entity !== entity || this._entity.attributes !== entity.attributes) {
-      const stateStr = entity ? entity.state : "unavailable";
-      root.querySelector("#status-cell").innerHTML = this._t(stateStr);
-
-      const card = root.querySelector("#card");
-      card.className = stateStr;
-
-      const btn = root.querySelector("#mark-done-btn");
-      btn.title = this._t("mark_as_done");
-      btn.setAttribute("aria-label", this._t("mark_as_done"));
-
-      const taskIntervalVal = entity.attributes.task_interval_value;
-      const taskIntervalType = entity.attributes.task_interval_type;
-      const taskIntervalSingularPlural = taskIntervalVal === 1 ? 'singular' : 'plural';
-      const taskIntervalTypeTranslated = this._t(`${taskIntervalType}_${taskIntervalSingularPlural}`)
-      const taskIntervalCell = root.querySelector("#task-interval-cell");
-      taskIntervalCell.innerHTML = `${taskIntervalVal}&nbsp;${taskIntervalTypeTranslated}`;
-
-      const haLocale = (this._hass && this._hass.locale && this._hass.locale.language) || undefined;
-
-      const lastDoneVal = entity.attributes.last_done;
-      const lastDoneCell = root.querySelector("#last-done-cell");
-      lastDoneCell.innerHTML = new Date(lastDoneVal).toLocaleDateString(haLocale, { day: '2-digit', month: '2-digit', year: 'numeric' });
-
-      const dueDateVal = entity.attributes.due_date;
-      const dueDateCell = root.querySelector("#due-date-cell");
-      dueDateCell.innerHTML = new Date(dueDateVal).toLocaleDateString(haLocale, { day: '2-digit', month: '2-digit', year: 'numeric' });
-
-      const dueLabelCell = root.querySelector("#due-label-cell");
-      const dueCell = root.querySelector("#due-cell");
-        if (entity.attributes.due_in > 0) {
-            dueLabelCell.innerHTML = this._t('due_in');
-        } else {
-            dueLabelCell.innerHTML = this._t('overdue_by');
-        }
-      const dueNum = entity.attributes.due_in > 0 ? entity.attributes.due_in : entity.attributes.overdue_by;
-      const dueSingularPlural = dueNum === 1 ? 'singular' : 'plural';
-      const dueDayTranslated = this._t(`day_${dueSingularPlural}`)
-      dueCell.innerHTML = `${dueNum}&nbsp;${dueDayTranslated}`;
-
-      this._entity = entity;
-    }
+    this._render();
   }
 
   setConfig(config) {
@@ -167,6 +19,159 @@ class TaskTracker extends HTMLElement {
       throw new Error("You need to define an entity");
     }
     this.config = config;
+  }
+
+  _stateColor(state) {
+    switch (state) {
+      case "due":      return "#e74c3c";
+      case "done":     return "#27ae60";
+      case "inactive": return "#3498db";
+      default:         return "#95a5a6";
+    }
+  }
+
+  _render() {
+    if (!this._hass || !this.config) return;
+
+    const entityId = this.config.entity;
+    const entity = this._hass.states[entityId];
+    const attrs = (entity && entity.attributes) || {};
+    const stateStr = (entity && entity.state) || "unavailable";
+    const name = attrs.friendly_name || entityId;
+
+    const haLocale =
+      (this._hass && this._hass.locale && this._hass.locale.language) ||
+      undefined;
+
+    const formatDate = (dateStr) =>
+      new Date(dateStr).toLocaleDateString(haLocale, {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      });
+
+    const taskIntervalVal = attrs.task_interval_value;
+    const taskIntervalType = attrs.task_interval_type;
+    const singularPlural = taskIntervalVal === 1 ? "singular" : "plural";
+    const intervalTypeStr = this._t(`${taskIntervalType}_${singularPlural}`);
+    const intervalStr = `${taskIntervalVal}\u00a0${intervalTypeStr}`;
+
+    const lastDoneStr = formatDate(attrs.last_done);
+    const dueDateStr = formatDate(attrs.due_date);
+
+    let dueLabel, dueValue;
+    if (attrs.due_in > 0) {
+      dueLabel = this._t("due_in");
+      const sp = attrs.due_in === 1 ? "singular" : "plural";
+      dueValue = `${attrs.due_in}\u00a0${this._t(`day_${sp}`)}`;
+    } else {
+      dueLabel = this._t("overdue_by");
+      const sp = attrs.overdue_by === 1 ? "singular" : "plural";
+      dueValue = `${attrs.overdue_by}\u00a0${this._t(`day_${sp}`)}`;
+    }
+
+    this.shadowRoot.innerHTML = `
+      <style>
+        :host { display: block; }
+        ha-card { color: var(--primary-text-color); }
+        .card-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 12px 16px;
+          font-size: 1.1rem;
+          font-weight: 600;
+          border-bottom: 1px solid rgba(0,0,0,0.1);
+          background: ${this._stateColor(stateStr)};
+          color: white;
+          border-radius: 8px 8px 0 0;
+        }
+        .task-name {
+          flex: 1;
+          margin-right: 8px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .badge {
+          display: inline-block;
+          padding: 2px 10px;
+          border-radius: 12px;
+          font-size: 0.78em;
+          background: rgba(255,255,255,0.3);
+          text-transform: capitalize;
+          flex-shrink: 0;
+        }
+        .card-content {
+          padding: 10px 16px 14px;
+        }
+        table { width: 100%; border-collapse: collapse; }
+        td { padding: 4px 0; font-size: 1em; color: var(--primary-text-color); }
+        td:last-child { text-align: right; color: var(--secondary-text-color); }
+        .action-buttons {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px;
+          margin-top: 10px;
+          padding-top: 8px;
+          border-top: 1px solid var(--divider-color, #e0e0e0);
+        }
+        .action-btn {
+          padding: 4px 10px;
+          border: none;
+          border-radius: 12px;
+          cursor: pointer;
+          font-size: 0.78em;
+          font-family: inherit;
+          font-weight: 500;
+          transition: opacity 0.2s;
+          color: white;
+        }
+        .action-btn:hover { opacity: 0.85; }
+        .mark-done-btn { background: #27ae60; }
+      </style>
+      <ha-card>
+        <div class="card-header">
+          <span class="task-name">${name}</span>
+          <span class="badge">${stateStr}</span>
+        </div>
+        <div class="card-content">
+          <table>
+            <tr>
+              <td>${this._t("status")}</td>
+              <td>${this._t(stateStr)}</td>
+            </tr>
+            <tr>
+              <td>${this._t("interval")}</td>
+              <td>${intervalStr}</td>
+            </tr>
+            <tr>
+              <td>${this._t("last_done")}</td>
+              <td>${lastDoneStr}</td>
+            </tr>
+            <tr>
+              <td>${this._t("due_date")}</td>
+              <td>${dueDateStr}</td>
+            </tr>
+            <tr>
+              <td>${dueLabel}</td>
+              <td>${dueValue}</td>
+            </tr>
+          </table>
+          <div class="action-buttons">
+            <button class="action-btn mark-done-btn"
+                    title="${this._t("mark_as_done")}"
+                    aria-label="${this._t("mark_as_done")}">
+              &#10003; ${this._t("mark_as_done")}
+            </button>
+          </div>
+        </div>
+      </ha-card>
+    `;
+
+    this.shadowRoot.querySelector(".mark-done-btn").addEventListener("click", () =>
+      this._markAsDone()
+    );
   }
 
   getCardSize() {
@@ -183,8 +188,8 @@ class TaskTracker extends HTMLElement {
   }
 
   _markAsDone() {
-    this._hass.callService('task_tracker', 'mark_as_done', {
-      entity_id: this.config.entity
+    this._hass.callService("task_tracker", "mark_as_done", {
+      entity_id: this.config.entity,
     });
   }
 }
