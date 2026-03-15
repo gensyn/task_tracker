@@ -469,3 +469,87 @@ class TestTaskTrackerSensorTodoOffsetOverride(unittest.IsolatedAsyncioTestCase):
         sensor.last_done = date.today()
         await self._run_update(sensor)
         self.assertEqual(sensor._attr_extra_state_attributes["todo_offset_days"], 3)
+
+
+class TestTaskTrackerSensorAddedToHass(unittest.IsolatedAsyncioTestCase):
+
+    def _make_hass(self):
+        hass = MagicMock()
+        hass.bus.async_listen = MagicMock(return_value=MagicMock())
+        hass.states.get = MagicMock(return_value=None)
+        return hass
+
+    async def test_async_update_called_immediately(self):
+        """async_update should always be called directly without deferral."""
+        hass = self._make_hass()
+        sensor = make_sensor(hass=hass)
+
+        with patch.object(sensor, "async_get_last_sensor_data", new_callable=AsyncMock, return_value=None):
+            with patch.object(sensor, "async_get_last_state", new_callable=AsyncMock, return_value=None):
+                with patch.object(sensor, "async_update", new_callable=AsyncMock) as mock_update:
+                    sensor.hass = hass
+                    sensor.async_on_remove = MagicMock()
+                    await sensor.async_added_to_hass()
+
+        mock_update.assert_called_once()
+
+    async def test_async_update_called_regardless_of_hass_state(self):
+        """async_update should be called even when hass is not in running state."""
+        hass = self._make_hass()
+        hass.state = "not_running"
+        sensor = make_sensor(hass=hass)
+
+        with patch.object(sensor, "async_get_last_sensor_data", new_callable=AsyncMock, return_value=None):
+            with patch.object(sensor, "async_get_last_state", new_callable=AsyncMock, return_value=None):
+                with patch.object(sensor, "async_update", new_callable=AsyncMock) as mock_update:
+                    sensor.hass = hass
+                    sensor.async_on_remove = MagicMock()
+                    await sensor.async_added_to_hass()
+
+        mock_update.assert_called_once()
+
+    async def test_restores_last_done_from_state(self):
+        """Last done date should be restored from previous state attributes."""
+        hass = self._make_hass()
+        sensor = make_sensor(hass=hass)
+
+        last_state = MagicMock()
+        last_state.attributes = {"last_done": "2024-05-10"}
+
+        with patch.object(sensor, "async_get_last_sensor_data", new_callable=AsyncMock, return_value=None):
+            with patch.object(sensor, "async_get_last_state", new_callable=AsyncMock, return_value=last_state):
+                with patch.object(sensor, "async_update", new_callable=AsyncMock):
+                    sensor.hass = hass
+                    sensor.async_on_remove = MagicMock()
+                    await sensor.async_added_to_hass()
+
+        self.assertEqual(sensor.last_done, date(2024, 5, 10))
+
+    async def test_todo_list_state_change_listener_registered(self):
+        """A state-change listener for todo lists should be subscribed."""
+        hass = self._make_hass()
+        sensor = make_sensor(hass=hass, todo_lists=["todo.my_list"])
+
+        with patch.object(sensor, "async_get_last_sensor_data", new_callable=AsyncMock, return_value=None):
+            with patch.object(sensor, "async_get_last_state", new_callable=AsyncMock, return_value=None):
+                with patch.object(sensor, "async_update", new_callable=AsyncMock):
+                    sensor.hass = hass
+                    sensor.async_on_remove = MagicMock()
+                    await sensor.async_added_to_hass()
+
+        hass.bus.async_listen.assert_called()
+
+    async def test_no_event_homeassistant_started_listener_registered(self):
+        """No listener for EVENT_HOMEASSISTANT_STARTED should be registered."""
+        hass = self._make_hass()
+        hass.bus.async_listen_once = MagicMock()
+        sensor = make_sensor(hass=hass)
+
+        with patch.object(sensor, "async_get_last_sensor_data", new_callable=AsyncMock, return_value=None):
+            with patch.object(sensor, "async_get_last_state", new_callable=AsyncMock, return_value=None):
+                with patch.object(sensor, "async_update", new_callable=AsyncMock):
+                    sensor.hass = hass
+                    sensor.async_on_remove = MagicMock()
+                    await sensor.async_added_to_hass()
+
+        hass.bus.async_listen_once.assert_not_called()
