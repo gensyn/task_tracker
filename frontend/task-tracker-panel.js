@@ -5,6 +5,12 @@ class TaskTrackerPanel extends HTMLElement {
     this.attachShadow({ mode: "open" });
     this._filter = "all";
     this._narrow = false;
+    this.shadowRoot.addEventListener("click", (e) => {
+      const filterBtn = e.target.closest(".filter-btn");
+      if (filterBtn) { this._setFilter(filterBtn.dataset.filter); return; }
+      const doneBtn = e.target.closest(".mark-done-btn");
+      if (doneBtn) { this._markAsDone(doneBtn.dataset.entityId); return; }
+    });
   }
 
   set hass(hass) {
@@ -66,6 +72,15 @@ class TaskTrackerPanel extends HTMLElement {
     this._render();
   }
 
+  _stateColor(state) {
+    switch (state) {
+      case "due":      return "#e74c3c";
+      case "done":     return "#27ae60";
+      case "inactive": return "#3498db";
+      default:         return "#95a5a6";
+    }
+  }
+
   _markAsDone(entityId) {
     this._hass.callService("task_tracker", "mark_as_done", {
       entity_id: entityId,
@@ -109,21 +124,25 @@ class TaskTrackerPanel extends HTMLElement {
     }
 
     return `
-      <div class="task-card ${state}">
-        <div class="task-card-header">
+      <div class="task-card">
+        <div class="task-card-header" style="background:${this._stateColor(state)}">
           <span class="task-name">${name}</span>
-          <button class="mark-done-btn"
-                  data-entity-id="${entity.entity_id}"
-                  title="${this._t("mark_as_done")}">&#10003;</button>
+          <span class="state-badge">${state}</span>
         </div>
         <div class="task-card-content">
           <table>
-            <tr><td>${this._t("status")}</td><td>${this._t(state)}</td></tr>
             <tr><td>${this._t("interval")}</td><td>${intervalStr}</td></tr>
             <tr><td>${this._t("last_done")}</td><td>${lastDoneStr}</td></tr>
             <tr><td>${this._t("due_date")}</td><td>${dueDateStr}</td></tr>
             <tr><td>${dueLabel}</td><td>${dueValue}</td></tr>
           </table>
+          <div class="action-buttons">
+            <button class="action-btn mark-done-btn"
+                    data-entity-id="${entity.entity_id}"
+                    title="${this._t("mark_as_done")}">
+              &#10003; ${this._t("mark_as_done")}
+            </button>
+          </div>
         </div>
       </div>
     `;
@@ -159,7 +178,7 @@ class TaskTrackerPanel extends HTMLElement {
             (f) =>
               `<button class="filter-btn${this._filter === f ? " active" : ""}"
                        data-filter="${f}">
-                ${this._t(f)}${f !== "all" ? ` (${counts[f]})` : ""}
+                ${this._t(f)} (${f === "all" ? allTasks.length : counts[f]})
                </button>`
           )
           .join("")
@@ -225,24 +244,15 @@ class TaskTrackerPanel extends HTMLElement {
         .task-card {
           border-radius: 8px;
           overflow: hidden;
-          color: black;
-          background-color: #ec7063;
           box-shadow: var(--ha-card-box-shadow, 0 2px 6px rgba(0,0,0,0.2));
-        }
-        .task-card.done {
-          background-color: #7dcea0;
-        }
-        .task-card.inactive {
-          background-color: #5dade2;
+          background: var(--card-background-color, white);
         }
         .task-card-header {
           display: flex;
           justify-content: space-between;
           align-items: center;
           padding: 12px 16px;
-          font-size: 1rem;
-          font-weight: 600;
-          border-bottom: 1px solid rgba(0,0,0,0.1);
+          color: white;
         }
         .task-name {
           flex: 1;
@@ -250,24 +260,16 @@ class TaskTrackerPanel extends HTMLElement {
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
-          font-size: 1.2rem;
-        }
-        .mark-done-btn {
-          background: rgba(255,255,255,0.35);
-          border: none;
-          border-radius: 50%;
-          width: 32px;
-          height: 32px;
           font-size: 1.1rem;
-          cursor: pointer;
-          flex-shrink: 0;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          transition: background 0.2s;
+          font-weight: 600;
         }
-        .mark-done-btn:hover {
-          background: rgba(255,255,255,0.55);
+        .state-badge {
+          background: rgba(255,255,255,0.3);
+          padding: 2px 10px;
+          border-radius: 12px;
+          font-size: 0.78em;
+          flex-shrink: 0;
+          text-transform: capitalize;
         }
         .task-card-content {
           padding: 8px 16px 12px;
@@ -277,13 +279,35 @@ class TaskTrackerPanel extends HTMLElement {
           border-collapse: collapse;
         }
         td {
-          padding: 3px 0;
+          padding: 4px 0;
           font-size: 1rem;
+          color: var(--primary-text-color, #212121);
         }
         td:last-child {
           text-align: right;
-          padding-left: 8px;
+          color: var(--secondary-text-color, #727272);
         }
+        .action-buttons {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px;
+          margin-top: 10px;
+          padding-top: 8px;
+          border-top: 1px solid var(--divider-color, #e0e0e0);
+        }
+        .action-btn {
+          padding: 4px 10px;
+          border: none;
+          border-radius: 12px;
+          cursor: pointer;
+          font-size: 0.78em;
+          font-family: inherit;
+          font-weight: 500;
+          transition: opacity 0.2s;
+          color: white;
+        }
+        .action-btn:hover { opacity: 0.85; }
+        .mark-done-btn { background: #27ae60; }
         .no-tasks {
           color: var(--secondary-text-color, #727272);
           font-style: italic;
@@ -306,16 +330,6 @@ class TaskTrackerPanel extends HTMLElement {
         menuButton.narrow = this._narrow;
       }
     }
-
-    this.shadowRoot.querySelectorAll(".filter-btn").forEach((btn) => {
-      btn.addEventListener("click", () => this._setFilter(btn.dataset.filter));
-    });
-
-    this.shadowRoot.querySelectorAll(".mark-done-btn").forEach((btn) => {
-      btn.addEventListener("click", () =>
-        this._markAsDone(btn.dataset.entityId)
-      );
-    });
   }
 }
 

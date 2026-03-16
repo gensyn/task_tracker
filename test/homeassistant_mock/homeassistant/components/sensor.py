@@ -13,6 +13,9 @@ class SensorEntity:
     def async_write_ha_state(self):
         pass
 
+    def async_schedule_update_ha_state(self, force_refresh=False):
+        pass
+
     def async_on_remove(self, cb):
         pass
 

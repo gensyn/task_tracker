@@ -295,15 +295,14 @@ class TestTaskTrackerSensorMarkAsDone(unittest.IsolatedAsyncioTestCase):
     async def test_mark_as_done_sets_last_done_to_today(self):
         sensor = make_sensor()
         sensor.last_done = date(1970, 1, 1)
-        with patch.object(sensor, "async_update", new_callable=AsyncMock):
-            await sensor.async_mark_as_done()
+        await sensor.async_mark_as_done()
         self.assertEqual(sensor.last_done, date.today())
 
     async def test_mark_as_done_triggers_update(self):
         sensor = make_sensor()
-        with patch.object(sensor, "async_update", new_callable=AsyncMock) as mock_update:
+        with patch.object(sensor, "async_schedule_update_ha_state") as mock_schedule:
             await sensor.async_mark_as_done()
-        mock_update.assert_called_once()
+        mock_schedule.assert_called_once_with(force_refresh=True)
 
 
 class TestTaskTrackerSensorSetLastDoneDate(unittest.IsolatedAsyncioTestCase):
@@ -312,15 +311,14 @@ class TestTaskTrackerSensorSetLastDoneDate(unittest.IsolatedAsyncioTestCase):
         sensor = make_sensor()
         sensor.last_done = date(1970, 1, 1)
         new_date = date(2024, 6, 15)
-        with patch.object(sensor, "async_update", new_callable=AsyncMock):
-            await sensor.async_set_last_done_date(new_date)
+        await sensor.async_set_last_done_date(new_date)
         self.assertEqual(sensor.last_done, new_date)
 
     async def test_set_last_done_date_triggers_update(self):
         sensor = make_sensor()
-        with patch.object(sensor, "async_update", new_callable=AsyncMock) as mock_update:
+        with patch.object(sensor, "async_schedule_update_ha_state") as mock_schedule:
             await sensor.async_set_last_done_date(date(2024, 1, 1))
-        mock_update.assert_called_once()
+        mock_schedule.assert_called_once_with(force_refresh=True)
 
 
 class TestTaskTrackerSensorActiveOverride(unittest.IsolatedAsyncioTestCase):
