@@ -109,16 +109,6 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
             )
         )
 
-    @property
-    def last_done(self) -> date:
-        """Return the last-done date from the coordinator."""
-        return self.coordinator.last_done
-
-    @last_done.setter
-    def last_done(self, value: date) -> None:
-        """Set the last-done date on the coordinator."""
-        self.coordinator.last_done = value
-
     async def async_added_to_hass(self) -> None:
         """Restore last known state on startup."""
         await super().async_added_to_hass()
@@ -128,7 +118,8 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
         last_state = await self.async_get_last_state()
         if last_state is not None:
             last_done = last_state.attributes.get("last_done", "1970-01-01")
-            self.last_done = datetime.strptime(last_done, "%Y-%m-%d").date()
+            # Restore last_done into the coordinator — it is the single source of truth.
+            self.coordinator.last_done = datetime.strptime(last_done, "%Y-%m-%d").date()
 
             self._attr_extra_state_attributes: dict[str, str | int | list] = {
                 "last_done": last_done,
@@ -185,13 +176,13 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
                     pass
 
         if effective_task_interval_type == CONF_WEEK:
-            self.due_date = self.last_done + relativedelta(weeks=effective_task_interval_value)
+            self.due_date = self.coordinator.last_done + relativedelta(weeks=effective_task_interval_value)
         elif effective_task_interval_type == CONF_MONTH:
-            self.due_date = self.last_done + relativedelta(months=effective_task_interval_value)
+            self.due_date = self.coordinator.last_done + relativedelta(months=effective_task_interval_value)
         elif effective_task_interval_type == CONF_YEAR:
-            self.due_date = self.last_done + relativedelta(years=effective_task_interval_value)
+            self.due_date = self.coordinator.last_done + relativedelta(years=effective_task_interval_value)
         else:
-            self.due_date = self.last_done + relativedelta(days=effective_task_interval_value)
+            self.due_date = self.coordinator.last_done + relativedelta(days=effective_task_interval_value)
 
         self.due_in: int = (self.due_date - date.today()).days if self.due_date > date.today() else 0
         overdue_by: int = (date.today() - self.due_date).days if self.due_date < date.today() else 0
@@ -205,7 +196,7 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
         self._effective_todo_offset_days: int = effective_todo_offset_days
 
         self._attr_extra_state_attributes: dict[str, str | int | list] = {
-            "last_done": str(self.last_done),
+            "last_done": str(self.coordinator.last_done),
             "due_date": str(self.due_date),
             "due_in": self.due_in,
             "overdue_by": overdue_by,
