@@ -10,6 +10,7 @@ sys.path.insert(0, absolute_mock_path)
 absolute_plugin_path = str(Path(__file__).parent.parent.parent.absolute())
 sys.path.insert(0, absolute_plugin_path)
 
+from task_tracker.coordinator import TaskTrackerCoordinator
 from task_tracker.sensor import TaskTrackerSensor
 from task_tracker.const import (
     CONF_DAY, CONF_WEEK, CONF_MONTH, CONF_YEAR,
@@ -32,10 +33,16 @@ def make_sensor(
     active_override=None,
     task_interval_override=None,
     todo_offset_override=None,
+    coordinator=None,
 ):
     if hass is None:
         hass = MagicMock()
+    if coordinator is None:
+        # Create a default coordinator for the entry_id so tests that don't
+        # provide one explicitly still get a fully functional sensor.
+        coordinator = TaskTrackerCoordinator(entry_id)
     return TaskTrackerSensor(
+        coordinator=coordinator,
         entry_name=entry_name,
         task_interval_value=task_interval_value,
         task_interval_type=task_interval_type,
@@ -73,7 +80,7 @@ class TestTaskTrackerSensorInit(unittest.TestCase):
 
     def test_init_last_done_defaults_to_epoch(self):
         sensor = make_sensor()
-        self.assertEqual(sensor.last_done, date(1970, 1, 1))
+        self.assertEqual(sensor.coordinator.last_done, date(1970, 1, 1))
 
     def test_init_splits_tags(self):
         sensor = make_sensor(tags="tag1, tag2; tag3")
@@ -103,76 +110,76 @@ class TestTaskTrackerSensorUpdate(unittest.IsolatedAsyncioTestCase):
 
     async def test_status_done_when_not_yet_due(self):
         sensor = make_sensor(task_interval_value=30)
-        sensor.last_done = date.today()
+        sensor.coordinator.last_done = date.today()
         await self._run_update(sensor)
         self.assertEqual(sensor._attr_native_value, CONST_DONE)
 
     async def test_status_due_when_overdue(self):
         sensor = make_sensor(task_interval_value=7)
-        sensor.last_done = date(1970, 1, 1)
+        sensor.coordinator.last_done = date(1970, 1, 1)
         await self._run_update(sensor)
         self.assertEqual(sensor._attr_native_value, CONST_DUE)
 
     async def test_status_inactive_when_not_active(self):
         sensor = make_sensor(active=False, task_interval_value=7)
-        sensor.last_done = date(1970, 1, 1)
+        sensor.coordinator.last_done = date(1970, 1, 1)
         await self._run_update(sensor)
         self.assertEqual(sensor._attr_native_value, CONST_INACTIVE)
 
     async def test_due_date_calculated_in_days(self):
         sensor = make_sensor(task_interval_value=7, task_interval_type=CONF_DAY)
-        sensor.last_done = date(2024, 1, 1)
+        sensor.coordinator.last_done = date(2024, 1, 1)
         await self._run_update(sensor)
         from datetime import timedelta
         self.assertEqual(sensor.due_date, date(2024, 1, 8))
 
     async def test_due_date_calculated_in_weeks(self):
         sensor = make_sensor(task_interval_value=2, task_interval_type=CONF_WEEK)
-        sensor.last_done = date(2024, 1, 1)
+        sensor.coordinator.last_done = date(2024, 1, 1)
         await self._run_update(sensor)
         self.assertEqual(sensor.due_date, date(2024, 1, 15))
 
     async def test_due_date_calculated_in_months(self):
         sensor = make_sensor(task_interval_value=1, task_interval_type=CONF_MONTH)
-        sensor.last_done = date(2024, 1, 15)
+        sensor.coordinator.last_done = date(2024, 1, 15)
         await self._run_update(sensor)
         self.assertEqual(sensor.due_date, date(2024, 2, 15))
 
     async def test_due_date_calculated_in_years(self):
         sensor = make_sensor(task_interval_value=1, task_interval_type=CONF_YEAR)
-        sensor.last_done = date(2024, 1, 15)
+        sensor.coordinator.last_done = date(2024, 1, 15)
         await self._run_update(sensor)
         self.assertEqual(sensor.due_date, date(2025, 1, 15))
 
     async def test_attributes_contain_last_done(self):
         sensor = make_sensor()
-        sensor.last_done = date(2024, 3, 1)
+        sensor.coordinator.last_done = date(2024, 3, 1)
         await self._run_update(sensor)
         self.assertEqual(sensor._attr_extra_state_attributes["last_done"], "2024-03-01")
 
     async def test_attributes_contain_due_date(self):
         sensor = make_sensor(task_interval_value=7)
-        sensor.last_done = date(2024, 3, 1)
+        sensor.coordinator.last_done = date(2024, 3, 1)
         await self._run_update(sensor)
         self.assertIn("due_date", sensor._attr_extra_state_attributes)
 
     async def test_attributes_contain_due_in(self):
         sensor = make_sensor(task_interval_value=30)
-        sensor.last_done = date.today()
+        sensor.coordinator.last_done = date.today()
         await self._run_update(sensor)
         self.assertIn("due_in", sensor._attr_extra_state_attributes)
         self.assertGreater(sensor._attr_extra_state_attributes["due_in"], 0)
 
     async def test_attributes_contain_overdue_by(self):
         sensor = make_sensor(task_interval_value=7)
-        sensor.last_done = date(1970, 1, 1)
+        sensor.coordinator.last_done = date(1970, 1, 1)
         await self._run_update(sensor)
         self.assertIn("overdue_by", sensor._attr_extra_state_attributes)
         self.assertGreater(sensor._attr_extra_state_attributes["overdue_by"], 0)
 
     async def test_sync_called_for_each_todo_list(self):
         sensor = make_sensor(todo_lists=["todo.list1", "todo.list2"])
-        sensor.last_done = date.today()
+        sensor.coordinator.last_done = date.today()
         with patch.object(sensor, "async_write_ha_state"):
             with patch.object(sensor, "async_sync_todo_list", new_callable=AsyncMock) as mock_sync:
                 await sensor.async_update()
@@ -233,7 +240,7 @@ class TestTaskTrackerSensorSyncTodoList(unittest.IsolatedAsyncioTestCase):
 
     async def test_adds_item_when_due_and_not_exists(self):
         sensor = make_sensor(task_interval_value=7, todo_offset_days=0)
-        sensor.last_done = date(1970, 1, 1)
+        sensor.coordinator.last_done = date(1970, 1, 1)
         sensor.due_in = 0
         sensor.due_date = date(1970, 1, 8)
         with patch.object(sensor, "async_get_item_from_todo_list", new_callable=AsyncMock, return_value=None):
@@ -294,9 +301,9 @@ class TestTaskTrackerSensorMarkAsDone(unittest.IsolatedAsyncioTestCase):
 
     async def test_mark_as_done_sets_last_done_to_today(self):
         sensor = make_sensor()
-        sensor.last_done = date(1970, 1, 1)
+        sensor.coordinator.last_done = date(1970, 1, 1)
         await sensor.async_mark_as_done()
-        self.assertEqual(sensor.last_done, date.today())
+        self.assertEqual(sensor.coordinator.last_done, date.today())
 
     async def test_mark_as_done_triggers_update(self):
         sensor = make_sensor()
@@ -309,10 +316,10 @@ class TestTaskTrackerSensorSetLastDoneDate(unittest.IsolatedAsyncioTestCase):
 
     async def test_set_last_done_date_updates_last_done(self):
         sensor = make_sensor()
-        sensor.last_done = date(1970, 1, 1)
+        sensor.coordinator.last_done = date(1970, 1, 1)
         new_date = date(2024, 6, 15)
         await sensor.async_set_last_done_date(new_date)
-        self.assertEqual(sensor.last_done, new_date)
+        self.assertEqual(sensor.coordinator.last_done, new_date)
 
     async def test_set_last_done_date_triggers_update(self):
         sensor = make_sensor()
@@ -335,7 +342,7 @@ class TestTaskTrackerSensorActiveOverride(unittest.IsolatedAsyncioTestCase):
         hass.states.get.return_value = override_state
         sensor = make_sensor(active=False, active_override="input_boolean.my_switch")
         sensor.hass = hass
-        sensor.last_done = date(1970, 1, 1)
+        sensor.coordinator.last_done = date(1970, 1, 1)
         await self._run_update(sensor)
         self.assertNotEqual(sensor._attr_native_value, CONST_INACTIVE)
 
@@ -346,7 +353,7 @@ class TestTaskTrackerSensorActiveOverride(unittest.IsolatedAsyncioTestCase):
         hass.states.get.return_value = override_state
         sensor = make_sensor(active=True, active_override="input_boolean.my_switch")
         sensor.hass = hass
-        sensor.last_done = date(1970, 1, 1)
+        sensor.coordinator.last_done = date(1970, 1, 1)
         await self._run_update(sensor)
         self.assertEqual(sensor._attr_native_value, CONST_INACTIVE)
 
@@ -357,13 +364,13 @@ class TestTaskTrackerSensorActiveOverride(unittest.IsolatedAsyncioTestCase):
         hass.states.get.return_value = override_state
         sensor = make_sensor(active=True, active_override="input_boolean.my_switch")
         sensor.hass = hass
-        sensor.last_done = date(1970, 1, 1)
+        sensor.coordinator.last_done = date(1970, 1, 1)
         await self._run_update(sensor)
         self.assertNotEqual(sensor._attr_native_value, CONST_INACTIVE)
 
     async def test_active_override_none_does_not_override(self):
         sensor = make_sensor(active=False, active_override=None)
-        sensor.last_done = date(1970, 1, 1)
+        sensor.coordinator.last_done = date(1970, 1, 1)
         await self._run_update(sensor)
         self.assertEqual(sensor._attr_native_value, CONST_INACTIVE)
 
@@ -383,7 +390,7 @@ class TestTaskTrackerSensorTaskIntervalOverride(unittest.IsolatedAsyncioTestCase
         sensor = make_sensor(task_interval_value=7,
                              task_interval_override="input_number.my_interval")
         sensor.hass = hass
-        sensor.last_done = date(2024, 1, 1)
+        sensor.coordinator.last_done = date(2024, 1, 1)
         await self._run_update(sensor)
         self.assertEqual(sensor.due_date, date(2024, 1, 31))
 
@@ -395,7 +402,7 @@ class TestTaskTrackerSensorTaskIntervalOverride(unittest.IsolatedAsyncioTestCase
         sensor = make_sensor(task_interval_value=7, task_interval_type=CONF_WEEK,
                              task_interval_override="input_number.my_interval")
         sensor.hass = hass
-        sensor.last_done = date(2024, 1, 1)
+        sensor.coordinator.last_done = date(2024, 1, 1)
         await self._run_update(sensor)
         # Override forces CONF_DAY: 14 days = Jan 15
         self.assertEqual(sensor.due_date, date(2024, 1, 15))
@@ -408,7 +415,7 @@ class TestTaskTrackerSensorTaskIntervalOverride(unittest.IsolatedAsyncioTestCase
         sensor = make_sensor(task_interval_value=7,
                              task_interval_override="input_number.my_interval")
         sensor.hass = hass
-        sensor.last_done = date(2024, 1, 1)
+        sensor.coordinator.last_done = date(2024, 1, 1)
         await self._run_update(sensor)
         self.assertEqual(sensor.due_date, date(2024, 1, 2))
 
@@ -420,13 +427,13 @@ class TestTaskTrackerSensorTaskIntervalOverride(unittest.IsolatedAsyncioTestCase
         sensor = make_sensor(task_interval_value=7,
                              task_interval_override="input_number.my_interval")
         sensor.hass = hass
-        sensor.last_done = date(2024, 1, 1)
+        sensor.coordinator.last_done = date(2024, 1, 1)
         await self._run_update(sensor)
         self.assertEqual(sensor.due_date, date(2024, 1, 8))
 
     async def test_task_interval_override_none_does_not_override(self):
         sensor = make_sensor(task_interval_value=7, task_interval_override=None)
-        sensor.last_done = date(2024, 1, 1)
+        sensor.coordinator.last_done = date(2024, 1, 1)
         await self._run_update(sensor)
         self.assertEqual(sensor.due_date, date(2024, 1, 8))
 
@@ -446,7 +453,7 @@ class TestTaskTrackerSensorTodoOffsetOverride(unittest.IsolatedAsyncioTestCase):
         sensor = make_sensor(todo_offset_days=0,
                              todo_offset_override="input_number.my_offset")
         sensor.hass = hass
-        sensor.last_done = date.today()
+        sensor.coordinator.last_done = date.today()
         await self._run_update(sensor)
         self.assertEqual(sensor._attr_extra_state_attributes["todo_offset_days"], 5)
 
@@ -458,13 +465,13 @@ class TestTaskTrackerSensorTodoOffsetOverride(unittest.IsolatedAsyncioTestCase):
         sensor = make_sensor(todo_offset_days=3,
                              todo_offset_override="input_number.my_offset")
         sensor.hass = hass
-        sensor.last_done = date.today()
+        sensor.coordinator.last_done = date.today()
         await self._run_update(sensor)
         self.assertEqual(sensor._attr_extra_state_attributes["todo_offset_days"], 3)
 
     async def test_todo_offset_override_none_does_not_override(self):
         sensor = make_sensor(todo_offset_days=3, todo_offset_override=None)
-        sensor.last_done = date.today()
+        sensor.coordinator.last_done = date.today()
         await self._run_update(sensor)
         self.assertEqual(sensor._attr_extra_state_attributes["todo_offset_days"], 3)
 
@@ -521,7 +528,7 @@ class TestTaskTrackerSensorAddedToHass(unittest.IsolatedAsyncioTestCase):
                     sensor.async_on_remove = MagicMock()
                     await sensor.async_added_to_hass()
 
-        self.assertEqual(sensor.last_done, date(2024, 5, 10))
+        self.assertEqual(sensor.coordinator.last_done, date(2024, 5, 10))
 
     async def test_todo_list_state_change_listener_registered(self):
         """A state-change listener for todo lists should be subscribed."""

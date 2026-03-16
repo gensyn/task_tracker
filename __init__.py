@@ -17,8 +17,8 @@ from .const import DOMAIN, CONF_TASK_INTERVAL_VALUE, CONF_DAY, CONF_TASK_INTERVA
     CONF_TODO_OFFSET_DAYS, CONF_TAGS, CONF_ACTIVE, CONF_TODO_LISTS, SERVICE_MARK_AS_DONE, \
     SERVICE_MARK_AS_DONE_SCHEMA, SERVICE_SET_LAST_DONE_DATE, SERVICE_SET_LAST_DONE_DATE_SCHEMA, CONF_DATE, \
     CONF_SHOW_PANEL
+from .coordinator import TaskTrackerCoordinator
 from .frontend import TaskTrackerCardRegistration
-from .sensor import TaskTrackerSensor
 
 _PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.BUTTON]
 _LOGGER = logging.getLogger(__name__)
@@ -33,6 +33,21 @@ CONFIG_SCHEMA = vol.Schema(
     },
     extra=vol.ALLOW_EXTRA,
 )
+
+
+def _get_coordinator(hass: HomeAssistant, entity_id: str) -> TaskTrackerCoordinator:
+    """Return the coordinator for *entity_id*, raising ValueError if not found."""
+    reg = entity_registry.async_get(hass)
+    entry = reg.async_get(entity_id)
+    if entry is None or entry.config_entry_id is None:
+        raise ValueError(f"Could not find config entry for {entity_id}")
+    coordinator = hass.data.get(DOMAIN, {}).get(entry.config_entry_id)
+    if coordinator is None:
+        raise ValueError(
+            f"Task Tracker integration not loaded for {entity_id}; "
+            "the config entry may still be setting up"
+        )
+    return coordinator
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
@@ -58,12 +73,12 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     domain_data["midnight_unsub"] = unsub
 
     async def async_mark_as_done(service_call: ServiceCall):
-        s = await get_sensor(hass, service_call.data[CONF_ENTITY_ID])
-        await s.async_mark_as_done()
+        coordinator = _get_coordinator(hass, service_call.data[CONF_ENTITY_ID])
+        await coordinator.async_mark_as_done()
 
     async def async_set_last_done_date(service_call: ServiceCall):
-        s = await get_sensor(hass, service_call.data[CONF_ENTITY_ID])
-        await s.async_set_last_done_date(service_call.data[CONF_DATE])
+        coordinator = _get_coordinator(hass, service_call.data[CONF_ENTITY_ID])
+        await coordinator.async_set_last_done_date(service_call.data[CONF_DATE])
 
     hass.services.async_register(
         DOMAIN,
@@ -103,6 +118,8 @@ async def async_update_entities(entity_ids: list[str], hass: HomeAssistant) -> d
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Task Tracker from a config entry."""
+    coordinator = TaskTrackerCoordinator(entry.entry_id)
+    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
     await hass.config_entries.async_forward_entry_setups(entry, _PLATFORMS)
 
     return True
@@ -110,7 +127,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
-    return await hass.config_entries.async_unload_platforms(entry, _PLATFORMS)
+    result = await hass.config_entries.async_unload_platforms(entry, _PLATFORMS)
+    if result:
+        hass.data.get(DOMAIN, {}).pop(entry.entry_id, None)
+    return result
 
 
 async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -142,11 +162,3 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             minor_version=new_minor_version,
         )
     return True
-
-
-async def get_sensor(hass, entity_id: str) -> TaskTrackerSensor:
-    """Get the sensor."""
-    s = hass.data["entity_components"][Platform.SENSOR].get_entity(entity_id)
-    if s is None:
-        raise ValueError(f"Could not find {entity_id}")
-    return s
