@@ -5,6 +5,12 @@ class TaskTrackerPanel extends HTMLElement {
     this.attachShadow({ mode: "open" });
     this._filter = "all";
     this._narrow = false;
+    this.shadowRoot.addEventListener("click", (e) => {
+      const filterBtn = e.target.closest(".filter-btn");
+      if (filterBtn) { this._setFilter(filterBtn.dataset.filter); return; }
+      const doneBtn = e.target.closest(".mark-done-btn");
+      if (doneBtn) { this._markAsDone(doneBtn.dataset.entityId); return; }
+    });
   }
 
   set hass(hass) {
@@ -324,16 +330,6 @@ class TaskTrackerPanel extends HTMLElement {
         menuButton.narrow = this._narrow;
       }
     }
-
-    this.shadowRoot.querySelectorAll(".filter-btn").forEach((btn) => {
-      btn.addEventListener("click", () => this._setFilter(btn.dataset.filter));
-    });
-
-    this.shadowRoot.querySelectorAll(".mark-done-btn").forEach((btn) => {
-      btn.addEventListener("click", () =>
-        this._markAsDone(btn.dataset.entityId)
-      );
-    });
   }
 }
 

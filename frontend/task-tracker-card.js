@@ -3,6 +3,9 @@ class TaskTracker extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
+    this.shadowRoot.addEventListener("click", (e) => {
+      if (e.target.closest(".mark-done-btn")) this._markAsDone();
+    });
   }
 
   _t(key) {
@@ -11,6 +14,9 @@ class TaskTracker extends HTMLElement {
 
   set hass(hass) {
     this._hass = hass;
+    const entity = hass.states[this.config?.entity];
+    if (entity === this._entity) return;
+    this._entity = entity;
     this._render();
   }
 
@@ -164,10 +170,6 @@ class TaskTracker extends HTMLElement {
         </div>
       </ha-card>
     `;
-
-    this.shadowRoot.querySelector(".mark-done-btn").addEventListener("click", () =>
-      this._markAsDone()
-    );
   }
 
   getCardSize() {
