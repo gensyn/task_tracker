@@ -178,7 +178,7 @@ class TaskTrackerPanel extends HTMLElement {
             (f) =>
               `<button class="filter-btn${this._filter === f ? " active" : ""}"
                        data-filter="${f}">
-                ${this._t(f)}${f !== "all" ? ` (${counts[f]})` : ""}
+                ${this._t(f)} (${f === "all" ? allTasks.length : counts[f]})
                </button>`
           )
           .join("")
