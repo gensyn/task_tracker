@@ -125,7 +125,6 @@ class TaskTrackerPanel extends HTMLElement {
         </div>
         <div class="task-card-content">
           <table>
-            <tr><td>${this._t("status")}</td><td>${this._t(state)}</td></tr>
             <tr><td>${this._t("interval")}</td><td>${intervalStr}</td></tr>
             <tr><td>${this._t("last_done")}</td><td>${lastDoneStr}</td></tr>
             <tr><td>${this._t("due_date")}</td><td>${dueDateStr}</td></tr>

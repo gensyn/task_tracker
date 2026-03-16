@@ -138,10 +138,6 @@ class TaskTracker extends HTMLElement {
         <div class="card-content">
           <table>
             <tr>
-              <td>${this._t("status")}</td>
-              <td>${this._t(stateStr)}</td>
-            </tr>
-            <tr>
               <td>${this._t("interval")}</td>
               <td>${intervalStr}</td>
             </tr>
