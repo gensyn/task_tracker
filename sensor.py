@@ -1,7 +1,6 @@
 """Platform for sensor integration."""
 from __future__ import annotations
 
-import asyncio
 import re
 from datetime import timedelta, datetime, date
 from functools import partial
@@ -13,8 +12,8 @@ from homeassistant.components.sensor import (
     SensorEntity, RestoreSensor,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_NAME, EVENT_HOMEASSISTANT_STARTED, CONF_ICON, CONF_ENTITY_ID, EVENT_STATE_CHANGED
-from homeassistant.core import HomeAssistant, CoreState, EventStateChangedData, callback
+from homeassistant.const import CONF_NAME, CONF_ICON, CONF_ENTITY_ID, EVENT_STATE_CHANGED
+from homeassistant.core import HomeAssistant, EventStateChangedData, callback
 from homeassistant.exceptions import ServiceValidationError, HomeAssistantError
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import generate_entity_id
@@ -130,15 +129,7 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
                 )
             )
 
-        if self.hass.state == CoreState.running:
-            await self.async_update()
-        else:
-            # Delay the first update until Home Assistant is fully started so startup is not blocked
-            self.hass.bus.async_listen_once(
-                EVENT_HOMEASSISTANT_STARTED,
-                lambda _event: asyncio.run_coroutine_threadsafe(self.async_update_ha_state(force_refresh=True),
-                                                                self.hass.loop)
-            )
+        await self.async_update()
 
     async def async_update(self) -> None:
         self._attr_native_value = CONST_DONE
