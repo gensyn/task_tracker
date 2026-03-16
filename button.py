@@ -5,16 +5,15 @@ from logging import getLogger
 
 from homeassistant.components.button import ButtonEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import Platform, CONF_NAME
+from homeassistant.const import CONF_NAME
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import entity_registry
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import generate_entity_id
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import slugify
 
 from .const import DOMAIN
-from .sensor import TaskTrackerSensor
+from .coordinator import TaskTrackerCoordinator
 
 LOGGER = getLogger(__name__)
 
@@ -37,6 +36,7 @@ class TaskTrackerButton(ButtonEntity):
 
     def __init__(self, entry_name: str, entry_id: str, hass: HomeAssistant) -> None:
         """Initialize the button."""
+        self._entry_id = entry_id
         self.device_id = f"{DOMAIN}_{entry_id}"
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, self.device_id)},
@@ -48,16 +48,6 @@ class TaskTrackerButton(ButtonEntity):
         self.entity_id = generate_entity_id("button.task_tracker_{}_mark_as_done", slugify(entry_name), hass=hass)
 
     async def async_press(self) -> None:
-        sensor: TaskTrackerSensor = await get_sensor(self.hass, self.device_entry.id)
-        await sensor.async_mark_as_done()
+        coordinator: TaskTrackerCoordinator = self.hass.data[DOMAIN][self._entry_id]
+        await coordinator.async_mark_as_done()
 
-
-async def get_sensor(hass, device_id: str) -> TaskTrackerSensor:
-    """Get the sensor."""
-    entity_reg = entity_registry.async_get(hass)
-    entries = entity_registry.async_entries_for_device(entity_reg, device_id)
-    sensors = [entry.entity_id for entry in entries if entry.entity_id.startswith(Platform.SENSOR)]
-    if len(sensors) != 1:
-        raise ValueError(f"Expected exactly one sensor for device_id {device_id}, found {len(sensors)}")
-    # cannot use hass.states.get(sensors[0]) here because we need the entity object, not just the state
-    return hass.data["entity_components"][Platform.SENSOR].get_entity(sensors[0])

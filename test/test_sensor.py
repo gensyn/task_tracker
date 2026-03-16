@@ -10,6 +10,7 @@ sys.path.insert(0, absolute_mock_path)
 absolute_plugin_path = str(Path(__file__).parent.parent.parent.absolute())
 sys.path.insert(0, absolute_plugin_path)
 
+from task_tracker.coordinator import TaskTrackerCoordinator
 from task_tracker.sensor import TaskTrackerSensor
 from task_tracker.const import (
     CONF_DAY, CONF_WEEK, CONF_MONTH, CONF_YEAR,
@@ -32,10 +33,16 @@ def make_sensor(
     active_override=None,
     task_interval_override=None,
     todo_offset_override=None,
+    coordinator=None,
 ):
     if hass is None:
         hass = MagicMock()
+    if coordinator is None:
+        # Create a default coordinator for the entry_id so tests that don't
+        # provide one explicitly still get a fully functional sensor.
+        coordinator = TaskTrackerCoordinator(entry_id)
     return TaskTrackerSensor(
+        coordinator=coordinator,
         entry_name=entry_name,
         task_interval_value=task_interval_value,
         task_interval_type=task_interval_type,

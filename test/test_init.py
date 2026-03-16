@@ -11,11 +11,13 @@ sys.path.insert(0, absolute_plugin_path)
 
 from homeassistant.config_entries import ConfigEntry
 
-from task_tracker import async_migrate_entry, get_sensor
+from task_tracker import async_migrate_entry, _get_coordinator
 from task_tracker.const import (
     CONF_ACTIVE, CONF_TASK_INTERVAL_VALUE, CONF_TASK_INTERVAL_TYPE, CONF_ICON,
     CONF_TAGS, CONF_TODO_LISTS, CONF_TODO_OFFSET_DAYS, CONF_NOTIFICATION_INTERVAL, CONF_DAY,
+    DOMAIN,
 )
+from task_tracker.coordinator import TaskTrackerCoordinator
 
 
 class TestAsyncMigrateEntry(unittest.IsolatedAsyncioTestCase):
@@ -71,23 +73,42 @@ class TestAsyncMigrateEntry(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(result)
 
 
-class TestGetSensor(unittest.IsolatedAsyncioTestCase):
+class TestGetCoordinator(unittest.IsolatedAsyncioTestCase):
 
-    async def test_returns_sensor_when_found(self):
-        from task_tracker.sensor import TaskTrackerSensor
-        mock_sensor = MagicMock(spec=TaskTrackerSensor)
+    def _make_hass(self, coordinator, config_entry_id="entry1"):
         mock_hass = MagicMock()
-        mock_hass.data = {"entity_components": {"sensor": MagicMock()}}
-        mock_hass.data["entity_components"]["sensor"].get_entity.return_value = mock_sensor
+        mock_hass.data = {DOMAIN: {config_entry_id: coordinator}}
+        import homeassistant.helpers.entity_registry as entity_registry
+        mock_reg_entry = MagicMock()
+        mock_reg_entry.config_entry_id = config_entry_id
+        entity_registry.async_get = lambda hass: MagicMock(
+            async_get=lambda entity_id: mock_reg_entry
+        )
+        return mock_hass
 
-        result = await get_sensor(mock_hass, "sensor.task_tracker_my_task")
+    def test_returns_coordinator_when_found(self):
+        coordinator = TaskTrackerCoordinator("entry1")
+        mock_hass = self._make_hass(coordinator)
+        result = _get_coordinator(mock_hass, "sensor.task_tracker_my_task")
+        self.assertEqual(result, coordinator)
 
-        self.assertEqual(result, mock_sensor)
-
-    async def test_raises_when_sensor_not_found(self):
+    def test_raises_when_entity_not_in_registry(self):
         mock_hass = MagicMock()
-        mock_hass.data = {"entity_components": {"sensor": MagicMock()}}
-        mock_hass.data["entity_components"]["sensor"].get_entity.return_value = None
-
+        mock_hass.data = {DOMAIN: {}}
+        import homeassistant.helpers.entity_registry as entity_registry
+        entity_registry.async_get = lambda hass: MagicMock(async_get=lambda entity_id: None)
         with self.assertRaises(ValueError):
-            await get_sensor(mock_hass, "sensor.task_tracker_nonexistent")
+            _get_coordinator(mock_hass, "sensor.task_tracker_nonexistent")
+
+    def test_raises_when_coordinator_not_in_hass_data(self):
+        mock_hass = MagicMock()
+        mock_hass.data = {DOMAIN: {}}
+        import homeassistant.helpers.entity_registry as entity_registry
+        mock_reg_entry = MagicMock()
+        mock_reg_entry.config_entry_id = "entry_missing"
+        entity_registry.async_get = lambda hass: MagicMock(
+            async_get=lambda entity_id: mock_reg_entry
+        )
+        with self.assertRaises(ValueError):
+            _get_coordinator(mock_hass, "sensor.task_tracker_my_task")
+

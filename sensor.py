@@ -25,6 +25,7 @@ from homeassistant.util.dt import UTC
 from .const import DOMAIN, CONF_TASK_INTERVAL_VALUE, CONF_NOTIFICATION_INTERVAL, CONF_TAGS, CONF_ACTIVE, CONF_WEEK, \
     CONF_MONTH, CONF_YEAR, CONST_DUE, CONST_INACTIVE, CONST_DONE, CONF_TASK_INTERVAL_TYPE, CONF_TODO_OFFSET_DAYS, \
     CONF_TODO_LISTS, CONF_DAY, CONF_ACTIVE_OVERRIDE, CONF_TASK_INTERVAL_OVERRIDE, CONF_TODO_OFFSET_OVERRIDE
+from .coordinator import TaskTrackerCoordinator
 
 LOGGER = getLogger(__name__)
 
@@ -35,10 +36,12 @@ async def async_setup_entry(
         async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up sensor platform from a config entry."""
+    coordinator: TaskTrackerCoordinator = hass.data[DOMAIN][entry.entry_id]
     data = entry.data
     options = entry.options
     async_add_entities(
-        [TaskTrackerSensor(data[CONF_NAME], options[CONF_TASK_INTERVAL_VALUE], options[CONF_TASK_INTERVAL_TYPE],
+        [TaskTrackerSensor(coordinator, data[CONF_NAME], options[CONF_TASK_INTERVAL_VALUE],
+                           options[CONF_TASK_INTERVAL_TYPE],
                            options[CONF_NOTIFICATION_INTERVAL], options[CONF_TODO_LISTS],
                            options[CONF_TODO_OFFSET_DAYS], options[CONF_TAGS],
                            options[CONF_ACTIVE], options[CONF_ICON], entry.entry_id, hass,
@@ -54,13 +57,15 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
     _attr_should_poll = False
     _attr_translation_key = "status"
 
-    def __init__(self, entry_name: str, task_interval_value: int, task_interval_type: str,
+    def __init__(self, coordinator: TaskTrackerCoordinator, entry_name: str,
+                 task_interval_value: int, task_interval_type: str,
                  notification_interval: int, todo_lists: list[str], todo_offset_days: int, tags: str, active: bool,
                  icon: str, entry_id: str, hass: HomeAssistant,
                  active_override: str | None = None,
                  task_interval_override: str | None = None,
                  todo_offset_override: str | None = None) -> None:
         """Initialize the sensor with a service name."""
+        self.coordinator = coordinator
         self.task_interval_value: int = task_interval_value
         self.task_interval_type: str = task_interval_type
         self.notification_interval: int = notification_interval
@@ -68,7 +73,6 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
         self.todo_offset_days: int = todo_offset_days
         self.entry_id = entry_id
         self.entry_name = entry_name
-        self.last_done: date = date(1970, 1, 1)
         tags_list = re.split(r'[;, ]+', tags)
         self.tags: list = [tag.strip() for tag in tags_list if tag]
         self.active: bool = active
@@ -94,6 +98,26 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
             model="Task Tracker",
             name=entry_name,
         )
+
+        # Register coordinator listener so state changes are reflected in HA.
+        # Registered here (not just in async_added_to_hass) so that tests which
+        # call async_mark_as_done / async_set_last_done_date without adding the
+        # entity to hass also trigger the update callback.
+        self.async_on_remove(
+            self.coordinator.async_add_listener(
+                lambda: self.async_schedule_update_ha_state(force_refresh=True)
+            )
+        )
+
+    @property
+    def last_done(self) -> date:
+        """Return the last-done date from the coordinator."""
+        return self.coordinator.last_done
+
+    @last_done.setter
+    def last_done(self, value: date) -> None:
+        """Set the last-done date on the coordinator."""
+        self.coordinator.last_done = value
 
     async def async_added_to_hass(self) -> None:
         """Restore last known state on startup."""
@@ -312,10 +336,8 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
 
     async def async_mark_as_done(self) -> None:
         """Mark the task as done for today."""
-        self.last_done = date.today()
-        self.async_schedule_update_ha_state(force_refresh=True)
+        await self.coordinator.async_mark_as_done()
 
     async def async_set_last_done_date(self, new_date: date) -> None:
         """Set the last done date."""
-        self.last_done = new_date
-        self.async_schedule_update_ha_state(force_refresh=True)
+        await self.coordinator.async_set_last_done_date(new_date)
