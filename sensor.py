@@ -322,9 +322,9 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
     async def async_mark_as_done(self) -> None:
         """Mark the task as done for today."""
         self.last_done = date.today()
-        await self.async_update()
+        self.async_schedule_update_ha_state(force_refresh=True)
 
     async def async_set_last_done_date(self, new_date: date) -> None:
         """Set the last done date."""
         self.last_done = new_date
-        await self.async_update()
+        self.async_schedule_update_ha_state(force_refresh=True)
