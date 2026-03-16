@@ -127,7 +127,7 @@ class TaskTrackerPanel extends HTMLElement {
       <div class="task-card">
         <div class="task-card-header" style="background:${this._stateColor(state)}">
           <span class="task-name">${name}</span>
-          <span class="state-badge">${state}</span>
+          <span class="state-badge">${this._t(state) || state}</span>
         </div>
         <div class="task-card-content">
           <table>
