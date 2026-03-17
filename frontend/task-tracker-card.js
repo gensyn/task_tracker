@@ -30,6 +30,7 @@ class TaskTracker extends HTMLElement {
   _stateColor(state) {
     switch (state) {
       case "due":      return "#e74c3c";
+      case "due_soon": return "#e67e22";
       case "done":     return "#27ae60";
       case "inactive": return "#3498db";
       default:         return "#95a5a6";

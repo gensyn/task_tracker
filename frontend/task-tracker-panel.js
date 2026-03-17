@@ -75,6 +75,7 @@ class TaskTrackerPanel extends HTMLElement {
   _stateColor(state) {
     switch (state) {
       case "due":      return "#e74c3c";
+      case "due_soon": return "#e67e22";
       case "done":     return "#27ae60";
       case "inactive": return "#3498db";
       default:         return "#95a5a6";
@@ -155,11 +156,12 @@ class TaskTrackerPanel extends HTMLElement {
 
     const counts = {
       due: allTasks.filter((t) => t.state === "due").length,
+      due_soon: allTasks.filter((t) => t.state === "due_soon").length,
       done: allTasks.filter((t) => t.state === "done").length,
       inactive: allTasks.filter((t) => t.state === "inactive").length,
     };
 
-    const activeStates = ["due", "done", "inactive"].filter(
+    const activeStates = ["due", "due_soon", "done", "inactive"].filter(
       (s) => counts[s] > 0
     );
 

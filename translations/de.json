@@ -36,8 +36,8 @@
                     "task_interval_override": "Taskintervall überschreiben",
                     "notification_interval": "Benachrichtigungsintervall (Tage)",
                     "todo_lists": "Todo-Listen",
-                    "todo_offset_days": "Todo-Listen Offset (Tage)",
-                    "todo_offset_override": "Todo-Listen Offset überschreiben (Tage)",
+                    "due_soon_days": "Bald fällig (Tage)",
+                    "due_soon_override": "Bald fällig überschreiben (Tage)",
                     "tags": "Tags",
                     "icon": "Icon",
                     "active": "Aktiv",
@@ -49,8 +49,8 @@
                     "task_interval_override": "input_number (Wert in Tagen) zur Überschreibung des Taskintervalls auswählen.",
                     "notification_interval": "Die Zeit in Tagen, nach dem Benachrichtigungen erneut gesendet werden.",
                     "todo_lists": "Die Todo-Listen, zu denen diese Task hinzugefügt wird.",
-                    "todo_offset_days": "Die Anzahl der Tage vor Fälligkeit der Task, um einen Todo-Eintrag zu erstellen.",
-                    "todo_offset_override": "input_number (Wert in Tagen) zur Überschreibung des Todo-Listen Offsets auswählen.",
+                    "due_soon_days": "Die Anzahl der Tage vor Fälligkeit der Task, um sie als bald fällig anzuzeigen.",
+                    "due_soon_override": "input_number (Wert in Tagen) zur Überschreibung der Bald-fällig-Schwelle auswählen.",
                     "tags": "Tags zur Kategorisierung der Task, getrennt durch Kommas.",
                     "icon": "Icon zur Darstellung der Task.",
                     "active": "Task aktivieren oder deaktivieren.",
@@ -75,6 +75,7 @@
                 "state": {
                     "done": "Erledigt",
                     "due": "Fällig",
+                    "due_soon": "Bald fällig",
                     "overdue": "Überfällig",
                     "inactive": "Inaktiv"
                 }
@@ -94,6 +95,9 @@
             },
             "due": {
                 "name": "Fällig"
+            },
+            "due_soon": {
+                "name": "Bald fällig"
             },
             "overdue": {
                 "name": "Überfällig"

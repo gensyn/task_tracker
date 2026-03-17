@@ -23,6 +23,8 @@ from custom_components.task_tracker.const import (
     CONF_ACTIVE_OVERRIDE,
     CONF_DATE,
     CONF_DAY,
+    CONF_DUE_SOON_DAYS,
+    CONF_DUE_SOON_OVERRIDE,
     CONF_MONTH,
     CONF_NOTIFICATION_INTERVAL,
     CONF_TAGS,
@@ -30,12 +32,11 @@ from custom_components.task_tracker.const import (
     CONF_TASK_INTERVAL_TYPE,
     CONF_TASK_INTERVAL_VALUE,
     CONF_TODO_LISTS,
-    CONF_TODO_OFFSET_DAYS,
-    CONF_TODO_OFFSET_OVERRIDE,
     CONF_WEEK,
     CONF_YEAR,
     CONST_DONE,
     CONST_DUE,
+    CONST_DUE_SOON,
     CONST_INACTIVE,
     DOMAIN,
     SERVICE_MARK_AS_DONE,
@@ -55,13 +56,13 @@ def _make_entry(
     task_interval_type: str = CONF_DAY,
     notification_interval: int = 2,
     todo_lists: list | None = None,
-    todo_offset_days: int = 0,
+    due_soon_days: int = 0,
     tags: str = "",
     active: bool = True,
     icon: str = "mdi:water",
     active_override: str | None = None,
     task_interval_override: str | None = None,
-    todo_offset_override: str | None = None,
+    due_soon_override: str | None = None,
 ) -> MockConfigEntry:
     """Return a MockConfigEntry covering all configurable options."""
     options: dict = {
@@ -70,7 +71,7 @@ def _make_entry(
         CONF_TASK_INTERVAL_TYPE: task_interval_type,
         CONF_NOTIFICATION_INTERVAL: notification_interval,
         CONF_TODO_LISTS: todo_lists if todo_lists is not None else [],
-        CONF_TODO_OFFSET_DAYS: todo_offset_days,
+        CONF_DUE_SOON_DAYS: due_soon_days,
         CONF_TAGS: tags,
         CONF_ICON: icon,
     }
@@ -78,8 +79,8 @@ def _make_entry(
         options[CONF_ACTIVE_OVERRIDE] = active_override
     if task_interval_override is not None:
         options[CONF_TASK_INTERVAL_OVERRIDE] = task_interval_override
-    if todo_offset_override is not None:
-        options[CONF_TODO_OFFSET_OVERRIDE] = todo_offset_override
+    if due_soon_override is not None:
+        options[CONF_DUE_SOON_OVERRIDE] = due_soon_override
     return MockConfigEntry(
         domain=DOMAIN,
         entry_id=entry_id,
@@ -87,7 +88,7 @@ def _make_entry(
         data={"name": name},
         options=options,
         version=1,
-        minor_version=2,
+        minor_version=3,
     )
 
 
@@ -541,26 +542,26 @@ class TestNotificationIntervalOption:
 
 
 # ---------------------------------------------------------------------------
-# Todo offset days option
+# Due soon days option
 # ---------------------------------------------------------------------------
 
 
-class TestTodoOffsetDaysOption:
-    """todo_offset_days option is exposed in sensor attributes."""
+class TestDueSoonDaysOption:
+    """due_soon_days option is exposed in sensor attributes."""
 
-    async def test_todo_offset_days_in_attributes(self, hass: HomeAssistant) -> None:
-        entry = _make_entry(todo_offset_days=5)
+    async def test_due_soon_days_in_attributes(self, hass: HomeAssistant) -> None:
+        entry = _make_entry(due_soon_days=5)
         await _setup_entry(hass, entry)
 
         state = hass.states.get("sensor.task_tracker_water_plants")
-        assert state.attributes["todo_offset_days"] == 5
+        assert state.attributes["due_soon_days"] == 5
 
-    async def test_todo_offset_days_zero_default(self, hass: HomeAssistant) -> None:
-        entry = _make_entry(todo_offset_days=0)
+    async def test_due_soon_days_zero_default(self, hass: HomeAssistant) -> None:
+        entry = _make_entry(due_soon_days=0)
         await _setup_entry(hass, entry)
 
         state = hass.states.get("sensor.task_tracker_water_plants")
-        assert state.attributes["todo_offset_days"] == 0
+        assert state.attributes["due_soon_days"] == 0
 
 
 # ---------------------------------------------------------------------------
@@ -729,67 +730,137 @@ class TestTaskIntervalOverride:
 
 
 # ---------------------------------------------------------------------------
-# todo_offset_override (input_number)
+# due_soon_override (input_number)
 # ---------------------------------------------------------------------------
 
 
-class TestTodoOffsetOverride:
-    """todo_offset_override reads an input_number entity to override todo_offset_days."""
+class TestDueSoonOverride:
+    """due_soon_override reads an input_number entity to override due_soon_days."""
 
-    async def test_override_value_replaces_offset_days(self, hass: HomeAssistant) -> None:
-        """Override of 10 → todo_offset_days=10, ignoring configured value of 0."""
+    async def test_override_value_replaces_due_soon_days(self, hass: HomeAssistant) -> None:
+        """Override of 10 → due_soon_days=10, ignoring configured value of 0."""
         hass.states.async_set("input_number.todo_offset", "10")
         entry = _make_entry(
-            todo_offset_days=0,
-            todo_offset_override="input_number.todo_offset",
+            due_soon_days=0,
+            due_soon_override="input_number.todo_offset",
         )
         await _setup_entry(hass, entry)
 
         state = hass.states.get("sensor.task_tracker_water_plants")
-        assert state.attributes["todo_offset_days"] == 10
+        assert state.attributes["due_soon_days"] == 10
 
     async def test_override_minimum_clamped_to_zero(self, hass: HomeAssistant) -> None:
         """Negative override values are clamped to 0."""
         hass.states.async_set("input_number.todo_offset", "-5")
-        entry = _make_entry(todo_offset_override="input_number.todo_offset")
+        entry = _make_entry(due_soon_override="input_number.todo_offset")
         await _setup_entry(hass, entry)
 
         state = hass.states.get("sensor.task_tracker_water_plants")
-        assert state.attributes["todo_offset_days"] == 0
+        assert state.attributes["due_soon_days"] == 0
 
-    async def test_override_unavailable_falls_back_to_configured_offset(self, hass: HomeAssistant) -> None:
-        """When override entity is unavailable, configured todo_offset_days is used."""
+    async def test_override_unavailable_falls_back_to_configured_due_soon_days(self, hass: HomeAssistant) -> None:
+        """When override entity is unavailable, configured due_soon_days is used."""
         hass.states.async_set("input_number.todo_offset", "unavailable")
         entry = _make_entry(
-            todo_offset_days=3,
-            todo_offset_override="input_number.todo_offset",
+            due_soon_days=3,
+            due_soon_override="input_number.todo_offset",
         )
         await _setup_entry(hass, entry)
 
         state = hass.states.get("sensor.task_tracker_water_plants")
-        assert state.attributes["todo_offset_days"] == 3
+        assert state.attributes["due_soon_days"] == 3
 
-    async def test_override_unknown_falls_back_to_configured_offset(self, hass: HomeAssistant) -> None:
-        """When override entity is unknown, configured todo_offset_days is used."""
+    async def test_override_unknown_falls_back_to_configured_due_soon_days(self, hass: HomeAssistant) -> None:
+        """When override entity is unknown, configured due_soon_days is used."""
         hass.states.async_set("input_number.todo_offset", "unknown")
         entry = _make_entry(
-            todo_offset_days=7,
-            todo_offset_override="input_number.todo_offset",
+            due_soon_days=7,
+            due_soon_override="input_number.todo_offset",
         )
         await _setup_entry(hass, entry)
 
         state = hass.states.get("sensor.task_tracker_water_plants")
-        assert state.attributes["todo_offset_days"] == 7
+        assert state.attributes["due_soon_days"] == 7
 
-    async def test_override_state_change_updates_offset(self, hass: HomeAssistant) -> None:
+    async def test_override_state_change_updates_due_soon_days(self, hass: HomeAssistant) -> None:
         """Changing the override entity value triggers sensor re-evaluation."""
         hass.states.async_set("input_number.todo_offset", "2")
-        entry = _make_entry(todo_offset_override="input_number.todo_offset")
+        entry = _make_entry(due_soon_override="input_number.todo_offset")
         await _setup_entry(hass, entry)
 
-        assert hass.states.get("sensor.task_tracker_water_plants").attributes["todo_offset_days"] == 2
+        assert hass.states.get("sensor.task_tracker_water_plants").attributes["due_soon_days"] == 2
 
         hass.states.async_set("input_number.todo_offset", "8")
         await hass.async_block_till_done()
 
-        assert hass.states.get("sensor.task_tracker_water_plants").attributes["todo_offset_days"] == 8
+        assert hass.states.get("sensor.task_tracker_water_plants").attributes["due_soon_days"] == 8
+
+
+# ---------------------------------------------------------------------------
+# due_soon state
+# ---------------------------------------------------------------------------
+
+
+class TestDueSoonState:
+    """Tasks within the due_soon_days threshold get the 'due_soon' state."""
+
+    async def test_due_soon_state_when_within_threshold(self, hass: HomeAssistant) -> None:
+        """Task is 'due_soon' when due_in <= due_soon_days and due_in > 0."""
+        entry = _make_entry(task_interval_value=7, due_soon_days=5)
+        await _setup_entry(hass, entry)
+
+        # Mark as done 4 days ago → due_in = 3, which is ≤ 5
+        last_done = date.today() - __import__("datetime").timedelta(days=4)
+        await hass.services.async_call(
+            DOMAIN,
+            SERVICE_SET_LAST_DONE_DATE,
+            {"entity_id": "sensor.task_tracker_water_plants", "date": last_done},
+            blocking=True,
+        )
+        await hass.async_block_till_done()
+
+        state = hass.states.get("sensor.task_tracker_water_plants")
+        assert state.state == CONST_DUE_SOON
+
+    async def test_done_state_when_beyond_threshold(self, hass: HomeAssistant) -> None:
+        """Task is 'done' when due_in > due_soon_days."""
+        entry = _make_entry(task_interval_value=7, due_soon_days=2)
+        await _setup_entry(hass, entry)
+
+        # Mark as done today → due_in = 7, which is > 2
+        await hass.services.async_call(
+            DOMAIN,
+            SERVICE_MARK_AS_DONE,
+            {"entity_id": "sensor.task_tracker_water_plants"},
+            blocking=True,
+        )
+        await hass.async_block_till_done()
+
+        state = hass.states.get("sensor.task_tracker_water_plants")
+        assert state.state == CONST_DONE
+
+    async def test_due_state_takes_precedence_over_due_soon(self, hass: HomeAssistant) -> None:
+        """When the task is overdue (due_in=0), state is 'due' not 'due_soon'."""
+        entry = _make_entry(task_interval_value=7, due_soon_days=999)
+        await _setup_entry(hass, entry)
+
+        # Default last_done = epoch → always overdue
+        state = hass.states.get("sensor.task_tracker_water_plants")
+        assert state.state == CONST_DUE
+
+    async def test_no_due_soon_when_threshold_is_zero(self, hass: HomeAssistant) -> None:
+        """When due_soon_days=0, tasks are never in 'due_soon' state."""
+        entry = _make_entry(task_interval_value=7, due_soon_days=0)
+        await _setup_entry(hass, entry)
+
+        # Mark as done today → due_in = 7 > 0, so should be 'done'
+        await hass.services.async_call(
+            DOMAIN,
+            SERVICE_MARK_AS_DONE,
+            {"entity_id": "sensor.task_tracker_water_plants"},
+            blocking=True,
+        )
+        await hass.async_block_till_done()
+
+        state = hass.states.get("sensor.task_tracker_water_plants")
+        assert state.state == CONST_DONE
