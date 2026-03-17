@@ -27,7 +27,7 @@ class ConfigFlow:
         return result
 
 
-class OptionsFlowWithReload:
+class OptionsFlow:
     hass = None
     config_entry = None
 
@@ -39,3 +39,7 @@ class OptionsFlowWithReload:
 
     def add_suggested_values_to_schema(self, schema, values):
         return schema
+
+
+# Backwards-compatibility alias (real HA only ever had OptionsFlow)
+OptionsFlowWithReload = OptionsFlow
