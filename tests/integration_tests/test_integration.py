@@ -15,6 +15,7 @@ from datetime import date
 
 import pytest
 from homeassistant.core import HomeAssistant
+from homeassistant.const import CONF_ICON
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.task_tracker.const import (
@@ -22,7 +23,6 @@ from custom_components.task_tracker.const import (
     CONF_ACTIVE_OVERRIDE,
     CONF_DATE,
     CONF_DAY,
-    CONF_ICON,
     CONF_MONTH,
     CONF_NOTIFICATION_INTERVAL,
     CONF_TAGS,
