@@ -136,10 +136,14 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
 
         # Subscribe to override entity state changes
         if any([self.active_override, self.task_interval_override, self.todo_offset_override]):
+            @callback
+            def _async_override_state_changed(_event: Any) -> None:
+                self.async_schedule_update_ha_state(force_refresh=True)
+
             self.async_on_remove(
                 self.hass.bus.async_listen(
                     EVENT_STATE_CHANGED,
-                    self.async_update,
+                    _async_override_state_changed,
                     self._filter_override_changes,
                 )
             )
