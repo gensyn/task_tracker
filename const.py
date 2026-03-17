@@ -1,13 +1,7 @@
 """Constants for the Task Tracker integration."""
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
-<<<<<<< copilot/add-regression-integration-tests
-from homeassistant.const import CONF_NAME, CONF_ENTITY_ID, CONF_ICON, CONF_MODE
-
-CONF_OPTIONS = "options"  # removed from homeassistant.const in HA 2024.x
-=======
 from homeassistant.const import CONF_NAME, CONF_ENTITY_ID, CONF_OPTIONS, CONF_MODE
->>>>>>> main
 from homeassistant.helpers.selector import selector
 
 DOMAIN = "task_tracker"
@@ -31,7 +25,6 @@ CONF_DATE = "date"
 CONF_VALUE = "value"
 CONF_LABEL = "label"
 CONF_SHOW_PANEL = "show_panel"
-
 
 CONST_DUE = "due"
 CONST_DONE = "done"
