@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 
 from homeassistant.components.http import StaticPathConfig
-from homeassistant.components.lovelace import MODE_STORAGE, LovelaceData
+from homeassistant.components.lovelace import MODE_STORAGE
 from homeassistant.components.panel_custom import async_register_panel
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
@@ -20,7 +20,7 @@ class TaskTrackerCardRegistration:
     def __init__(self, hass: HomeAssistant) -> None:
         """Initialise."""
         self.hass = hass
-        self.lovelace: LovelaceData = self.hass.data.get("lovelace")
+        self.lovelace = self.hass.data.get("lovelace")
         if hasattr(self.lovelace, "resource_mode"):
             self.resource_mode = self.lovelace.resource_mode
         else:

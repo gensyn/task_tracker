@@ -2,15 +2,16 @@ from typing import Any
 
 import voluptuous as vol
 
-from homeassistant.config_entries import OptionsFlowWithReload, ConfigFlowResult
-from homeassistant.const import CONF_ICON, CONF_OPTIONS, CONF_MODE
+from homeassistant.config_entries import OptionsFlow, ConfigFlowResult
+from homeassistant.const import CONF_ICON, CONF_MODE
 from homeassistant.helpers.selector import selector
 from .const import CONF_TASK_INTERVAL_VALUE, CONF_NOTIFICATION_INTERVAL, CONF_TAGS, CONF_ACTIVE, \
     CONF_TASK_INTERVAL_TYPE, CONF_TODO_OFFSET_DAYS, CONF_SELECT, CONF_DAY, CONF_WEEK, CONF_MONTH, CONF_YEAR, \
-    CONF_DROPDOWN, CONF_TODO_LISTS, CONF_ACTIVE_OVERRIDE, CONF_TASK_INTERVAL_OVERRIDE, CONF_TODO_OFFSET_OVERRIDE
+    CONF_DROPDOWN, CONF_TODO_LISTS, CONF_ACTIVE_OVERRIDE, CONF_TASK_INTERVAL_OVERRIDE, CONF_TODO_OFFSET_OVERRIDE, \
+    CONF_OPTIONS
 
 
-class TaskTrackerOptionsFlow(OptionsFlowWithReload):
+class TaskTrackerOptionsFlow(OptionsFlow):
     async def async_step_init(
             self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
