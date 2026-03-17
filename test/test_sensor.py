@@ -235,6 +235,22 @@ class TestTaskTrackerSensorFilterStateChanges(unittest.TestCase):
         }
         self.assertFalse(sensor._filter_state_changes(event_data))
 
+    def test_returns_true_for_multi_digit_decrease(self):
+        """Numeric comparison must be used — string comparison gives wrong results.
+
+        ``"5" < "10"`` is ``False`` lexicographically even though 5 < 10 as integers.
+        If only string comparison is used this test would fail.
+        """
+        sensor = make_sensor(todo_lists=["todo.my_list"])
+        event_data = self._make_event_data("todo.my_list", "10", "5")
+        self.assertTrue(sensor._filter_state_changes(event_data))
+
+    def test_returns_false_for_non_numeric_state(self):
+        """Non-numeric todo list states (e.g. 'unavailable') should not trigger."""
+        sensor = make_sensor(todo_lists=["todo.my_list"])
+        event_data = self._make_event_data("todo.my_list", "unavailable", "unavailable")
+        self.assertFalse(sensor._filter_state_changes(event_data))
+
 
 class TestTaskTrackerSensorSyncTodoList(unittest.IsolatedAsyncioTestCase):
 

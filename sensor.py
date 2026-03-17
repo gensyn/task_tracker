@@ -74,7 +74,7 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
         self.entry_id = entry_id
         self.entry_name = entry_name
         tags_list = re.split(r'[;, ]+', tags)
-        self.tags: list = [tag.strip() for tag in tags_list if tag]
+        self.tags: list[str] = [tag.strip() for tag in tags_list if tag]
         self.active: bool = active
         self.icon: str = icon
         self.due_date: date = date(1970, 1, 1)
@@ -150,44 +150,59 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
 
         await self.async_update()
 
-    async def async_update(self) -> None:
-        self._attr_native_value = CONST_DONE
-
-        effective_active = self.active
+    def _resolve_active_override(self) -> bool:
+        """Return the effective ``active`` value after applying any override entity."""
         if self.active_override:
             override_state = self.hass.states.get(self.active_override)
             if override_state is not None and override_state.state not in ("unavailable", "unknown"):
-                effective_active = override_state.state == "on"
+                return override_state.state == "on"
+        return self.active
 
-        effective_task_interval_value = self.task_interval_value
-        effective_task_interval_type = self.task_interval_type
+    def _resolve_task_interval_override(self) -> tuple[int, str]:
+        """Return the effective (interval_value, interval_type) after applying any override entity.
+
+        When an override entity is active the interval type is always ``CONF_DAY``; the
+        override represents a number of days regardless of the configured interval type.
+        """
         if self.task_interval_override:
             override_state = self.hass.states.get(self.task_interval_override)
             if override_state is not None and override_state.state not in ("unavailable", "unknown"):
                 try:
-                    effective_task_interval_value = max(1, int(float(override_state.state)))
-                    effective_task_interval_type = CONF_DAY
+                    return max(1, int(float(override_state.state))), CONF_DAY
                 except (ValueError, TypeError):
                     pass
+        return self.task_interval_value, self.task_interval_type
 
-        effective_todo_offset_days = self.todo_offset_days
+    def _resolve_todo_offset_override(self) -> int:
+        """Return the effective todo offset (days) after applying any override entity."""
         if self.todo_offset_override:
             override_state = self.hass.states.get(self.todo_offset_override)
             if override_state is not None and override_state.state not in ("unavailable", "unknown"):
                 try:
-                    effective_todo_offset_days = max(0, int(float(override_state.state)))
+                    return max(0, int(float(override_state.state)))
                 except (ValueError, TypeError):
                     pass
+        return self.todo_offset_days
 
-        if effective_task_interval_type == CONF_WEEK:
-            self.due_date = self.coordinator.last_done + relativedelta(weeks=effective_task_interval_value)
-        elif effective_task_interval_type == CONF_MONTH:
-            self.due_date = self.coordinator.last_done + relativedelta(months=effective_task_interval_value)
-        elif effective_task_interval_type == CONF_YEAR:
-            self.due_date = self.coordinator.last_done + relativedelta(years=effective_task_interval_value)
-        else:
-            self.due_date = self.coordinator.last_done + relativedelta(days=effective_task_interval_value)
+    def _calculate_due_date(self, interval_value: int, interval_type: str) -> date:
+        """Return the due date computed from *last_done* and the given interval."""
+        if interval_type == CONF_WEEK:
+            return self.coordinator.last_done + relativedelta(weeks=interval_value)
+        if interval_type == CONF_MONTH:
+            return self.coordinator.last_done + relativedelta(months=interval_value)
+        if interval_type == CONF_YEAR:
+            return self.coordinator.last_done + relativedelta(years=interval_value)
+        return self.coordinator.last_done + relativedelta(days=interval_value)
 
+    async def async_update(self) -> None:
+        """Recalculate state, attributes, and sync all configured todo lists."""
+        self._attr_native_value = CONST_DONE
+
+        effective_active = self._resolve_active_override()
+        effective_task_interval_value, effective_task_interval_type = self._resolve_task_interval_override()
+        effective_todo_offset_days = self._resolve_todo_offset_override()
+
+        self.due_date = self._calculate_due_date(effective_task_interval_value, effective_task_interval_type)
         self.due_in: int = (self.due_date - date.today()).days if self.due_date > date.today() else 0
         overdue_by: int = (date.today() - self.due_date).days if self.due_date < date.today() else 0
 
@@ -218,9 +233,22 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
     @callback
     def _filter_state_changes(self, event_data: EventStateChangedData) -> bool:
         """Listen only for events regarding todo list entities of our task.
-        Also filter out events where the number of open items did not decrease."""
-        return event_data["entity_id"] in self.todo_lists and event_data.get("old_state") and event_data.get(
-            "new_state") and event_data["new_state"].state < event_data["old_state"].state
+
+        Also filter out events where the number of open items did not decrease.
+        Todo list states are integer strings (e.g. "5"), so an explicit int()
+        conversion is required — pure string comparison gives wrong results for
+        multi-digit counts (e.g. ``"5" < "10"`` is ``False`` lexicographically).
+        """
+        if event_data["entity_id"] not in self.todo_lists:
+            return False
+        old_state = event_data.get("old_state")
+        new_state = event_data.get("new_state")
+        if not old_state or not new_state:
+            return False
+        try:
+            return int(new_state.state) < int(old_state.state)
+        except (ValueError, TypeError):
+            return False
 
     @callback
     def _filter_override_changes(self, event_data: EventStateChangedData) -> bool:
@@ -230,6 +258,11 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
         return event_data["entity_id"] in override_entities
 
     async def async_todo_list_changed(self, event: Any) -> None:
+        """Handle a todo list state-change event.
+
+        Cancels any previously scheduled deferred update, then waits 5 seconds
+        before acting — giving the user a chance to undo an accidental completion.
+        """
         if self.mark_as_done_scheduled:
             self.mark_as_done_scheduled()
         # allow 5 seconds for the user to change their mind - it might have been a misclick
@@ -240,6 +273,7 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
         )
 
     async def async_todo_list_changed_deferred(self, event: Any, _) -> None:
+        """Mark task as done if the todo item was completed within the last 5 minutes."""
         todo_list = event.data[CONF_ENTITY_ID]
         existing_item = await self.async_get_item_from_todo_list(todo_list)
         if existing_item is None:
@@ -247,12 +281,21 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
             return
         completed_string = existing_item.get("completed")
         if completed_string:
-            completed = datetime.strptime(completed_string, "%Y-%m-%dT%H:%M:%S.%f%z")
+            try:
+                completed = datetime.strptime(completed_string, "%Y-%m-%dT%H:%M:%S.%f%z")
+            except ValueError:
+                LOGGER.warning(
+                    "Could not parse completed timestamp %r for task %s; skipping mark-as-done",
+                    completed_string,
+                    self.entry_name,
+                )
+                return
             if datetime.now(UTC) - completed < timedelta(minutes=5):
                 # the item was marked as done, so we need to update our last_done date
                 await self.async_mark_as_done()
 
     async def async_sync_todo_list(self, todo_list: str) -> None:
+        """Add, update, or remove this task's item in *todo_list* as appropriate."""
         existing_item: dict | None = await self.async_get_item_from_todo_list(todo_list)
 
         if self._effective_active and self.due_in <= self._effective_todo_offset_days:
@@ -261,19 +304,16 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
                 # The item does not exist, so we need to add it
                 await self.async_add_item_to_todo_list(todo_list)
                 return
-            else:
-                # the item exists but the status and due date might be wrong
-                # even if the current status and due date are correct, it is easiest to just update the item
-                await self.async_update_item_in_todo_list(todo_list)
+            # the item exists but the status and due date might be wrong
+            # even if the current status and due date are correct, it is easiest to just update the item
+            await self.async_update_item_in_todo_list(todo_list)
         else:
             # there is NOT supposed to be an item in the todo list
             if existing_item is None:
                 # The item does not exist, so no action is needed
                 return
-            else:
-                # The item exists, so we need to remove it
-                await self.async_remove_item_from_todo_list(todo_list)
-                return
+            # The item exists, so we need to remove it
+            await self.async_remove_item_from_todo_list(todo_list)
 
     async def async_add_item_to_todo_list(self, todo_list: str) -> None:
         """Add the item to the todo list."""
