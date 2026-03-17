@@ -27,4 +27,4 @@ jobs:
 
     - name: Analysing the code with pylint
       run: |
-        pylint --fail-under=9 --max-line-length=120 --disable=import-error,wrong-import-position,wrong-import-order,too-many-instance-attributes,too-many-locals,too-many-arguments,too-few-public-methods --ignore-paths=^test/.*$ $(git ls-files '*.py')
+        pylint --fail-under=9 --max-line-length=120 --disable=import-error,wrong-import-position,wrong-import-order,too-many-instance-attributes,too-many-locals,too-many-arguments,too-few-public-methods --ignore-paths=^tests/.*$ $(git ls-files '*.py')
