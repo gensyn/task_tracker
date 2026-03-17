@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, MagicMock
 absolute_mock_path = str(Path(__file__).parent / "homeassistant_mock")
 sys.path.insert(0, absolute_mock_path)
 
-absolute_plugin_path = str(Path(__file__).parent.parent.parent.absolute())
+absolute_plugin_path = str(Path(__file__).parent.parent.parent.parent.absolute())
 sys.path.insert(0, absolute_plugin_path)
 
 from homeassistant.config_entries import ConfigEntry

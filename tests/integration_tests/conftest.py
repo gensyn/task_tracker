@@ -18,7 +18,7 @@ import pytest
 # ---------------------------------------------------------------------------
 
 # The repo root IS the component package (content_in_root: true).
-REPO_ROOT = Path(__file__).parent.parent  # …/task_tracker/task_tracker/
+REPO_ROOT = Path(__file__).parent.parent.parent  # …/task_tracker/task_tracker/
 
 # Make the repo root importable so Python can see it as a top-level package.
 _REPO_PARENT = str(REPO_ROOT.parent)
