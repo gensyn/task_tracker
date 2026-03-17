@@ -1,7 +1,7 @@
 """Constants for the Task Tracker integration."""
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
-from homeassistant.const import CONF_NAME, CONF_ENTITY_ID, CONF_ICON, CONF_OPTIONS, CONF_MODE
+from homeassistant.const import CONF_NAME, CONF_ENTITY_ID, CONF_OPTIONS, CONF_MODE
 from homeassistant.helpers.selector import selector
 
 DOMAIN = "task_tracker"
