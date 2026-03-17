@@ -23,7 +23,7 @@ async def async_setup_entry(
         entry: ConfigEntry,
         async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up sensor platform from a config entry."""
+    """Set up button platform from a config entry."""
     async_add_entities([TaskTrackerButton(entry.data[CONF_NAME], entry.entry_id, hass)])
 
 
@@ -50,4 +50,3 @@ class TaskTrackerButton(ButtonEntity):
     async def async_press(self) -> None:
         coordinator: TaskTrackerCoordinator = self.hass.data[DOMAIN][self._entry_id]
         await coordinator.async_mark_as_done()
-
