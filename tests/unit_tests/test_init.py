@@ -15,7 +15,8 @@ from homeassistant.const import CONF_ICON
 from task_tracker import async_migrate_entry, _get_coordinator
 from task_tracker.const import (
     CONF_ACTIVE, CONF_TASK_INTERVAL_VALUE, CONF_TASK_INTERVAL_TYPE,
-    CONF_TAGS, CONF_TODO_LISTS, CONF_TODO_OFFSET_DAYS, CONF_NOTIFICATION_INTERVAL, CONF_DAY,
+    CONF_TAGS, CONF_TODO_LISTS, CONF_DUE_SOON_DAYS, CONF_DUE_SOON_OVERRIDE,
+    CONF_NOTIFICATION_INTERVAL, CONF_DAY,
     DOMAIN,
 )
 from task_tracker.coordinator import TaskTrackerCoordinator
@@ -41,7 +42,9 @@ class TestAsyncMigrateEntry(unittest.IsolatedAsyncioTestCase):
         result = await async_migrate_entry(mock_hass, entry)
 
         self.assertTrue(result)
-        mock_hass.config_entries.async_update_entry.assert_called_once()
+        # Mock doesn't mutate entry, so only the first migration step (1.1→1.2) runs.
+        # The 1.2→1.3 step is covered by test_migrates_version_1_2_to_1_3.
+        self.assertEqual(mock_hass.config_entries.async_update_entry.call_count, 1)
         call_kwargs = mock_hass.config_entries.async_update_entry.call_args[1]
         self.assertEqual(call_kwargs["version"], 1)
         self.assertEqual(call_kwargs["minor_version"], 2)
@@ -52,11 +55,67 @@ class TestAsyncMigrateEntry(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(new_options[CONF_ICON], "mdi:calendar")
         self.assertEqual(new_options[CONF_TAGS], "user1")
         self.assertEqual(new_options[CONF_TODO_LISTS], [])
-        self.assertEqual(new_options[CONF_TODO_OFFSET_DAYS], 0)
+        self.assertEqual(new_options["todo_offset_days"], 0)
         self.assertEqual(new_options[CONF_NOTIFICATION_INTERVAL], 2)
 
+    async def test_migrates_version_1_2_to_1_3(self):
+        entry = ConfigEntry(
+            entry_id="test",
+            version=1,
+            minor_version=2,
+            options={
+                CONF_ACTIVE: True,
+                CONF_TASK_INTERVAL_VALUE: 7,
+                CONF_TASK_INTERVAL_TYPE: CONF_DAY,
+                "todo_offset_days": 3,
+                "todo_offset_override": "input_number.my_offset",
+                CONF_TODO_LISTS: [],
+                CONF_NOTIFICATION_INTERVAL: 1,
+            },
+        )
+
+        mock_hass = MagicMock()
+
+        result = await async_migrate_entry(mock_hass, entry)
+
+        self.assertTrue(result)
+        mock_hass.config_entries.async_update_entry.assert_called_once()
+        call_kwargs = mock_hass.config_entries.async_update_entry.call_args[1]
+        self.assertEqual(call_kwargs["version"], 1)
+        self.assertEqual(call_kwargs["minor_version"], 3)
+        new_options = call_kwargs["options"]
+        self.assertEqual(new_options[CONF_DUE_SOON_DAYS], 3)
+        self.assertEqual(new_options[CONF_DUE_SOON_OVERRIDE], "input_number.my_offset")
+        self.assertNotIn("todo_offset_days", new_options)
+        self.assertNotIn("todo_offset_override", new_options)
+
+    async def test_migrates_version_1_2_to_1_3_without_override(self):
+        entry = ConfigEntry(
+            entry_id="test",
+            version=1,
+            minor_version=2,
+            options={
+                CONF_ACTIVE: True,
+                CONF_TASK_INTERVAL_VALUE: 7,
+                CONF_TASK_INTERVAL_TYPE: CONF_DAY,
+                "todo_offset_days": 0,
+                CONF_TODO_LISTS: [],
+                CONF_NOTIFICATION_INTERVAL: 1,
+            },
+        )
+
+        mock_hass = MagicMock()
+
+        result = await async_migrate_entry(mock_hass, entry)
+
+        self.assertTrue(result)
+        call_kwargs = mock_hass.config_entries.async_update_entry.call_args[1]
+        new_options = call_kwargs["options"]
+        self.assertEqual(new_options[CONF_DUE_SOON_DAYS], 0)
+        self.assertIsNone(new_options[CONF_DUE_SOON_OVERRIDE])
+
     async def test_returns_true_for_current_version(self):
-        entry = ConfigEntry(version=1, minor_version=2)
+        entry = ConfigEntry(version=1, minor_version=3)
         mock_hass = MagicMock()
         result = await async_migrate_entry(mock_hass, entry)
         self.assertTrue(result)
@@ -68,7 +127,7 @@ class TestAsyncMigrateEntry(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(result)
 
     async def test_returns_false_for_future_minor_version(self):
-        entry = ConfigEntry(version=1, minor_version=3)
+        entry = ConfigEntry(version=1, minor_version=4)
         mock_hass = MagicMock()
         result = await async_migrate_entry(mock_hass, entry)
         self.assertFalse(result)

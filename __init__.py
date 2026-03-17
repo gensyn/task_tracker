@@ -14,7 +14,7 @@ from homeassistant.helpers.event import async_track_time_change
 from homeassistant.helpers.typing import ConfigType
 
 from .const import DOMAIN, CONF_TASK_INTERVAL_VALUE, CONF_DAY, CONF_TASK_INTERVAL_TYPE, CONF_NOTIFICATION_INTERVAL, \
-    CONF_TODO_OFFSET_DAYS, CONF_TAGS, CONF_ACTIVE, CONF_TODO_LISTS, SERVICE_MARK_AS_DONE, \
+    CONF_DUE_SOON_DAYS, CONF_DUE_SOON_OVERRIDE, CONF_TAGS, CONF_ACTIVE, CONF_TODO_LISTS, SERVICE_MARK_AS_DONE, \
     SERVICE_MARK_AS_DONE_SCHEMA, SERVICE_SET_LAST_DONE_DATE, SERVICE_SET_LAST_DONE_DATE_SCHEMA, CONF_DATE, \
     CONF_SHOW_PANEL
 from .coordinator import TaskTrackerCoordinator
@@ -136,14 +136,12 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Migrate old config entry."""
 
-    if entry.version > 1 or entry.minor_version > 2:
+    if entry.version > 1 or entry.minor_version > 3:
         # This means the user has downgraded from a later version
         return False
 
     if entry.version == 1 and entry.minor_version == 1:
         # 1.1 Migrate config_entry to changed options structure
-        new_version = 1
-        new_minor_version = 2
         new_options = {
             CONF_ACTIVE: True,
             CONF_TASK_INTERVAL_VALUE: entry.options["task_frequency"],
@@ -151,14 +149,29 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             CONF_ICON: entry.options[CONF_ICON],
             CONF_TAGS: entry.options["assignees"],
             CONF_TODO_LISTS: [],
-            CONF_TODO_OFFSET_DAYS: 0,
+            "todo_offset_days": 0,
             CONF_NOTIFICATION_INTERVAL: entry.options["notification_frequency"],
         }
 
         hass.config_entries.async_update_entry(
             entry,
             options=new_options,
-            version=new_version,
-            minor_version=new_minor_version,
+            version=1,
+            minor_version=2,
         )
+
+    if entry.version == 1 and entry.minor_version == 2:
+        # 1.2 Rename todo_offset_days -> due_soon_days and todo_offset_override -> due_soon_override
+        new_options = dict(entry.options)
+        new_options[CONF_DUE_SOON_DAYS] = new_options.pop("todo_offset_days", 0)
+        due_soon_override = new_options.pop("todo_offset_override", None)
+        new_options[CONF_DUE_SOON_OVERRIDE] = due_soon_override
+
+        hass.config_entries.async_update_entry(
+            entry,
+            options=new_options,
+            version=1,
+            minor_version=3,
+        )
+
     return True
