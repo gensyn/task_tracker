@@ -1,0 +1,126 @@
+name: Playwright E2E Tests
+
+on:
+  push:
+    branches:
+      - main
+      - "copilot/**"
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  playwright:
+    name: Playwright E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+
+    services:
+      homeassistant:
+        image: ghcr.io/home-assistant/home-assistant:stable
+        ports:
+          - "8123:8123"
+        options: >-
+          --privileged
+          --health-cmd "curl -sf http://localhost:8123/api/ || exit 1"
+          --health-interval 15s
+          --health-timeout 10s
+          --health-retries 10
+          --health-start-period 90s
+        volumes:
+          - /tmp/ha-config:/config
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r tests/playwright/requirements.txt
+
+      - name: Install Playwright browsers
+        run: playwright install --with-deps chromium
+
+      - name: Prepare HA configuration directory
+        run: |
+          mkdir -p /tmp/ha-config/custom_components
+          # Link the component into custom_components so HA can discover it
+          ln -s "$GITHUB_WORKSPACE" /tmp/ha-config/custom_components/task_tracker
+          # Minimal configuration.yaml that enables the component and creates a token
+          cat > /tmp/ha-config/configuration.yaml <<'EOF'
+          homeassistant:
+            name: "Test Home"
+          task_tracker:
+          EOF
+
+      - name: Wait for Home Assistant to be ready
+        run: |
+          echo "Waiting for Home Assistant..."
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:8123/api/ >/dev/null 2>&1; then
+              echo "Home Assistant is ready"
+              break
+            fi
+            echo "  attempt $i/30 – sleeping 5s"
+            sleep 5
+          done
+
+      - name: Onboard Home Assistant and obtain a token
+        run: |
+          # Perform the onboarding flow to get a long-lived access token
+          python - <<'PYEOF'
+          import requests, json, os, sys
+
+          BASE = "http://localhost:8123"
+          # Step 1: start onboarding
+          r = requests.post(f"{BASE}/api/onboarding/users", json={
+              "client_id": f"{BASE}/",
+              "name": "Test Admin",
+              "username": "admin",
+              "password": "testpassword",
+              "language": "en",
+          })
+          if r.status_code not in (200, 201):
+              print(f"Onboarding failed: {r.status_code} {r.text}", file=sys.stderr)
+              sys.exit(1)
+          auth = r.json()
+          access_token = auth.get("access_token", "")
+
+          # Step 2: generate a long-lived access token
+          headers = {"Authorization": f"Bearer {access_token}"}
+          r2 = requests.post(
+              f"{BASE}/auth/long_lived_access_token",
+              headers=headers,
+              json={"client_name": "playwright-ci"},
+          )
+          if r2.status_code not in (200, 201):
+              # Fallback: use the short-lived token directly
+              token = access_token
+          else:
+              token = r2.json().get("access_token", access_token)
+
+          with open(os.environ.get("GITHUB_ENV", "/dev/null"), "a") as f:
+              f.write(f"HA_TOKEN={token}\n")
+          print("Token obtained successfully")
+          PYEOF
+
+      - name: Run Playwright tests
+        env:
+          HOMEASSISTANT_URL: "http://localhost:8123"
+          HA_TOKEN: ${{ env.HA_TOKEN }}
+        run: |
+          pytest tests/playwright/ -v --tb=short
+
+      - name: Upload Playwright traces on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces
+          path: test-results/
+          retention-days: 7
