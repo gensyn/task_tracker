@@ -1,0 +1,5 @@
+playwright>=1.40.0
+pytest>=7.4.0
+pytest-playwright>=0.4.4
+pytest-asyncio>=0.23.0
+requests>=2.31.0
