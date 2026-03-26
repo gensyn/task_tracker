@@ -243,9 +243,13 @@ def _add_integration(
 ) -> dict:
     """Add a Task Tracker config entry via the config flow.
 
-    Returns the completed flow response dict (``type == "create_entry"``).
+    Returns the completed flow response dict (``type == "create_entry"``) with
+    an ``entry_id`` key guaranteed to be present.
     Raises if the flow does not complete successfully.
     """
+    # Snapshot entry IDs before creating so we can diff afterwards if needed
+    entries_before = _get_task_tracker_entry_ids(ha_api)
+
     # Step 1: Start the config flow
     flow_resp = ha_api.post(
         f"{HA_URL}/api/config/config_entries/flow",
@@ -272,6 +276,20 @@ def _add_integration(
     assert result.get("type") == "create_entry", (
         f"Expected flow to complete with 'create_entry', got: {result.get('type')!r}"
     )
+
+    # Resolve entry_id: the HA API may return it at different locations
+    # depending on the HA version.  We try the most common locations first,
+    # then fall back to diffing the config-entry list.
+    if "entry_id" not in result:
+        nested = result.get("result")
+        if isinstance(nested, dict) and "entry_id" in nested:
+            result["entry_id"] = nested["entry_id"]
+        else:
+            entries_after = _get_task_tracker_entry_ids(ha_api)
+            new_entries = entries_after - entries_before
+            assert new_entries, "Config flow claimed success but no new entry_id found"
+            result["entry_id"] = next(iter(new_entries))
+
     return result
 
 
