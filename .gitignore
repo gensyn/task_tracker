@@ -3,3 +3,4 @@ __pycache__/
 htmlcov/
 .coverage
 custom_components/
+playwright-results/

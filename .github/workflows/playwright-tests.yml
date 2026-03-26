@@ -1,0 +1,34 @@
+name: Playwright E2E Tests
+
+on:
+  workflow_dispatch:
+
+jobs:
+  playwright-e2e:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker images
+        run: docker compose build
+
+      - name: Run Playwright E2E tests
+        # `docker compose run` starts the declared dependencies (homeassistant)
+        # and then runs the playwright-tests container.
+        # The exit code of the run command mirrors the test container's exit code.
+        run: docker compose run --rm playwright-tests
+
+      - name: Stop services
+        if: always()
+        run: docker compose down -v
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-e2e-results
+          path: playwright-results/
+          if-no-files-found: ignore
