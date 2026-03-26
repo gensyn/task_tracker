@@ -7,8 +7,8 @@ from homeassistant.const import CONF_ICON, CONF_MODE
 from homeassistant.helpers.selector import selector
 
 from .const import CONF_TASK_INTERVAL_VALUE, CONF_NOTIFICATION_INTERVAL, CONF_TAGS, CONF_ACTIVE, \
-    CONF_TASK_INTERVAL_TYPE, CONF_TODO_OFFSET_DAYS, CONF_SELECT, CONF_DAY, CONF_WEEK, CONF_MONTH, CONF_YEAR, \
-    CONF_DROPDOWN, CONF_TODO_LISTS, CONF_ACTIVE_OVERRIDE, CONF_TASK_INTERVAL_OVERRIDE, CONF_TODO_OFFSET_OVERRIDE, \
+    CONF_TASK_INTERVAL_TYPE, CONF_DUE_SOON_DAYS, CONF_SELECT, CONF_DAY, CONF_WEEK, CONF_MONTH, CONF_YEAR, \
+    CONF_DROPDOWN, CONF_TODO_LISTS, CONF_ACTIVE_OVERRIDE, CONF_TASK_INTERVAL_OVERRIDE, CONF_DUE_SOON_OVERRIDE, \
     CONF_OPTIONS
 
 _STEP_INIT_SCHEMA = vol.Schema(
@@ -40,8 +40,8 @@ _STEP_INIT_SCHEMA = vol.Schema(
                 "multiple": True,
             }
         }),
-        vol.Optional(CONF_TODO_OFFSET_DAYS, default=0): int,
-        vol.Optional(CONF_TODO_OFFSET_OVERRIDE): selector({
+        vol.Optional(CONF_DUE_SOON_DAYS, default=0): int,
+        vol.Optional(CONF_DUE_SOON_OVERRIDE): selector({
             "entity": {
                 "domain": "input_number",
             }
@@ -94,8 +94,8 @@ async def validate_options(user_input: dict[str, Any]) -> dict[str, Any]:
     if user_input.get(CONF_TODO_LISTS) is None:
         user_input[CONF_TODO_LISTS] = []
 
-    if user_input.get(CONF_TODO_OFFSET_DAYS) is None:
-        user_input[CONF_TODO_OFFSET_DAYS] = 0
+    if user_input.get(CONF_DUE_SOON_DAYS) is None:
+        user_input[CONF_DUE_SOON_DAYS] = 0
 
     if user_input.get(CONF_NOTIFICATION_INTERVAL, 0) < 1:
         user_input[CONF_NOTIFICATION_INTERVAL] = 1
@@ -109,7 +109,7 @@ async def validate_options(user_input: dict[str, Any]) -> dict[str, Any]:
         CONF_ICON: user_input[CONF_ICON],
         CONF_TAGS: user_input[CONF_TAGS],
         CONF_TODO_LISTS: user_input[CONF_TODO_LISTS],
-        CONF_TODO_OFFSET_DAYS: user_input[CONF_TODO_OFFSET_DAYS],
-        CONF_TODO_OFFSET_OVERRIDE: user_input.get(CONF_TODO_OFFSET_OVERRIDE) or None,
+        CONF_DUE_SOON_DAYS: user_input[CONF_DUE_SOON_DAYS],
+        CONF_DUE_SOON_OVERRIDE: user_input.get(CONF_DUE_SOON_OVERRIDE) or None,
         CONF_NOTIFICATION_INTERVAL: user_input[CONF_NOTIFICATION_INTERVAL],
     }

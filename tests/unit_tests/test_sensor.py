@@ -14,7 +14,7 @@ from task_tracker.coordinator import TaskTrackerCoordinator
 from task_tracker.sensor import TaskTrackerSensor
 from task_tracker.const import (
     CONF_DAY, CONF_WEEK, CONF_MONTH, CONF_YEAR,
-    CONST_DUE, CONST_DONE, CONST_INACTIVE,
+    CONST_DUE, CONST_DUE_SOON, CONST_DONE, CONST_INACTIVE,
 )
 
 
@@ -24,7 +24,7 @@ def make_sensor(
     task_interval_type=CONF_DAY,
     notification_interval=1,
     todo_lists=None,
-    todo_offset_days=0,
+    due_soon_days=0,
     tags="",
     active=True,
     icon="mdi:calendar",
@@ -32,7 +32,7 @@ def make_sensor(
     hass=None,
     active_override=None,
     task_interval_override=None,
-    todo_offset_override=None,
+    due_soon_override=None,
     coordinator=None,
 ):
     if hass is None:
@@ -48,7 +48,7 @@ def make_sensor(
         task_interval_type=task_interval_type,
         notification_interval=notification_interval,
         todo_lists=todo_lists if todo_lists is not None else [],
-        todo_offset_days=todo_offset_days,
+        due_soon_days=due_soon_days,
         tags=tags,
         active=active,
         icon=icon,
@@ -56,7 +56,7 @@ def make_sensor(
         hass=hass,
         active_override=active_override,
         task_interval_override=task_interval_override,
-        todo_offset_override=todo_offset_override,
+        due_soon_override=due_soon_override,
     )
 
 
@@ -120,7 +120,33 @@ class TestTaskTrackerSensorUpdate(unittest.IsolatedAsyncioTestCase):
         await self._run_update(sensor)
         self.assertEqual(sensor._attr_native_value, CONST_DUE)
 
-    async def test_status_inactive_when_not_active(self):
+    async def test_status_due_soon_when_within_threshold(self):
+        sensor = make_sensor(task_interval_value=10, due_soon_days=3)
+        sensor.coordinator.last_done = date.today()
+        await self._run_update(sensor)
+        # due_in will be 10, which is > 3, so state should be DONE
+        self.assertEqual(sensor._attr_native_value, CONST_DONE)
+
+    async def test_status_due_soon_within_days(self):
+        from datetime import timedelta
+        sensor = make_sensor(task_interval_value=7, due_soon_days=5)
+        # Set last_done so that due_date is 3 days from now (within 5 day threshold)
+        sensor.coordinator.last_done = date.today() - timedelta(days=4)
+        await self._run_update(sensor)
+        self.assertEqual(sensor._attr_native_value, CONST_DUE_SOON)
+
+    async def test_status_not_due_soon_when_threshold_is_zero(self):
+        from datetime import timedelta
+        sensor = make_sensor(task_interval_value=7, due_soon_days=0)
+        sensor.coordinator.last_done = date.today() - timedelta(days=4)
+        await self._run_update(sensor)
+        self.assertEqual(sensor._attr_native_value, CONST_DONE)
+
+    async def test_status_due_overrides_due_soon(self):
+        sensor = make_sensor(task_interval_value=7, due_soon_days=5)
+        sensor.coordinator.last_done = date(1970, 1, 1)
+        await self._run_update(sensor)
+        self.assertEqual(sensor._attr_native_value, CONST_DUE)
         sensor = make_sensor(active=False, task_interval_value=7)
         sensor.coordinator.last_done = date(1970, 1, 1)
         await self._run_update(sensor)
@@ -255,7 +281,7 @@ class TestTaskTrackerSensorFilterStateChanges(unittest.TestCase):
 class TestTaskTrackerSensorSyncTodoList(unittest.IsolatedAsyncioTestCase):
 
     async def test_adds_item_when_due_and_not_exists(self):
-        sensor = make_sensor(task_interval_value=7, todo_offset_days=0)
+        sensor = make_sensor(task_interval_value=7, due_soon_days=0)
         sensor.coordinator.last_done = date(1970, 1, 1)
         sensor.due_in = 0
         sensor.due_date = date(1970, 1, 8)
@@ -265,7 +291,7 @@ class TestTaskTrackerSensorSyncTodoList(unittest.IsolatedAsyncioTestCase):
         mock_add.assert_called_once_with("todo.list1")
 
     async def test_updates_item_when_due_and_exists(self):
-        sensor = make_sensor(task_interval_value=7, todo_offset_days=0)
+        sensor = make_sensor(task_interval_value=7, due_soon_days=0)
         sensor.due_in = 0
         sensor.due_date = date(1970, 1, 8)
         existing = {"summary": "Test Task", "status": "needs_action"}
@@ -275,7 +301,7 @@ class TestTaskTrackerSensorSyncTodoList(unittest.IsolatedAsyncioTestCase):
         mock_update.assert_called_once_with("todo.list1")
 
     async def test_removes_item_when_not_due_and_exists(self):
-        sensor = make_sensor(task_interval_value=7, todo_offset_days=0)
+        sensor = make_sensor(task_interval_value=7, due_soon_days=0)
         sensor.due_in = 10
         sensor.due_date = date.today()
         existing = {"summary": "Test Task", "status": "needs_action"}
@@ -285,7 +311,7 @@ class TestTaskTrackerSensorSyncTodoList(unittest.IsolatedAsyncioTestCase):
         mock_remove.assert_called_once_with("todo.list1")
 
     async def test_no_action_when_not_due_and_not_exists(self):
-        sensor = make_sensor(task_interval_value=7, todo_offset_days=0)
+        sensor = make_sensor(task_interval_value=7, due_soon_days=0)
         sensor.due_in = 10
         sensor.due_date = date.today()
         with patch.object(sensor, "async_get_item_from_todo_list", new_callable=AsyncMock, return_value=None):
@@ -296,7 +322,7 @@ class TestTaskTrackerSensorSyncTodoList(unittest.IsolatedAsyncioTestCase):
         mock_remove.assert_not_called()
 
     async def test_no_action_when_inactive_and_not_exists(self):
-        sensor = make_sensor(active=False, task_interval_value=7, todo_offset_days=0)
+        sensor = make_sensor(active=False, task_interval_value=7, due_soon_days=0)
         sensor.due_in = 0
         with patch.object(sensor, "async_get_item_from_todo_list", new_callable=AsyncMock, return_value=None):
             with patch.object(sensor, "async_add_item_to_todo_list", new_callable=AsyncMock) as mock_add:
@@ -304,7 +330,7 @@ class TestTaskTrackerSensorSyncTodoList(unittest.IsolatedAsyncioTestCase):
         mock_add.assert_not_called()
 
     async def test_removes_item_when_inactive_and_exists(self):
-        sensor = make_sensor(active=False, task_interval_value=7, todo_offset_days=0)
+        sensor = make_sensor(active=False, task_interval_value=7, due_soon_days=0)
         sensor.due_in = 0
         existing = {"summary": "Test Task"}
         with patch.object(sensor, "async_get_item_from_todo_list", new_callable=AsyncMock, return_value=existing):
@@ -454,42 +480,42 @@ class TestTaskTrackerSensorTaskIntervalOverride(unittest.IsolatedAsyncioTestCase
         self.assertEqual(sensor.due_date, date(2024, 1, 8))
 
 
-class TestTaskTrackerSensorTodoOffsetOverride(unittest.IsolatedAsyncioTestCase):
+class TestTaskTrackerSensorDueSoonOverride(unittest.IsolatedAsyncioTestCase):
 
     async def _run_update(self, sensor):
         with patch.object(sensor, "async_write_ha_state"):
             with patch.object(sensor, "async_sync_todo_list", new_callable=AsyncMock):
                 await sensor.async_update()
 
-    async def test_todo_offset_override_changes_attributes(self):
+    async def test_due_soon_override_changes_attributes(self):
         hass = MagicMock()
         override_state = MagicMock()
         override_state.state = "5"
         hass.states.get.return_value = override_state
-        sensor = make_sensor(todo_offset_days=0,
-                             todo_offset_override="input_number.my_offset")
+        sensor = make_sensor(due_soon_days=0,
+                             due_soon_override="input_number.my_offset")
         sensor.hass = hass
         sensor.coordinator.last_done = date.today()
         await self._run_update(sensor)
-        self.assertEqual(sensor._attr_extra_state_attributes["todo_offset_days"], 5)
+        self.assertEqual(sensor._attr_extra_state_attributes["due_soon_days"], 5)
 
-    async def test_todo_offset_override_unavailable_falls_back_to_config(self):
+    async def test_due_soon_override_unavailable_falls_back_to_config(self):
         hass = MagicMock()
         override_state = MagicMock()
         override_state.state = "unavailable"
         hass.states.get.return_value = override_state
-        sensor = make_sensor(todo_offset_days=3,
-                             todo_offset_override="input_number.my_offset")
+        sensor = make_sensor(due_soon_days=3,
+                             due_soon_override="input_number.my_offset")
         sensor.hass = hass
         sensor.coordinator.last_done = date.today()
         await self._run_update(sensor)
-        self.assertEqual(sensor._attr_extra_state_attributes["todo_offset_days"], 3)
+        self.assertEqual(sensor._attr_extra_state_attributes["due_soon_days"], 3)
 
-    async def test_todo_offset_override_none_does_not_override(self):
-        sensor = make_sensor(todo_offset_days=3, todo_offset_override=None)
+    async def test_due_soon_override_none_does_not_override(self):
+        sensor = make_sensor(due_soon_days=3, due_soon_override=None)
         sensor.coordinator.last_done = date.today()
         await self._run_update(sensor)
-        self.assertEqual(sensor._attr_extra_state_attributes["todo_offset_days"], 3)
+        self.assertEqual(sensor._attr_extra_state_attributes["due_soon_days"], 3)
 
 
 class TestTaskTrackerSensorAddedToHass(unittest.IsolatedAsyncioTestCase):

@@ -12,8 +12,8 @@ from task_tracker.options_flow import validate_options
 from homeassistant.const import CONF_ICON
 from task_tracker.const import (
     CONF_ACTIVE, CONF_TASK_INTERVAL_VALUE, CONF_TASK_INTERVAL_TYPE,
-    CONF_TAGS, CONF_TODO_LISTS, CONF_TODO_OFFSET_DAYS, CONF_NOTIFICATION_INTERVAL, CONF_DAY,
-    CONF_ACTIVE_OVERRIDE, CONF_TASK_INTERVAL_OVERRIDE, CONF_TODO_OFFSET_OVERRIDE,
+    CONF_TAGS, CONF_TODO_LISTS, CONF_DUE_SOON_DAYS, CONF_NOTIFICATION_INTERVAL, CONF_DAY,
+    CONF_ACTIVE_OVERRIDE, CONF_TASK_INTERVAL_OVERRIDE, CONF_DUE_SOON_OVERRIDE,
 )
 
 
@@ -126,15 +126,15 @@ class TestValidateOptions(unittest.IsolatedAsyncioTestCase):
             CONF_TASK_INTERVAL_VALUE: 7,
             CONF_TASK_INTERVAL_TYPE: CONF_DAY,
         })
-        self.assertEqual(result[CONF_TODO_OFFSET_DAYS], 0)
+        self.assertEqual(result[CONF_DUE_SOON_DAYS], 0)
 
     async def test_todo_offset_days_preserved(self):
         result = await validate_options({
             CONF_TASK_INTERVAL_VALUE: 7,
             CONF_TASK_INTERVAL_TYPE: CONF_DAY,
-            CONF_TODO_OFFSET_DAYS: 3,
+            CONF_DUE_SOON_DAYS: 3,
         })
-        self.assertEqual(result[CONF_TODO_OFFSET_DAYS], 3)
+        self.assertEqual(result[CONF_DUE_SOON_DAYS], 3)
 
     async def test_notification_interval_minimum_is_one(self):
         result = await validate_options({
@@ -168,7 +168,7 @@ class TestValidateOptions(unittest.IsolatedAsyncioTestCase):
             CONF_ICON: "mdi:clock",
             CONF_TAGS: "tag1, tag2",
             CONF_TODO_LISTS: ["todo.list1"],
-            CONF_TODO_OFFSET_DAYS: 3,
+            CONF_DUE_SOON_DAYS: 3,
             CONF_NOTIFICATION_INTERVAL: 2,
         })
         self.assertFalse(result[CONF_ACTIVE])
@@ -177,7 +177,7 @@ class TestValidateOptions(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result[CONF_ICON], "mdi:clock")
         self.assertEqual(result[CONF_TAGS], "tag1, tag2")
         self.assertEqual(result[CONF_TODO_LISTS], ["todo.list1"])
-        self.assertEqual(result[CONF_TODO_OFFSET_DAYS], 3)
+        self.assertEqual(result[CONF_DUE_SOON_DAYS], 3)
         self.assertEqual(result[CONF_NOTIFICATION_INTERVAL], 2)
 
     async def test_active_override_defaults_to_none(self):
@@ -231,20 +231,20 @@ class TestValidateOptions(unittest.IsolatedAsyncioTestCase):
             CONF_TASK_INTERVAL_VALUE: 7,
             CONF_TASK_INTERVAL_TYPE: CONF_DAY,
         })
-        self.assertIsNone(result[CONF_TODO_OFFSET_OVERRIDE])
+        self.assertIsNone(result[CONF_DUE_SOON_OVERRIDE])
 
     async def test_todo_offset_override_preserved(self):
         result = await validate_options({
             CONF_TASK_INTERVAL_VALUE: 7,
             CONF_TASK_INTERVAL_TYPE: CONF_DAY,
-            CONF_TODO_OFFSET_OVERRIDE: "input_number.my_offset",
+            CONF_DUE_SOON_OVERRIDE: "input_number.my_offset",
         })
-        self.assertEqual(result[CONF_TODO_OFFSET_OVERRIDE], "input_number.my_offset")
+        self.assertEqual(result[CONF_DUE_SOON_OVERRIDE], "input_number.my_offset")
 
     async def test_todo_offset_override_empty_string_becomes_none(self):
         result = await validate_options({
             CONF_TASK_INTERVAL_VALUE: 7,
             CONF_TASK_INTERVAL_TYPE: CONF_DAY,
-            CONF_TODO_OFFSET_OVERRIDE: "",
+            CONF_DUE_SOON_OVERRIDE: "",
         })
-        self.assertIsNone(result[CONF_TODO_OFFSET_OVERRIDE])
+        self.assertIsNone(result[CONF_DUE_SOON_OVERRIDE])
