@@ -47,6 +47,21 @@ class TestFrontend:
         # The page should load within the HA shell
         assert page.url.startswith(HA_URL)
 
+    def test_task_tracker_panel_sort_controls_visible(self, page: Page, ensure_integration: Any) -> None:
+        """The Task Tracker panel renders sort controls for Name and Due date."""
+        page.goto(f"{HA_URL}/task-tracker")
+        page.wait_for_load_state("networkidle")
+        # The panel is a custom element with shadow DOM; verify it is present
+        panel = page.locator("task-tracker-panel")
+        expect(panel).to_be_visible()
+        # Sort buttons are rendered inside the shadow root
+        name_btn = panel.locator("pierce/.sort-btn[data-sort='name']")
+        due_btn = panel.locator("pierce/.sort-btn[data-sort='due_date']")
+        expect(name_btn).to_be_visible()
+        expect(due_btn).to_be_visible()
+        # By default the Name button should be active (Name ↑)
+        expect(name_btn).to_have_class("active")
+
     def test_service_call_via_developer_tools(self, page: Page, ensure_integration: Any) -> None:
         """It should be possible to navigate to the service call UI for task_tracker."""
         page.goto(f"{HA_URL}/developer-tools/service")
