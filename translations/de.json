@@ -152,6 +152,15 @@
             },
             "no_tasks_found": {
                 "name": "Keine Tasks gefunden."
+            },
+            "sort_by": {
+                "name": "Sortieren nach"
+            },
+            "sort_name": {
+                "name": "Name"
+            },
+            "sort_due_date": {
+                "name": "Fälligkeitsdatum"
             }
         }
     },

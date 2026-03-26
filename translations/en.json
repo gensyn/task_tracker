@@ -155,6 +155,15 @@
             },
             "no_tasks_found": {
                 "name": "No tasks found."
+            },
+            "sort_by": {
+                "name": "Sort by"
+            },
+            "sort_name": {
+                "name": "Name"
+            },
+            "sort_due_date": {
+                "name": "Due date"
             }
         }
     },
