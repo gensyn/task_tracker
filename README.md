@@ -77,9 +77,9 @@ Access task settings through the cog icon ⚙️ on the integration page.
 | **Task Interval Override** | Select an `input_number` helper (value in days) to override the Task Interval at runtime |
 | **Material Design Icon** | Choose an icon for the sensor (available as attribute for notifications)                  |
 | **Tags** | Add keywords for filtering in automations/templates (e.g., assignees, notification times) |
-| **Todo Lists** | Select Todo lists for automatic task addition when due                                    |
-| **Todo List Offset** | Add task to lists `n` days before due date                                                |
-| **Todo List Offset Override** | Select an `input_number` helper (value in days) to override the Todo List Offset at runtime |
+| **Todo Lists** | Select Todo lists for automatic task addition when due or due soon                        |
+| **Due Soon** | Number of days before due date when the sensor switches to `due_soon` state and the task is added to todo lists |
+| **Due Soon Override** | Select an `input_number` helper (value in days) to override the Due Soon threshold at runtime |
 | **Notification Interval** | Reference value for automation/template notification timing                               |
 
 > **Note:** Tags and notification intervals require you to implement filtering logic in your own automations.
@@ -102,6 +102,7 @@ entity: sensor.task_tracker_mow_the_lawn
 <table>
 <tr>
 <td><img src="assets/4_due.png" alt="Due card"/><br/><b>Due</b></td>
+<td><b>Due soon</b><br/>(displayed in orange when task is within the Due Soon threshold)</td>
 <td><img src="assets/5_inactive.png" alt="Inactive card"/><br/><b>Inactive</b></td>
 <td><img src="assets/6_done.png" alt="Done card"/><br/><b>Done</b></td>
 </tr>
@@ -121,6 +122,7 @@ The panel shows all tasks in one place with live state filtering:
 |--------|-------|
 | **All** | Every task |
 | **Due** | Tasks that are due or overdue |
+| **Due soon** | Tasks that will be due within the configured Due Soon threshold |
 | **Done** | Tasks completed within their current interval |
 | **Inactive** | Tasks with the *Active* option turned off |
 
@@ -143,7 +145,7 @@ task_tracker:
 
 Task Tracker seamlessly integrates with Home Assistant's Local Todo lists: 
 
-- **Auto-Add**:  Tasks appear `n` days before due (based on todo list offset)
+- **Auto-Add**:  Tasks appear `n` days before due (based on the Due Soon setting)
 - **Auto-Remove**: Completed tasks are removed from todo lists
 - **Bi-directional Sync**:  Completing a todo item marks the task done after 5 seconds (grace period for accidental clicks)
 - **Smart Filtering**:  Inactive tasks won't be added to todo lists
