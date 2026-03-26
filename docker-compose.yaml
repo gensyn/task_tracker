@@ -1,0 +1,48 @@
+services:
+
+  # ── Home Assistant ──────────────────────────────────────────────────────────
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:stable
+    container_name: homeassistant_test
+    volumes:
+      # Persistent HA config (survives container restarts; start fresh with
+      # `docker compose down -v`).
+      - ha_config:/config
+      # Mount the integration source as a custom component so HA loads it on
+      # startup without any extra copy step.
+      - ./:/config/custom_components/task_tracker:ro
+      # Startup wrapper that pre-populates /etc/hosts before launching HA.
+      # Alpine Linux (musl libc) cannot resolve Docker container hostnames via
+      # Python's socket module because of iptables/UDP limitations in this
+      # environment.  The wrapper uses busybox nslookup (which works) to add
+      # entries to /etc/hosts so that all resolver calls succeed via the
+      # "files" nsswitch path.
+      - ./tests/playwright/ha-init-wrapper.sh:/ha-init-wrapper.sh:ro
+    environment:
+      - TZ=UTC
+    entrypoint: ["/bin/sh", "/ha-init-wrapper.sh"]
+    # Clear the external search domain that musl's resolver would try first,
+    # which causes timeouts in this Azure-hosted environment.
+    dns_search: "."
+    restart: unless-stopped
+
+  # ── Playwright E2E test runner ──────────────────────────────────────────────
+  # Not started by default (`docker compose up`); invoke explicitly:
+  #   docker compose run --rm playwright-tests
+  playwright-tests:
+    build:
+      context: .
+      dockerfile: tests/playwright/Dockerfile
+    environment:
+      - HOMEASSISTANT_URL=http://homeassistant:8123
+      - HA_USERNAME=admin
+      - HA_PASSWORD=admin
+    volumes:
+      # Test results (JUnit XML) written here are available on the host after
+      # the container exits, e.g. for CI artifact upload.
+      - ./playwright-results:/app/playwright-results
+    depends_on:
+      - homeassistant
+
+volumes:
+  ha_config:
