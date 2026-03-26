@@ -102,9 +102,9 @@ entity: sensor.task_tracker_mow_the_lawn
 <table>
 <tr>
 <td><img src="assets/4_due.png" alt="Due card"/><br/><b>Due</b></td>
-<td><b>Due soon</b><br/>(displayed in orange when task is within the Due Soon threshold)</td>
 <td><img src="assets/5_inactive.png" alt="Inactive card"/><br/><b>Inactive</b></td>
 <td><img src="assets/6_done.png" alt="Done card"/><br/><b>Done</b></td>
+<td><img src="assets/7_due_soon.png" alt="Due soon card"/><br/><b>Due soon</b></td>
 </tr>
 </table>
 
@@ -114,7 +114,7 @@ entity: sensor.task_tracker_mow_the_lawn
 
 A **Task Tracker** entry is automatically added to your Home Assistant sidebar when the integration is installed — no manual dashboard setup required.
 
-![Task Tracker Panel](assets/7_panel.png)
+![Task Tracker Panel](assets/8_panel.png)
 
 The panel shows all tasks in one place with live state filtering:
 
