@@ -4,10 +4,14 @@ class TaskTrackerPanel extends HTMLElement {
     super();
     this.attachShadow({ mode: "open" });
     this._filter = "all";
+    this._sortBy = "name";
+    this._sortDir = "asc";
     this._narrow = false;
     this.shadowRoot.addEventListener("click", (e) => {
       const filterBtn = e.target.closest(".filter-btn");
       if (filterBtn) { this._setFilter(filterBtn.dataset.filter); return; }
+      const sortBtn = e.target.closest(".sort-btn");
+      if (sortBtn) { this._setSort(sortBtn.dataset.sort); return; }
       const doneBtn = e.target.closest(".mark-done-btn");
       if (doneBtn) { this._markAsDone(doneBtn.dataset.entityId); return; }
     });
@@ -55,10 +59,34 @@ class TaskTrackerPanel extends HTMLElement {
     return Object.values(this._hass.states)
       .filter((entity) => entity.entity_id.startsWith("sensor.task_tracker_"))
       .sort((a, b) => {
-        const nameA = (a.attributes.friendly_name || a.entity_id).toLowerCase();
-        const nameB = (b.attributes.friendly_name || b.entity_id).toLowerCase();
-        return nameA.localeCompare(nameB);
+        let cmp = 0;
+        if (this._sortBy === "due_date") {
+          // Tasks without a due_date are placed at the end (Infinity) for ascending sort.
+          const dateA = a.attributes.due_date ? new Date(a.attributes.due_date).getTime() : Infinity;
+          const dateB = b.attributes.due_date ? new Date(b.attributes.due_date).getTime() : Infinity;
+          cmp = dateA - dateB;
+        } else {
+          const nameA = (a.attributes.friendly_name || a.entity_id).toLowerCase();
+          const nameB = (b.attributes.friendly_name || b.entity_id).toLowerCase();
+          cmp = nameA.localeCompare(nameB);
+        }
+        return this._sortDir === "asc" ? cmp : -cmp;
       });
+  }
+
+  _setSort(sortBy) {
+    if (this._sortBy === sortBy) {
+      this._sortDir = this._sortDir === "asc" ? "desc" : "asc";
+    } else {
+      this._sortBy = sortBy;
+      this._sortDir = "asc";
+    }
+    this._render();
+  }
+
+  _sortIndicator(sortBy) {
+    if (this._sortBy !== sortBy) return "";
+    return this._sortDir === "asc" ? " ↑" : " ↓";
   }
 
   _getFilteredTasks() {
@@ -238,6 +266,36 @@ class TaskTrackerPanel extends HTMLElement {
         .filter-btn:hover:not(.active) {
           background: rgba(3, 169, 244, 0.1);
         }
+        .sort-controls {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 16px;
+        }
+        .sort-label {
+          font-size: 0.875rem;
+          color: var(--secondary-text-color, #727272);
+        }
+        .sort-btn {
+          padding: 6px 14px;
+          border: 2px solid var(--secondary-color, #727272);
+          background: transparent;
+          color: var(--secondary-text-color, #727272);
+          border-radius: 20px;
+          cursor: pointer;
+          font-size: 0.875rem;
+          font-family: inherit;
+          transition: background 0.2s, color 0.2s;
+        }
+        .sort-btn.active {
+          border-color: var(--primary-color, #03a9f4);
+          background: var(--primary-color, #03a9f4);
+          color: var(--text-primary-color, white);
+        }
+        .sort-btn:hover:not(.active) {
+          background: rgba(3, 169, 244, 0.1);
+        }
         .task-grid {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -321,6 +379,15 @@ class TaskTrackerPanel extends HTMLElement {
       </div>
       <div class="content">
         ${showFilters ? `<div class="filters">${filterButtons}</div>` : ""}
+        <div class="sort-controls">
+          <span class="sort-label">${this._t("sort_by") || "Sort by"}:</span>
+          <button class="sort-btn${this._sortBy === "name" ? " active" : ""}" data-sort="name">
+            ${this._t("sort_name") || "Name"}${this._sortIndicator("name")}
+          </button>
+          <button class="sort-btn${this._sortBy === "due_date" ? " active" : ""}" data-sort="due_date">
+            ${this._t("sort_due_date") || "Due date"}${this._sortIndicator("due_date")}
+          </button>
+        </div>
         <div class="task-grid">${taskGrid}</div>
       </div>
     `;
