@@ -1,0 +1,7 @@
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/"               # location of requirements.txt
+    schedule:
+      interval: "weekly"         # "daily" | "weekly" | "monthly"
+    open-pull-requests-limit: 10
