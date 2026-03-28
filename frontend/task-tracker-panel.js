@@ -222,6 +222,8 @@ class TaskTrackerPanel extends HTMLElement {
       <style>
         :host {
           display: block;
+          height: 100%;
+          overflow-y: auto;
         }
         .toolbar {
           display: flex;
@@ -230,6 +232,9 @@ class TaskTrackerPanel extends HTMLElement {
           color: var(--app-header-text-color, white);
           height: var(--header-height, 56px);
           padding: 0 16px;
+          position: sticky;
+          top: 0;
+          z-index: var(--toolbar-z-index, 10);
         }
         .toolbar-title {
           font-size: 1.25rem;
