@@ -30,10 +30,24 @@ header()  { echo -e "\n${BOLD}$*${NC}"; }
 
 command_exists() { command -v "$1" &>/dev/null; }
 
-# ── Docker installation ───────────────────────────────────────────────────────
+# ── Docker installation / update ─────────────────────────────────────────────
 install_docker() {
     if command_exists docker; then
         info "Docker is already installed: $(sudo docker --version)"
+        info "Checking for Docker updates…"
+        if command_exists apt-get; then
+            sudo apt-get update -qq \
+                && sudo apt-get install --only-upgrade -y \
+                    docker-ce docker-ce-cli containerd.io docker-compose-plugin \
+                || true
+        elif command_exists yum; then
+            sudo yum update -y \
+                docker-ce docker-ce-cli containerd.io docker-compose-plugin \
+                || true
+        else
+            warn "Cannot automatically update Docker on this platform; please update it manually."
+        fi
+        info "Docker version after update check: $(sudo docker --version)"
         return 0
     fi
 
@@ -43,10 +57,28 @@ install_docker() {
     warn "Docker installed. You may need to run 'newgrp docker' or re-login for group membership to take effect."
 }
 
-# ── act installation ──────────────────────────────────────────────────────────
+# ── act installation / update ─────────────────────────────────────────────────
 install_act() {
     if command_exists act; then
-        info "act is already installed: $(act --version)"
+        local current_version latest_version
+        current_version="$(act --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1 || true)"
+        latest_version="$(curl -fsSL https://api.github.com/repos/nektos/act/releases/latest 2>/dev/null \
+            | grep '"tag_name"' | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1 || true)"
+
+        if [[ -z "$current_version" ]] || [[ -z "$latest_version" ]]; then
+            warn "Could not determine act versions; skipping update check."
+            info "act is already installed: $(act --version)"
+            return 0
+        fi
+
+        if [[ "$current_version" == "$latest_version" ]]; then
+            info "act is already up to date: $(act --version)"
+            return 0
+        fi
+
+        header "Updating act from ${current_version} to ${latest_version}…"
+        curl -fsSL https://raw.githubusercontent.com/nektos/act/master/install.sh \
+            | sudo bash -s -- -b /usr/local/bin
         return 0
     fi
 
