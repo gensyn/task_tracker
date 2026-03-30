@@ -8,6 +8,21 @@ from playwright.sync_api import Page, expect
 
 from conftest import HA_URL
 
+# JavaScript helper that recursively searches through all shadow roots.
+_DEEP_QUERY_JS = """
+    function deepQuery(root, sel) {
+        const el = root.querySelector(sel);
+        if (el) return el;
+        for (const child of root.querySelectorAll('*')) {
+            if (child.shadowRoot) {
+                const found = deepQuery(child.shadowRoot, sel);
+                if (found) return found;
+            }
+        }
+        return null;
+    }
+"""
+
 
 class TestFrontend:
     """Tests that exercise the Home Assistant frontend with the Task Tracker integration."""
@@ -51,20 +66,41 @@ class TestFrontend:
         """The Task Tracker panel renders sort controls for Name and Due date."""
         page.goto(f"{HA_URL}/task-tracker")
         page.wait_for_load_state("networkidle")
-        # task-tracker-panel lives inside HA's nested shadow DOM chain
-        # (home-assistant → home-assistant-main → partial-panel-resolver →
-        # ha-panel-custom → task-tracker-panel).  Plain CSS selectors don't
-        # pierce shadow DOM, so we use the pierce/ selector engine which
-        # recursively traverses all shadow roots.
-        panel = page.locator("pierce/task-tracker-panel")
-        expect(panel).to_be_visible(timeout=15000)
-        # Sort buttons are rendered inside the panel's own shadow root
-        name_btn = panel.locator("pierce/.sort-btn[data-sort='name']")
-        due_btn = panel.locator("pierce/.sort-btn[data-sort='due_date']")
-        expect(name_btn).to_be_visible()
-        expect(due_btn).to_be_visible()
-        # By default the Name button should be active (Name ↑)
-        expect(name_btn).to_have_class("active")
+        # task-tracker-panel lives inside HA's nested shadow DOM. HA sets the
+        # `hass` property on the panel element only after the module is loaded
+        # and the element is connected, which triggers _render() and populates
+        # the shadow root. Use JavaScript to wait for the sort buttons to appear,
+        # which handles both the element-discovery and the hass-render timing.
+        page.wait_for_function(
+            f"""() => {{
+                {_DEEP_QUERY_JS}
+                const panel = deepQuery(document, 'task-tracker-panel');
+                return !!(
+                    panel &&
+                    panel.shadowRoot &&
+                    panel.shadowRoot.querySelector('.sort-btn[data-sort="name"]') &&
+                    panel.shadowRoot.querySelector('.sort-btn[data-sort="due_date"]')
+                );
+            }}""",
+            timeout=30000,
+        )
+        result = page.evaluate(
+            f"""() => {{
+                {_DEEP_QUERY_JS}
+                const panel = deepQuery(document, 'task-tracker-panel');
+                const shadow = panel.shadowRoot;
+                const nameBtn = shadow.querySelector('.sort-btn[data-sort="name"]');
+                const dueBtn = shadow.querySelector('.sort-btn[data-sort="due_date"]');
+                return {{
+                    hasNameBtn: !!nameBtn,
+                    hasDueBtn: !!dueBtn,
+                    nameBtnActive: nameBtn ? nameBtn.classList.contains('active') : false,
+                }};
+            }}"""
+        )
+        assert result["hasNameBtn"], "Name sort button not found in task-tracker-panel"
+        assert result["hasDueBtn"], "Due date sort button not found in task-tracker-panel"
+        assert result["nameBtnActive"], "Name sort button should be active by default"
 
     def test_service_call_via_developer_tools(self, page: Page, ensure_integration: Any) -> None:
         """It should be possible to navigate to the service call UI for task_tracker."""
