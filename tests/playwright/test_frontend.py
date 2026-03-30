@@ -51,6 +51,9 @@ class TestFrontend:
         """The Task Tracker panel renders sort controls for Name and Due date."""
         page.goto(f"{HA_URL}/task-tracker")
         page.wait_for_load_state("networkidle")
+        # HA is a SPA that lazy-loads the panel JS module; wait explicitly for
+        # the custom element to appear before asserting visibility.
+        page.wait_for_selector("task-tracker-panel", timeout=15000)
         # The panel is a custom element with shadow DOM; verify it is present
         panel = page.locator("task-tracker-panel")
         expect(panel).to_be_visible()
