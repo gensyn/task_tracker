@@ -64,13 +64,20 @@ class TestFrontend:
 
     def test_task_tracker_panel_sort_controls_visible(self, page: Page, ensure_integration: Any) -> None:
         """The Task Tracker panel renders sort controls for Name and Due date."""
+        # Navigate to HA's base URL first so the SPA establishes its WebSocket
+        # connection and loads the full panel registry (including task-tracker)
+        # before we try to route to the panel URL.  A direct navigation to
+        # /task-tracker can arrive before the SPA receives the panels list,
+        # causing a redirect to the default Lovelace view.
+        page.goto(HA_URL)
+        page.wait_for_load_state("networkidle")
         page.goto(f"{HA_URL}/task-tracker")
         page.wait_for_load_state("networkidle")
-        # task-tracker-panel lives inside HA's nested shadow DOM. HA sets the
-        # `hass` property on the panel element only after the module is loaded
-        # and the element is connected, which triggers _render() and populates
-        # the shadow root. Use JavaScript to wait for the sort buttons to appear,
-        # which handles both the element-discovery and the hass-render timing.
+        # task-tracker-panel lives inside HA's nested shadow DOM.  The panel
+        # pre-renders its sort controls in the constructor (before HA calls
+        # set hass()), so the buttons are present as soon as ha-panel-custom
+        # creates the element.  Use JavaScript deepQuery — which recursively
+        # traverses all shadow roots — to wait for them.
         page.wait_for_function(
             f"""() => {{
                 {_DEEP_QUERY_JS}
