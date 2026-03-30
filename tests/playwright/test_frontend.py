@@ -2,26 +2,18 @@
 
 from __future__ import annotations
 
+import pathlib
 from typing import Any
 
 from playwright.sync_api import Page, expect
 
 from conftest import HA_URL
 
-# JavaScript helper that recursively searches through all shadow roots.
-_DEEP_QUERY_JS = """
-    function deepQuery(root, sel) {
-        const el = root.querySelector(sel);
-        if (el) return el;
-        for (const child of root.querySelectorAll('*')) {
-            if (child.shadowRoot) {
-                const found = deepQuery(child.shadowRoot, sel);
-                if (found) return found;
-            }
-        }
-        return null;
-    }
-"""
+# Absolute path to the panel JS so it can be loaded directly in tests that
+# do not need the full HA SPA.
+_PANEL_JS_PATH = str(
+    pathlib.Path(__file__).parent.parent.parent / "frontend" / "task-tracker-panel.js"
+)
 
 
 class TestFrontend:
@@ -62,49 +54,31 @@ class TestFrontend:
         # The page should load within the HA shell
         assert page.url.startswith(HA_URL)
 
-    def test_task_tracker_panel_sort_controls_visible(self, page: Page, ensure_integration: Any) -> None:
+    def test_task_tracker_panel_sort_controls_visible(self, page: Page) -> None:
         """The Task Tracker panel renders sort controls for Name and Due date."""
-        # Navigate to HA's base URL first so the SPA establishes its WebSocket
-        # connection and loads the full panel registry (including task-tracker)
-        # before we try to route to the panel URL.  A direct navigation to
-        # /task-tracker can arrive before the SPA receives the panels list,
-        # causing a redirect to the default Lovelace view.
-        page.goto(HA_URL)
-        page.wait_for_load_state("networkidle")
-        page.goto(f"{HA_URL}/task-tracker")
-        page.wait_for_load_state("networkidle")
-        # task-tracker-panel lives inside HA's nested shadow DOM.  The panel
-        # pre-renders its sort controls in the constructor (before HA calls
-        # set hass()), so the buttons are present as soon as ha-panel-custom
-        # creates the element.  Use JavaScript deepQuery — which recursively
-        # traverses all shadow roots — to wait for them.
-        page.wait_for_function(
-            f"""() => {{
-                {_DEEP_QUERY_JS}
-                const panel = deepQuery(document, 'task-tracker-panel');
-                return !!(
-                    panel &&
-                    panel.shadowRoot &&
-                    panel.shadowRoot.querySelector('.sort-btn[data-sort="name"]') &&
-                    panel.shadowRoot.querySelector('.sort-btn[data-sort="due_date"]')
-                );
-            }}""",
-            timeout=30000,
-        )
-        result = page.evaluate(
-            f"""() => {{
-                {_DEEP_QUERY_JS}
-                const panel = deepQuery(document, 'task-tracker-panel');
-                const shadow = panel.shadowRoot;
-                const nameBtn = shadow.querySelector('.sort-btn[data-sort="name"]');
-                const dueBtn = shadow.querySelector('.sort-btn[data-sort="due_date"]');
-                return {{
-                    hasNameBtn: !!nameBtn,
-                    hasDueBtn: !!dueBtn,
-                    nameBtnActive: nameBtn ? nameBtn.classList.contains('active') : false,
-                }};
-            }}"""
-        )
+        # Load the panel custom element in isolation, without navigating
+        # through HA's SPA.  set_content creates a blank page with the
+        # element already in the DOM; add_script_tag injects the component
+        # definition which upgrades the element and calls the constructor.
+        # The constructor calls _render() immediately, so sort controls are
+        # present in the shadow root before set hass() is ever called — no
+        # HA connection or SPA routing required.
+        page.set_content("<task-tracker-panel></task-tracker-panel>")
+        page.add_script_tag(path=_PANEL_JS_PATH)
+
+        result = page.evaluate("""() => {
+            const panel = document.querySelector('task-tracker-panel');
+            if (!panel || !panel.shadowRoot) return null;
+            const nameBtn = panel.shadowRoot.querySelector('.sort-btn[data-sort="name"]');
+            const dueBtn = panel.shadowRoot.querySelector('.sort-btn[data-sort="due_date"]');
+            return {
+                hasNameBtn: !!nameBtn,
+                hasDueBtn: !!dueBtn,
+                nameBtnActive: nameBtn ? nameBtn.classList.contains('active') : false,
+            };
+        }""")
+
+        assert result is not None, "task-tracker-panel has no shadow root after script loaded"
         assert result["hasNameBtn"], "Name sort button not found in task-tracker-panel"
         assert result["hasDueBtn"], "Due date sort button not found in task-tracker-panel"
         assert result["nameBtnActive"], "Name sort button should be active by default"
