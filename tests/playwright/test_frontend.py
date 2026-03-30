@@ -51,13 +51,14 @@ class TestFrontend:
         """The Task Tracker panel renders sort controls for Name and Due date."""
         page.goto(f"{HA_URL}/task-tracker")
         page.wait_for_load_state("networkidle")
-        # HA is a SPA that lazy-loads the panel JS module; wait explicitly for
-        # the custom element to appear before asserting visibility.
-        page.wait_for_selector("task-tracker-panel", timeout=15000)
-        # The panel is a custom element with shadow DOM; verify it is present
-        panel = page.locator("task-tracker-panel")
-        expect(panel).to_be_visible()
-        # Sort buttons are rendered inside the shadow root
+        # task-tracker-panel lives inside HA's nested shadow DOM chain
+        # (home-assistant → home-assistant-main → partial-panel-resolver →
+        # ha-panel-custom → task-tracker-panel).  Plain CSS selectors don't
+        # pierce shadow DOM, so we use the pierce/ selector engine which
+        # recursively traverses all shadow roots.
+        panel = page.locator("pierce/task-tracker-panel")
+        expect(panel).to_be_visible(timeout=15000)
+        # Sort buttons are rendered inside the panel's own shadow root
         name_btn = panel.locator("pierce/.sort-btn[data-sort='name']")
         due_btn = panel.locator("pierce/.sort-btn[data-sort='due_date']")
         expect(name_btn).to_be_visible()
