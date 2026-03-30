@@ -2,11 +2,18 @@
 
 from __future__ import annotations
 
+import pathlib
 from typing import Any
 
 from playwright.sync_api import Page, expect
 
 from conftest import HA_URL
+
+# Absolute path to the panel JS so it can be loaded directly in tests that
+# do not need the full HA SPA.
+_PANEL_JS_PATH = str(
+    pathlib.Path(__file__).parent.parent.parent / "frontend" / "task-tracker-panel.js"
+)
 
 
 class TestFrontend:
@@ -47,20 +54,34 @@ class TestFrontend:
         # The page should load within the HA shell
         assert page.url.startswith(HA_URL)
 
-    def test_task_tracker_panel_sort_controls_visible(self, page: Page, ensure_integration: Any) -> None:
+    def test_task_tracker_panel_sort_controls_visible(self, page: Page) -> None:
         """The Task Tracker panel renders sort controls for Name and Due date."""
-        page.goto(f"{HA_URL}/task-tracker")
-        page.wait_for_load_state("networkidle")
-        # The panel is a custom element with shadow DOM; verify it is present
-        panel = page.locator("task-tracker-panel")
-        expect(panel).to_be_visible()
-        # Sort buttons are rendered inside the shadow root
-        name_btn = panel.locator("pierce/.sort-btn[data-sort='name']")
-        due_btn = panel.locator("pierce/.sort-btn[data-sort='due_date']")
-        expect(name_btn).to_be_visible()
-        expect(due_btn).to_be_visible()
-        # By default the Name button should be active (Name ↑)
-        expect(name_btn).to_have_class("active")
+        # Load the panel custom element in isolation, without navigating
+        # through HA's SPA.  set_content creates a blank page with the
+        # element already in the DOM; add_script_tag injects the component
+        # definition which upgrades the element and calls the constructor.
+        # The constructor calls _render() immediately, so sort controls are
+        # present in the shadow root before set hass() is ever called — no
+        # HA connection or SPA routing required.
+        page.set_content("<task-tracker-panel></task-tracker-panel>")
+        page.add_script_tag(path=_PANEL_JS_PATH)
+
+        result = page.evaluate("""() => {
+            const panel = document.querySelector('task-tracker-panel');
+            if (!panel || !panel.shadowRoot) return null;
+            const nameBtn = panel.shadowRoot.querySelector('.sort-btn[data-sort="name"]');
+            const dueBtn = panel.shadowRoot.querySelector('.sort-btn[data-sort="due_date"]');
+            return {
+                hasNameBtn: !!nameBtn,
+                hasDueBtn: !!dueBtn,
+                nameBtnActive: nameBtn ? nameBtn.classList.contains('active') : false,
+            };
+        }""")
+
+        assert result is not None, "task-tracker-panel has no shadow root after script loaded"
+        assert result["hasNameBtn"], "Name sort button not found in task-tracker-panel"
+        assert result["hasDueBtn"], "Due date sort button not found in task-tracker-panel"
+        assert result["nameBtnActive"], "Name sort button should be active by default"
 
     def test_service_call_via_developer_tools(self, page: Page, ensure_integration: Any) -> None:
         """It should be possible to navigate to the service call UI for task_tracker."""

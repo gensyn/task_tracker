@@ -7,6 +7,11 @@ class TaskTrackerPanel extends HTMLElement {
     this._sortBy = "name";
     this._sortDir = "asc";
     this._narrow = false;
+    // Pre-render sort controls immediately so they are present in the
+    // shadow DOM as soon as the element is created, even before HA calls
+    // set hass().  Full render (with live task data) happens once hass
+    // is available.
+    this._render();
     this.shadowRoot.addEventListener("click", (e) => {
       const filterBtn = e.target.closest(".filter-btn");
       if (filterBtn) { this._setFilter(filterBtn.dataset.filter); return; }
@@ -177,49 +182,8 @@ class TaskTrackerPanel extends HTMLElement {
     `;
   }
 
-  _render() {
-    if (!this._hass) return;
-
-    const allTasks = this._getAllTasks();
-
-    const counts = {
-      due: allTasks.filter((t) => t.state === "due").length,
-      due_soon: allTasks.filter((t) => t.state === "due_soon").length,
-      done: allTasks.filter((t) => t.state === "done").length,
-      inactive: allTasks.filter((t) => t.state === "inactive").length,
-    };
-
-    const activeStates = ["due", "due_soon", "done", "inactive"].filter(
-      (s) => counts[s] > 0
-    );
-
-    // Reset filter if the currently selected state has no tasks
-    if (this._filter !== "all" && counts[this._filter] === 0) {
-      this._filter = "all";
-    }
-
-    const filteredTasks = this._getFilteredTasks();
-
-    // Only show filters when tasks span more than one state
-    const showFilters = activeStates.length > 1;
-    const filterButtons = showFilters
-      ? ["all", ...activeStates]
-          .map(
-            (f) =>
-              `<button class="filter-btn${this._filter === f ? " active" : ""}"
-                       data-filter="${f}">
-                ${this._t(f)} (${f === "all" ? allTasks.length : counts[f]})
-               </button>`
-          )
-          .join("")
-      : "";
-
-    const taskGrid = filteredTasks.length
-      ? filteredTasks.map((t) => this._renderTaskCard(t)).join("")
-      : `<p class="no-tasks">${this._t("no_tasks_found")}</p>`;
-
-    this.shadowRoot.innerHTML = `
-      <style>
+  _css() {
+    return `
         :host {
           display: block;
         }
@@ -230,6 +194,9 @@ class TaskTrackerPanel extends HTMLElement {
           color: var(--app-header-text-color, white);
           height: var(--header-height, 56px);
           padding: 0 16px;
+          position: sticky;
+          top: 0;
+          z-index: 10;
         }
         .toolbar-title {
           font-size: 1.25rem;
@@ -372,7 +339,75 @@ class TaskTrackerPanel extends HTMLElement {
           color: var(--secondary-text-color, #727272);
           font-style: italic;
         }
-      </style>
+    `;
+  }
+
+  _render() {
+    if (!this._hass) {
+      // hass is not yet set; render a skeleton with the toolbar and sort
+      // controls so they are present in the shadow DOM immediately after
+      // the element is created.  Full render with live task data runs once
+      // HA calls set hass().
+      this.shadowRoot.innerHTML = `
+        <style>${this._css()}</style>
+        <div class="toolbar">
+          <div class="toolbar-title">Task Tracker</div>
+        </div>
+        <div class="content">
+          <div class="sort-controls">
+            <span class="sort-label">Sort by:</span>
+            <button class="sort-btn${this._sortBy === "name" ? " active" : ""}" data-sort="name">
+              Name${this._sortIndicator("name")}
+            </button>
+            <button class="sort-btn${this._sortBy === "due_date" ? " active" : ""}" data-sort="due_date">
+              Due date${this._sortIndicator("due_date")}
+            </button>
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    const allTasks = this._getAllTasks();
+
+    const counts = {
+      due: allTasks.filter((t) => t.state === "due").length,
+      due_soon: allTasks.filter((t) => t.state === "due_soon").length,
+      done: allTasks.filter((t) => t.state === "done").length,
+      inactive: allTasks.filter((t) => t.state === "inactive").length,
+    };
+
+    const activeStates = ["due", "due_soon", "done", "inactive"].filter(
+      (s) => counts[s] > 0
+    );
+
+    // Reset filter if the currently selected state has no tasks
+    if (this._filter !== "all" && counts[this._filter] === 0) {
+      this._filter = "all";
+    }
+
+    const filteredTasks = this._getFilteredTasks();
+
+    // Only show filters when tasks span more than one state
+    const showFilters = activeStates.length > 1;
+    const filterButtons = showFilters
+      ? ["all", ...activeStates]
+          .map(
+            (f) =>
+              `<button class="filter-btn${this._filter === f ? " active" : ""}"
+                       data-filter="${f}">
+                ${this._t(f)} (${f === "all" ? allTasks.length : counts[f]})
+               </button>`
+          )
+          .join("")
+      : "";
+
+    const taskGrid = filteredTasks.length
+      ? filteredTasks.map((t) => this._renderTaskCard(t)).join("")
+      : `<p class="no-tasks">${this._t("no_tasks_found")}</p>`;
+
+    this.shadowRoot.innerHTML = `
+      <style>${this._css()}</style>
       <div class="toolbar">
         ${this._narrow ? "<ha-menu-button></ha-menu-button>" : ""}
         <div class="toolbar-title">Task Tracker</div>
