@@ -90,7 +90,7 @@ class TestTaskTrackerConfigFlowRepeatAfter(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result["options"][CONF_REPEAT_MODE], CONF_REPEAT_AFTER)
 
     async def test_created_entry_clears_repeat_every_fields(self):
-        flow = await self._start("Vaccuum")
+        flow = await self._start("Vacuum")
         result = await flow.async_step_repeat_after(user_input={
             CONF_TASK_INTERVAL_VALUE: 7,
             CONF_TASK_INTERVAL_TYPE: CONF_WEEK,
