@@ -120,7 +120,15 @@ async def async_update_entities(entity_ids: list[str], hass: HomeAssistant) -> d
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Task Tracker from a config entry."""
-    coordinator = TaskTrackerCoordinator(entry.entry_id)
+    coordinator = TaskTrackerCoordinator(
+        entry.entry_id,
+        repeat_mode=entry.options.get(CONF_REPEAT_MODE, CONF_REPEAT_AFTER),
+        repeat_every_type=entry.options.get(CONF_REPEAT_EVERY_TYPE),
+        repeat_weekday=entry.options.get(CONF_REPEAT_WEEKDAY),
+        repeat_weeks_interval=entry.options.get(CONF_REPEAT_WEEKS_INTERVAL, 1),
+        repeat_month_day=entry.options.get(CONF_REPEAT_MONTH_DAY, 1),
+        repeat_nth_occurrence=entry.options.get(CONF_REPEAT_NTH_OCCURRENCE, "1"),
+    )
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
     await hass.config_entries.async_forward_entry_setups(entry, _PLATFORMS)
 

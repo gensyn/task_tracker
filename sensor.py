@@ -7,11 +7,9 @@ from functools import partial
 from logging import getLogger
 from typing import Any, Callable
 
-from dateutil.relativedelta import relativedelta
 from homeassistant.components.sensor import (
     SensorEntity, RestoreSensor,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_NAME, CONF_ICON, CONF_ENTITY_ID, EVENT_STATE_CHANGED
 from homeassistant.core import HomeAssistant, EventStateChangedData, callback
 from homeassistant.exceptions import ServiceValidationError, HomeAssistantError
@@ -22,13 +20,10 @@ from homeassistant.helpers.event import async_call_later
 from homeassistant.util import slugify
 from homeassistant.util.dt import UTC
 
-from .const import DOMAIN, CONF_TASK_INTERVAL_VALUE, CONF_NOTIFICATION_INTERVAL, CONF_TAGS, CONF_ACTIVE, CONF_WEEK, \
-    CONF_MONTH, CONF_YEAR, CONST_DUE, CONST_DUE_SOON, CONST_INACTIVE, CONST_DONE, CONF_TASK_INTERVAL_TYPE, \
+from .const import DOMAIN, CONF_TASK_INTERVAL_VALUE, CONF_NOTIFICATION_INTERVAL, CONF_TAGS, CONF_ACTIVE, \
+    CONST_DUE, CONST_DUE_SOON, CONST_INACTIVE, CONST_DONE, CONF_TASK_INTERVAL_TYPE, \
     CONF_DUE_SOON_DAYS, CONF_TODO_LISTS, CONF_DAY, CONF_ACTIVE_OVERRIDE, CONF_TASK_INTERVAL_OVERRIDE, \
-    CONF_DUE_SOON_OVERRIDE, CONF_REPEAT_MODE, CONF_REPEAT_AFTER, CONF_REPEAT_EVERY, \
-    CONF_REPEAT_EVERY_TYPE, CONF_REPEAT_EVERY_WEEKDAY, CONF_REPEAT_EVERY_DAY_OF_MONTH, \
-    CONF_REPEAT_EVERY_WEEKDAY_OF_MONTH, \
-    CONF_REPEAT_WEEKDAY, CONF_REPEAT_WEEKS_INTERVAL, CONF_REPEAT_MONTH_DAY, CONF_REPEAT_NTH_OCCURRENCE
+    CONF_DUE_SOON_OVERRIDE
 from .coordinator import TaskTrackerCoordinator
 
 LOGGER = getLogger(__name__)
@@ -51,13 +46,7 @@ async def async_setup_entry(
                            options[CONF_ACTIVE], options[CONF_ICON], entry.entry_id, hass,
                            options.get(CONF_ACTIVE_OVERRIDE),
                            options.get(CONF_TASK_INTERVAL_OVERRIDE),
-                           options.get(CONF_DUE_SOON_OVERRIDE),
-                           options.get(CONF_REPEAT_MODE, CONF_REPEAT_AFTER),
-                           options.get(CONF_REPEAT_EVERY_TYPE),
-                           options.get(CONF_REPEAT_WEEKDAY),
-                           options.get(CONF_REPEAT_WEEKS_INTERVAL, 1),
-                           options.get(CONF_REPEAT_MONTH_DAY, 1),
-                           options.get(CONF_REPEAT_NTH_OCCURRENCE, "1"))])
+                           options.get(CONF_DUE_SOON_OVERRIDE))])
 
 
 class TaskTrackerSensor(RestoreSensor, SensorEntity):
@@ -73,13 +62,7 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
                  icon: str, entry_id: str, hass: HomeAssistant,
                  active_override: str | None = None,
                  task_interval_override: str | None = None,
-                 due_soon_override: str | None = None,
-                 repeat_mode: str = CONF_REPEAT_AFTER,
-                 repeat_every_type: str | None = None,
-                 repeat_weekday: str | None = None,
-                 repeat_weeks_interval: int = 1,
-                 repeat_month_day: int = 1,
-                 repeat_nth_occurrence: str = "1") -> None:
+                 due_soon_override: str | None = None) -> None:
         """Initialize the sensor with a service name."""
         self.coordinator = coordinator
         self.task_interval_value: int = task_interval_value
@@ -99,19 +82,9 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
         self.active_override: str | None = active_override
         self.task_interval_override: str | None = task_interval_override
         self.due_soon_override: str | None = due_soon_override
-        self.repeat_mode: str = repeat_mode
-        self.repeat_every_type: str | None = repeat_every_type
-        self.repeat_weekday: str | None = repeat_weekday
-        self.repeat_weeks_interval: int = max(1, repeat_weeks_interval or 1)
-        self.repeat_month_day: int = max(1, min(31, repeat_month_day or 1))
-        self.repeat_nth_occurrence: str = repeat_nth_occurrence if repeat_nth_occurrence in ("1", "2", "3", "4", "last") else "1"
         # Effective values after applying overrides; initialised to configured values
         self._effective_active: bool = active
         self._effective_due_soon_days: int = due_soon_days
-
-        # Propagate repeat_mode to the coordinator so the button and service
-        # use the correct completion logic immediately, before async_update runs.
-        self.coordinator.repeat_mode = repeat_mode
 
         device_id = f"{DOMAIN}_{self.entry_id}"
         self._attr_name = None
@@ -210,113 +183,6 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
                     pass
         return self.due_soon_days
 
-    def _calculate_due_date(self, interval_value: int, interval_type: str) -> date:
-        """Return the due date computed from *last_done* and the given interval."""
-        if self.repeat_mode == CONF_REPEAT_EVERY:
-            return self._calculate_repeat_every_due_date()
-        # repeat_after (completion-coupled) — existing behaviour
-        if interval_type == CONF_WEEK:
-            return self.coordinator.last_done + relativedelta(weeks=interval_value)
-        if interval_type == CONF_MONTH:
-            return self.coordinator.last_done + relativedelta(months=interval_value)
-        if interval_type == CONF_YEAR:
-            return self.coordinator.last_done + relativedelta(years=interval_value)
-        return self.coordinator.last_done + relativedelta(days=interval_value)
-
-    def _calculate_repeat_every_due_date(self) -> date:
-        """Calculate due date for the active repeat_every schedule sub-type."""
-        last = self.coordinator.last_done
-        etype = self.repeat_every_type
-        if etype == CONF_REPEAT_EVERY_WEEKDAY:
-            return self._calc_next_weekday(
-                last, self.repeat_weekday or "monday", self.repeat_weeks_interval
-            )
-        if etype == CONF_REPEAT_EVERY_DAY_OF_MONTH:
-            return self._calc_next_day_of_month(last, self.repeat_month_day)
-        if etype == CONF_REPEAT_EVERY_WEEKDAY_OF_MONTH:
-            return self._calc_next_weekday_of_month(
-                last, self.repeat_weekday or "monday", self.repeat_nth_occurrence
-            )
-        # Unrecognised sub-type: fall back to a 7-day interval
-        return last + relativedelta(days=7)
-
-    @staticmethod
-    def _weekday_number(weekday_name: str) -> int:
-        """Convert a weekday name to Python weekday number (0 = Monday, 6 = Sunday)."""
-        return {
-            "monday": 0, "tuesday": 1, "wednesday": 2,
-            "thursday": 3, "friday": 4, "saturday": 5, "sunday": 6,
-        }[weekday_name]
-
-    def _calc_next_weekday(self, last: date, weekday_name: str, weeks_interval: int) -> date:
-        """Return the next due date for 'every N weeks on *weekday_name*'.
-
-        When *last* already falls on the target weekday the schedule advances by
-        *weeks_interval* full weeks.  Otherwise the very next occurrence of that
-        weekday is found and then (weeks_interval - 1) additional weeks are added
-        so the spacing after the first completion is always consistent.
-        """
-        target = self._weekday_number(weekday_name)
-        days_ahead = (target - last.weekday()) % 7
-        if days_ahead == 0:
-            return last + timedelta(weeks=weeks_interval)
-        return last + timedelta(days=days_ahead) + timedelta(weeks=weeks_interval - 1)
-
-    @staticmethod
-    def _calc_next_day_of_month(last: date, day: int) -> date:
-        """Return the next occurrence of *day* of the month strictly after *last*."""
-        import calendar
-        # Try the same month first (clamped to month length)
-        last_day_of_month = calendar.monthrange(last.year, last.month)[1]
-        candidate = last.replace(day=min(day, last_day_of_month))
-        if candidate > last:
-            return candidate
-        # Advance to next month
-        next_month = last.replace(day=1) + relativedelta(months=1)
-        last_day_of_next = calendar.monthrange(next_month.year, next_month.month)[1]
-        return next_month.replace(day=min(day, last_day_of_next))
-
-    @staticmethod
-    def _get_nth_weekday_of_month(year: int, month: int, target_weekday: int, nth: int) -> date | None:
-        """Return the *nth* occurrence of *target_weekday* in *year*/*month*.
-
-        Returns ``None`` when the requested occurrence does not exist (e.g. a
-        5th Monday in a month that only has four).  Use nth == -1 for the last
-        occurrence.
-        """
-        import calendar
-        if nth == -1:
-            last_day = calendar.monthrange(year, month)[1]
-            d = date(year, month, last_day)
-            while d.weekday() != target_weekday:
-                d -= timedelta(days=1)
-            return d
-        first_day = date(year, month, 1)
-        days_ahead = (target_weekday - first_day.weekday()) % 7
-        first_occurrence = first_day + timedelta(days=days_ahead)
-        result = first_occurrence + timedelta(weeks=nth - 1)
-        return result if result.month == month else None
-
-    def _calc_next_weekday_of_month(self, last: date, weekday_name: str, nth_str: str) -> date:
-        """Return the next *nth* weekday-of-month occurrence strictly after *last*."""
-        target = self._weekday_number(weekday_name)
-        nth = -1 if nth_str == "last" else int(nth_str)
-        # Try the current month
-        occurrence = self._get_nth_weekday_of_month(last.year, last.month, target, nth)
-        if occurrence is not None and occurrence > last:
-            return occurrence
-        # Advance month by month until a valid occurrence is found
-        candidate_month = last.replace(day=1) + relativedelta(months=1)
-        for _ in range(24):  # safety cap of 24 months
-            occurrence = self._get_nth_weekday_of_month(
-                candidate_month.year, candidate_month.month, target, nth
-            )
-            if occurrence is not None:
-                return occurrence
-            candidate_month += relativedelta(months=1)
-        # Unreachable in practice; last-resort fallback
-        return last + relativedelta(months=1)
-
     async def async_update(self) -> None:
         """Recalculate state, attributes, and sync all configured todo lists."""
         self._attr_native_value = CONST_DONE
@@ -325,15 +191,9 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
         effective_task_interval_value, effective_task_interval_type = self._resolve_task_interval_override()
         effective_due_soon_days = self._resolve_due_soon_override()
 
-        self.due_date = self._calculate_due_date(effective_task_interval_value, effective_task_interval_type)
+        self.due_date = self.coordinator.calculate_due_date(effective_task_interval_value, effective_task_interval_type)
         self.due_in: int = (self.due_date - date.today()).days if self.due_date > date.today() else 0
         overdue_by: int = (date.today() - self.due_date).days if self.due_date < date.today() else 0
-
-        # Keep the coordinator in sync so the button and service always use
-        # the latest due_date and repeat_mode when async_mark_as_done is called.
-        self.coordinator.due_date = self.due_date
-        self.coordinator.repeat_mode = self.repeat_mode
-        self.coordinator.repeat_every_type = self.repeat_every_type
 
         if not effective_active:
             self._attr_native_value = CONST_INACTIVE
@@ -352,12 +212,12 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
             "overdue_by": overdue_by,
             "task_interval_value": effective_task_interval_value,
             "task_interval_type": effective_task_interval_type,
-            "repeat_mode": self.repeat_mode,
-            "repeat_every_type": self.repeat_every_type,
-            "repeat_weekday": self.repeat_weekday,
-            "repeat_weeks_interval": self.repeat_weeks_interval,
-            "repeat_month_day": self.repeat_month_day,
-            "repeat_nth_occurrence": self.repeat_nth_occurrence,
+            "repeat_mode": self.coordinator.repeat_mode,
+            "repeat_every_type": self.coordinator.repeat_every_type,
+            "repeat_weekday": self.coordinator.repeat_weekday,
+            "repeat_weeks_interval": self.coordinator.repeat_weeks_interval,
+            "repeat_month_day": self.coordinator.repeat_month_day,
+            "repeat_nth_occurrence": self.coordinator.repeat_nth_occurrence,
             "icon": self.icon,
             "tags": self.tags,
             "todo_lists": self.todo_lists,
