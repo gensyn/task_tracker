@@ -175,7 +175,7 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         )
 
     if entry.version == 1 and entry.minor_version == 3:
-        # 1.3 Add repeat_mode option (default: repeat_after to preserve existing behaviour)
+        # 1.3 Add repeat_mode option (default: repeat_after to preserve existing behavior)
         new_options = dict(entry.options)
         new_options.setdefault(CONF_REPEAT_MODE, CONF_REPEAT_AFTER)
 

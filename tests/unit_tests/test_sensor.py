@@ -650,17 +650,15 @@ class TestTaskTrackerSensorRepeatMode(unittest.IsolatedAsyncioTestCase):
 
     async def test_repeat_every_maintains_schedule_when_completed_early(self):
         """Completing a task early should not shift the schedule in repeat_every mode."""
-        from datetime import timedelta
         sensor = make_sensor(repeat_mode=CONF_REPEAT_EVERY, task_interval_value=7)
         # due Wednesday Jan 10
         sensor.coordinator.last_done = date(2024, 1, 3)
         await self._run_update(sensor)
         self.assertEqual(sensor.due_date, date(2024, 1, 10))
         # complete it one day early (Jan 9 = Tuesday)
+        # mark_as_done sets last_done = Jan 10 (the due_date)
         await sensor.coordinator.async_mark_as_done()
-        # next due = Jan 10 + 7 = Jan 17 (not Jan 9 + 7 = Jan 16)
-        sensor.coordinator.last_done = date(2024, 1, 10)  # due_date was Jan 10
-        sensor.coordinator.last_done = sensor.coordinator.last_done  # re-affirm
+        self.assertEqual(sensor.coordinator.last_done, date(2024, 1, 10))
         # Recalculate: last_done = Jan 10, so next due = Jan 17
         await self._run_update(sensor)
         self.assertEqual(sensor.due_date, date(2024, 1, 17))
