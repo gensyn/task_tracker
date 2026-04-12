@@ -9,7 +9,7 @@ from homeassistant.helpers.selector import selector
 from .const import CONF_TASK_INTERVAL_VALUE, CONF_NOTIFICATION_INTERVAL, CONF_TAGS, CONF_ACTIVE, \
     CONF_TASK_INTERVAL_TYPE, CONF_DUE_SOON_DAYS, CONF_SELECT, CONF_DAY, CONF_WEEK, CONF_MONTH, CONF_YEAR, \
     CONF_DROPDOWN, CONF_TODO_LISTS, CONF_ACTIVE_OVERRIDE, CONF_TASK_INTERVAL_OVERRIDE, CONF_DUE_SOON_OVERRIDE, \
-    CONF_OPTIONS
+    CONF_OPTIONS, CONF_REPEAT_MODE, CONF_REPEAT_AFTER, CONF_REPEAT_EVERY
 
 _STEP_INIT_SCHEMA = vol.Schema(
     {
@@ -30,6 +30,13 @@ _STEP_INIT_SCHEMA = vol.Schema(
         vol.Optional(CONF_TASK_INTERVAL_OVERRIDE): selector({
             "entity": {
                 "domain": "input_number",
+            }
+        }),
+        vol.Required(CONF_REPEAT_MODE, default=CONF_REPEAT_AFTER): selector({
+            CONF_SELECT: {
+                CONF_OPTIONS: [CONF_REPEAT_AFTER, CONF_REPEAT_EVERY],
+                CONF_MODE: CONF_DROPDOWN,
+                "translation_key": "repeat_mode",
             }
         }),
         vol.Optional(CONF_ICON, default="mdi:calendar-question"): str,
@@ -82,6 +89,9 @@ async def validate_options(user_input: dict[str, Any]) -> dict[str, Any]:
     if not user_input.get(CONF_TASK_INTERVAL_TYPE):
         user_input[CONF_TASK_INTERVAL_TYPE] = CONF_DAY
 
+    if user_input.get(CONF_REPEAT_MODE) not in (CONF_REPEAT_AFTER, CONF_REPEAT_EVERY):
+        user_input[CONF_REPEAT_MODE] = CONF_REPEAT_AFTER
+
     if not user_input.get(CONF_ICON):
         user_input[CONF_ICON] = "mdi:calendar-question"
 
@@ -106,6 +116,7 @@ async def validate_options(user_input: dict[str, Any]) -> dict[str, Any]:
         CONF_TASK_INTERVAL_VALUE: user_input[CONF_TASK_INTERVAL_VALUE],
         CONF_TASK_INTERVAL_TYPE: user_input[CONF_TASK_INTERVAL_TYPE],
         CONF_TASK_INTERVAL_OVERRIDE: user_input.get(CONF_TASK_INTERVAL_OVERRIDE) or None,
+        CONF_REPEAT_MODE: user_input[CONF_REPEAT_MODE],
         CONF_ICON: user_input[CONF_ICON],
         CONF_TAGS: user_input[CONF_TAGS],
         CONF_TODO_LISTS: user_input[CONF_TODO_LISTS],

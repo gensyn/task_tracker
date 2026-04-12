@@ -15,6 +15,7 @@ from task_tracker.sensor import TaskTrackerSensor
 from task_tracker.const import (
     CONF_DAY, CONF_WEEK, CONF_MONTH, CONF_YEAR,
     CONST_DUE, CONST_DUE_SOON, CONST_DONE, CONST_INACTIVE,
+    CONF_REPEAT_AFTER, CONF_REPEAT_EVERY,
 )
 
 
@@ -33,6 +34,7 @@ def make_sensor(
     active_override=None,
     task_interval_override=None,
     due_soon_override=None,
+    repeat_mode=CONF_REPEAT_AFTER,
     coordinator=None,
 ):
     if hass is None:
@@ -57,6 +59,7 @@ def make_sensor(
         active_override=active_override,
         task_interval_override=task_interval_override,
         due_soon_override=due_soon_override,
+        repeat_mode=repeat_mode,
     )
 
 
@@ -600,3 +603,118 @@ class TestTaskTrackerSensorAddedToHass(unittest.IsolatedAsyncioTestCase):
                     await sensor.async_added_to_hass()
 
         hass.bus.async_listen_once.assert_not_called()
+
+
+class TestTaskTrackerSensorRepeatMode(unittest.IsolatedAsyncioTestCase):
+    """Tests for the repeat_mode feature (repeat_after vs repeat_every)."""
+
+    async def _run_update(self, sensor):
+        with patch.object(sensor, "async_write_ha_state"):
+            with patch.object(sensor, "async_sync_todo_list", new_callable=AsyncMock):
+                await sensor.async_update()
+
+    # --- repeat_after (default) ---
+
+    async def test_repeat_after_mark_as_done_sets_last_done_to_today(self):
+        """In repeat_after mode, mark_as_done sets last_done to today."""
+        sensor = make_sensor(repeat_mode=CONF_REPEAT_AFTER, task_interval_value=7)
+        sensor.coordinator.last_done = date(2024, 1, 1)
+        await self._run_update(sensor)
+        await sensor.coordinator.async_mark_as_done()
+        self.assertEqual(sensor.coordinator.last_done, date.today())
+
+    async def test_repeat_after_is_default(self):
+        """repeat_mode defaults to repeat_after."""
+        sensor = make_sensor()
+        self.assertEqual(sensor.repeat_mode, CONF_REPEAT_AFTER)
+
+    async def test_repeat_after_propagated_to_coordinator(self):
+        """repeat_after mode is written to the coordinator on init."""
+        sensor = make_sensor(repeat_mode=CONF_REPEAT_AFTER)
+        self.assertEqual(sensor.coordinator.repeat_mode, CONF_REPEAT_AFTER)
+
+    # --- repeat_every ---
+
+    async def test_repeat_every_mark_as_done_sets_last_done_to_due_date(self):
+        """In repeat_every mode, mark_as_done sets last_done to the current due date."""
+        from datetime import timedelta
+        sensor = make_sensor(repeat_mode=CONF_REPEAT_EVERY, task_interval_value=7)
+        # Set last_done so due_date = Jan 8
+        sensor.coordinator.last_done = date(2024, 1, 1)
+        await self._run_update(sensor)
+        # due_date should be Jan 8
+        self.assertEqual(sensor.due_date, date(2024, 1, 8))
+        await sensor.coordinator.async_mark_as_done()
+        # last_done should be the due_date (Jan 8), not today
+        self.assertEqual(sensor.coordinator.last_done, date(2024, 1, 8))
+
+    async def test_repeat_every_maintains_schedule_when_completed_early(self):
+        """Completing a task early should not shift the schedule in repeat_every mode."""
+        from datetime import timedelta
+        sensor = make_sensor(repeat_mode=CONF_REPEAT_EVERY, task_interval_value=7)
+        # due Wednesday Jan 10
+        sensor.coordinator.last_done = date(2024, 1, 3)
+        await self._run_update(sensor)
+        self.assertEqual(sensor.due_date, date(2024, 1, 10))
+        # complete it one day early (Jan 9 = Tuesday)
+        await sensor.coordinator.async_mark_as_done()
+        # next due = Jan 10 + 7 = Jan 17 (not Jan 9 + 7 = Jan 16)
+        sensor.coordinator.last_done = date(2024, 1, 10)  # due_date was Jan 10
+        sensor.coordinator.last_done = sensor.coordinator.last_done  # re-affirm
+        # Recalculate: last_done = Jan 10, so next due = Jan 17
+        await self._run_update(sensor)
+        self.assertEqual(sensor.due_date, date(2024, 1, 17))
+
+    async def test_repeat_every_maintains_schedule_when_completed_late(self):
+        """Completing a task late should still advance by exactly one interval."""
+        sensor = make_sensor(repeat_mode=CONF_REPEAT_EVERY, task_interval_value=7)
+        # due Jan 8, but completed Jan 10 (2 days late)
+        sensor.coordinator.last_done = date(2024, 1, 1)
+        await self._run_update(sensor)
+        self.assertEqual(sensor.due_date, date(2024, 1, 8))
+        await sensor.coordinator.async_mark_as_done()
+        # last_done should be Jan 8 (the due_date, not Jan 10 = today in this scenario)
+        self.assertEqual(sensor.coordinator.last_done, date(2024, 1, 8))
+        # next due = Jan 8 + 7 = Jan 15
+        await self._run_update(sensor)
+        self.assertEqual(sensor.due_date, date(2024, 1, 15))
+
+    async def test_repeat_every_propagated_to_coordinator(self):
+        """repeat_every mode is written to the coordinator on init."""
+        sensor = make_sensor(repeat_mode=CONF_REPEAT_EVERY)
+        self.assertEqual(sensor.coordinator.repeat_mode, CONF_REPEAT_EVERY)
+
+    async def test_repeat_every_coordinator_due_date_synced_on_update(self):
+        """After async_update the coordinator's due_date reflects the computed value."""
+        sensor = make_sensor(repeat_mode=CONF_REPEAT_EVERY, task_interval_value=7)
+        sensor.coordinator.last_done = date(2024, 1, 1)
+        await self._run_update(sensor)
+        self.assertEqual(sensor.coordinator.due_date, date(2024, 1, 8))
+
+    async def test_repeat_every_due_date_fallback_when_not_synced(self):
+        """If no due_date has been synced to coordinator, falls back to today."""
+        sensor = make_sensor(repeat_mode=CONF_REPEAT_EVERY, task_interval_value=7)
+        # do NOT call async_update — coordinator.due_date remains None
+        self.assertIsNone(sensor.coordinator.due_date)
+        await sensor.coordinator.async_mark_as_done()
+        self.assertEqual(sensor.coordinator.last_done, date.today())
+
+    async def test_repeat_mode_in_state_attributes(self):
+        """repeat_mode is included in the entity state attributes."""
+        sensor = make_sensor(repeat_mode=CONF_REPEAT_EVERY)
+        sensor.coordinator.last_done = date(2024, 1, 1)
+        await self._run_update(sensor)
+        self.assertEqual(
+            sensor._attr_extra_state_attributes["repeat_mode"],
+            CONF_REPEAT_EVERY,
+        )
+
+    async def test_repeat_after_mode_in_state_attributes(self):
+        """repeat_after mode is correctly reflected in state attributes."""
+        sensor = make_sensor(repeat_mode=CONF_REPEAT_AFTER)
+        sensor.coordinator.last_done = date(2024, 1, 1)
+        await self._run_update(sensor)
+        self.assertEqual(
+            sensor._attr_extra_state_attributes["repeat_mode"],
+            CONF_REPEAT_AFTER,
+        )

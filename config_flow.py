@@ -18,7 +18,7 @@ class TaskTrackerConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Task Tracker."""
 
     VERSION = 1
-    MINOR_VERSION = 3
+    MINOR_VERSION = 4
 
     async def async_step_user(
             self, user_input: dict[str, Any] | None = None

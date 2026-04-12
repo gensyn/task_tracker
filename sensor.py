@@ -25,7 +25,7 @@ from homeassistant.util.dt import UTC
 from .const import DOMAIN, CONF_TASK_INTERVAL_VALUE, CONF_NOTIFICATION_INTERVAL, CONF_TAGS, CONF_ACTIVE, CONF_WEEK, \
     CONF_MONTH, CONF_YEAR, CONST_DUE, CONST_DUE_SOON, CONST_INACTIVE, CONST_DONE, CONF_TASK_INTERVAL_TYPE, \
     CONF_DUE_SOON_DAYS, CONF_TODO_LISTS, CONF_DAY, CONF_ACTIVE_OVERRIDE, CONF_TASK_INTERVAL_OVERRIDE, \
-    CONF_DUE_SOON_OVERRIDE
+    CONF_DUE_SOON_OVERRIDE, CONF_REPEAT_MODE, CONF_REPEAT_AFTER
 from .coordinator import TaskTrackerCoordinator
 
 LOGGER = getLogger(__name__)
@@ -48,7 +48,8 @@ async def async_setup_entry(
                            options[CONF_ACTIVE], options[CONF_ICON], entry.entry_id, hass,
                            options.get(CONF_ACTIVE_OVERRIDE),
                            options.get(CONF_TASK_INTERVAL_OVERRIDE),
-                           options.get(CONF_DUE_SOON_OVERRIDE))])
+                           options.get(CONF_DUE_SOON_OVERRIDE),
+                           options.get(CONF_REPEAT_MODE, CONF_REPEAT_AFTER))])
 
 
 class TaskTrackerSensor(RestoreSensor, SensorEntity):
@@ -64,7 +65,8 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
                  icon: str, entry_id: str, hass: HomeAssistant,
                  active_override: str | None = None,
                  task_interval_override: str | None = None,
-                 due_soon_override: str | None = None) -> None:
+                 due_soon_override: str | None = None,
+                 repeat_mode: str = CONF_REPEAT_AFTER) -> None:
         """Initialize the sensor with a service name."""
         self.coordinator = coordinator
         self.task_interval_value: int = task_interval_value
@@ -84,9 +86,14 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
         self.active_override: str | None = active_override
         self.task_interval_override: str | None = task_interval_override
         self.due_soon_override: str | None = due_soon_override
+        self.repeat_mode: str = repeat_mode
         # Effective values after applying overrides; initialised to configured values
         self._effective_active: bool = active
         self._effective_due_soon_days: int = due_soon_days
+
+        # Propagate repeat_mode to the coordinator so the button and service
+        # use the correct completion logic immediately, before async_update runs.
+        self.coordinator.repeat_mode = repeat_mode
 
         device_id = f"{DOMAIN}_{self.entry_id}"
         self._attr_name = None
@@ -207,6 +214,11 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
         self.due_in: int = (self.due_date - date.today()).days if self.due_date > date.today() else 0
         overdue_by: int = (date.today() - self.due_date).days if self.due_date < date.today() else 0
 
+        # Keep the coordinator in sync so the button and service always use
+        # the latest due_date and repeat_mode when async_mark_as_done is called.
+        self.coordinator.due_date = self.due_date
+        self.coordinator.repeat_mode = self.repeat_mode
+
         if not effective_active:
             self._attr_native_value = CONST_INACTIVE
         elif self.due_in == 0:
@@ -224,6 +236,7 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
             "overdue_by": overdue_by,
             "task_interval_value": effective_task_interval_value,
             "task_interval_type": effective_task_interval_type,
+            "repeat_mode": self.repeat_mode,
             "icon": self.icon,
             "tags": self.tags,
             "todo_lists": self.todo_lists,

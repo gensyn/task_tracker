@@ -14,6 +14,7 @@ from task_tracker.const import (
     CONF_ACTIVE, CONF_TASK_INTERVAL_VALUE, CONF_TASK_INTERVAL_TYPE,
     CONF_TAGS, CONF_TODO_LISTS, CONF_DUE_SOON_DAYS, CONF_NOTIFICATION_INTERVAL, CONF_DAY,
     CONF_ACTIVE_OVERRIDE, CONF_TASK_INTERVAL_OVERRIDE, CONF_DUE_SOON_OVERRIDE,
+    CONF_REPEAT_MODE, CONF_REPEAT_AFTER, CONF_REPEAT_EVERY,
 )
 
 
@@ -248,3 +249,42 @@ class TestValidateOptions(unittest.IsolatedAsyncioTestCase):
             CONF_DUE_SOON_OVERRIDE: "",
         })
         self.assertIsNone(result[CONF_DUE_SOON_OVERRIDE])
+
+    async def test_repeat_mode_defaults_to_repeat_after(self):
+        result = await validate_options({
+            CONF_TASK_INTERVAL_VALUE: 7,
+            CONF_TASK_INTERVAL_TYPE: CONF_DAY,
+        })
+        self.assertEqual(result[CONF_REPEAT_MODE], CONF_REPEAT_AFTER)
+
+    async def test_repeat_mode_repeat_after_preserved(self):
+        result = await validate_options({
+            CONF_TASK_INTERVAL_VALUE: 7,
+            CONF_TASK_INTERVAL_TYPE: CONF_DAY,
+            CONF_REPEAT_MODE: CONF_REPEAT_AFTER,
+        })
+        self.assertEqual(result[CONF_REPEAT_MODE], CONF_REPEAT_AFTER)
+
+    async def test_repeat_mode_repeat_every_preserved(self):
+        result = await validate_options({
+            CONF_TASK_INTERVAL_VALUE: 7,
+            CONF_TASK_INTERVAL_TYPE: CONF_DAY,
+            CONF_REPEAT_MODE: CONF_REPEAT_EVERY,
+        })
+        self.assertEqual(result[CONF_REPEAT_MODE], CONF_REPEAT_EVERY)
+
+    async def test_repeat_mode_invalid_value_defaults_to_repeat_after(self):
+        result = await validate_options({
+            CONF_TASK_INTERVAL_VALUE: 7,
+            CONF_TASK_INTERVAL_TYPE: CONF_DAY,
+            CONF_REPEAT_MODE: "invalid_mode",
+        })
+        self.assertEqual(result[CONF_REPEAT_MODE], CONF_REPEAT_AFTER)
+
+    async def test_repeat_mode_empty_string_defaults_to_repeat_after(self):
+        result = await validate_options({
+            CONF_TASK_INTERVAL_VALUE: 7,
+            CONF_TASK_INTERVAL_TYPE: CONF_DAY,
+            CONF_REPEAT_MODE: "",
+        })
+        self.assertEqual(result[CONF_REPEAT_MODE], CONF_REPEAT_AFTER)

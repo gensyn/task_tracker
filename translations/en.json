@@ -13,11 +13,13 @@
                 "data": {
                     "name": "Name",
                     "task_interval_value": "Task Interval",
-                    "task_interval_type": "Task Interval Unit"
+                    "task_interval_type": "Task Interval Unit",
+                    "repeat_mode": "Repeat Mode"
                 },
                 "data_description": {
                     "task_interval_value": "Time after which the task becomes due again.",
-                    "task_interval_type": "The unit of time for the task interval."
+                    "task_interval_type": "The unit of time for the task interval.",
+                    "repeat_mode": "How the next due date is calculated when the task is completed."
                 }
             }
         }
@@ -37,6 +39,7 @@
                     "task_interval_value": "Task Interval",
                     "task_interval_type": "Task Interval Unit",
                     "task_interval_override": "Task Interval Override",
+                    "repeat_mode": "Repeat Mode",
                     "notification_interval": "Notification Interval (days)",
                     "todo_lists": "Todo-Lists",
                     "due_soon_days": "Due soon (days)",
@@ -50,6 +53,7 @@
                     "task_interval_value": "Time after which the task becomes due again.",
                     "task_interval_type": "The unit of time for the task interval.",
                     "task_interval_override": "Select an input_number (value in days) to override the Task Interval.",
+                    "repeat_mode": "How the next due date is calculated when the task is completed. 'Repeat after completion' sets the next due date relative to when the task was completed. 'Repeat every (fixed schedule)' keeps the task on its original schedule regardless of when it was completed.",
                     "notification_interval": "The time in days after which notifications are sent again.",
                     "todo_lists": "Todo-Lists, to which this task will be added.",
                     "due_soon_days": "The number of days before the task is due to show it as due soon.",
@@ -69,6 +73,12 @@
             "week": "Week",
             "month": "Month",
             "year": "Year"
+          }
+        },
+        "repeat_mode": {
+          "options": {
+            "repeat_after": "Repeat after completion",
+            "repeat_every": "Repeat every (fixed schedule)"
           }
         }
     },

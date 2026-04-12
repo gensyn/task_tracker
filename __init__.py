@@ -16,7 +16,7 @@ from homeassistant.helpers.typing import ConfigType
 from .const import DOMAIN, CONF_TASK_INTERVAL_VALUE, CONF_DAY, CONF_TASK_INTERVAL_TYPE, CONF_NOTIFICATION_INTERVAL, \
     CONF_DUE_SOON_DAYS, CONF_DUE_SOON_OVERRIDE, CONF_TAGS, CONF_ACTIVE, CONF_TODO_LISTS, SERVICE_MARK_AS_DONE, \
     SERVICE_MARK_AS_DONE_SCHEMA, SERVICE_SET_LAST_DONE_DATE, SERVICE_SET_LAST_DONE_DATE_SCHEMA, CONF_DATE, \
-    CONF_SHOW_PANEL
+    CONF_SHOW_PANEL, CONF_REPEAT_MODE, CONF_REPEAT_AFTER
 from .coordinator import TaskTrackerCoordinator
 from .frontend import TaskTrackerCardRegistration
 
@@ -136,7 +136,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Migrate old config entry."""
 
-    if entry.version > 1 or entry.minor_version > 3:
+    if entry.version > 1 or entry.minor_version > 4:
         # This means the user has downgraded from a later version
         return False
 
@@ -172,6 +172,18 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             options=new_options,
             version=1,
             minor_version=3,
+        )
+
+    if entry.version == 1 and entry.minor_version == 3:
+        # 1.3 Add repeat_mode option (default: repeat_after to preserve existing behaviour)
+        new_options = dict(entry.options)
+        new_options.setdefault(CONF_REPEAT_MODE, CONF_REPEAT_AFTER)
+
+        hass.config_entries.async_update_entry(
+            entry,
+            options=new_options,
+            version=1,
+            minor_version=4,
         )
 
     return True

@@ -13,11 +13,13 @@
                 "data": {
                     "name": "Name",
                     "task_interval_value": "Taskintervall",
-                    "task_interval_type": "Einheit des Taskintervalls"
+                    "task_interval_type": "Einheit des Taskintervalls",
+                    "repeat_mode": "Wiederholungsmodus"
                 },
                 "data_description": {
                     "task_interval_value": "Die Zeit, nach der die Task wieder fällig wird.",
-                    "task_interval_type": "Die Zeiteinheit für das Taskintervall."
+                    "task_interval_type": "Die Zeiteinheit für das Taskintervall.",
+                    "repeat_mode": "Wie das nächste Fälligkeitsdatum berechnet wird, wenn die Task abgeschlossen wurde."
                 }
             }
         }
@@ -34,6 +36,7 @@
                     "task_interval_value": "Taskintervall",
                     "task_interval_type": "Einheit des Taskintervalls",
                     "task_interval_override": "Taskintervall überschreiben",
+                    "repeat_mode": "Wiederholungsmodus",
                     "notification_interval": "Benachrichtigungsintervall (Tage)",
                     "todo_lists": "Todo-Listen",
                     "due_soon_days": "Bald fällig (Tage)",
@@ -47,6 +50,7 @@
                     "task_interval_value": "Die Zeit, nach der die Task wieder fällig wird.",
                     "task_interval_type": "Die Zeiteinheit für das Taskintervall.",
                     "task_interval_override": "input_number (Wert in Tagen) zur Überschreibung des Taskintervalls auswählen.",
+                    "repeat_mode": "Wie das nächste Fälligkeitsdatum berechnet wird, wenn die Task abgeschlossen wurde. 'Nach Abschluss wiederholen' berechnet das nächste Fälligkeitsdatum relativ zum Abschlussdatum. 'Regelmäßig wiederholen (fester Zeitplan)' hält die Task im ursprünglichen Zeitplan unabhängig davon, wann sie abgeschlossen wurde.",
                     "notification_interval": "Die Zeit in Tagen, nach dem Benachrichtigungen erneut gesendet werden.",
                     "todo_lists": "Die Todo-Listen, zu denen diese Task hinzugefügt wird.",
                     "due_soon_days": "Die Anzahl der Tage vor Fälligkeit der Task, um sie als bald fällig anzuzeigen.",
@@ -66,6 +70,12 @@
             "week": "Woche",
             "month": "Monat",
             "year": "Jahr"
+          }
+        },
+        "repeat_mode": {
+          "options": {
+            "repeat_after": "Nach Abschluss wiederholen",
+            "repeat_every": "Regelmäßig wiederholen (fester Zeitplan)"
           }
         }
     },

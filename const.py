@@ -25,6 +25,9 @@ CONF_DATE = "date"
 CONF_VALUE = "value"
 CONF_LABEL = "label"
 CONF_SHOW_PANEL = "show_panel"
+CONF_REPEAT_MODE = "repeat_mode"
+CONF_REPEAT_AFTER = "repeat_after"
+CONF_REPEAT_EVERY = "repeat_every"
 
 CONST_DUE = "due"
 CONST_DUE_SOON = "due_soon"
@@ -74,6 +77,13 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
                 CONF_MODE: CONF_DROPDOWN,
                 "translation_key": "task_interval",
             }
-        })
+        }),
+        vol.Required(CONF_REPEAT_MODE, default=CONF_REPEAT_AFTER): selector({
+            CONF_SELECT: {
+                CONF_OPTIONS: [CONF_REPEAT_AFTER, CONF_REPEAT_EVERY],
+                CONF_MODE: CONF_DROPDOWN,
+                "translation_key": "repeat_mode",
+            }
+        }),
     }
 )
