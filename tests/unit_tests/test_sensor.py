@@ -799,28 +799,31 @@ class TestCalcNextDayOfMonth(unittest.TestCase):
 class TestGetNthWeekdayOfMonth(unittest.TestCase):
     """Tests for TaskTrackerCoordinator._get_nth_weekday_of_month."""
 
+    def _coordinator(self):
+        return make_sensor().coordinator
+
     def test_1st_monday_of_jan_2024(self):
         # 2024-01-01 is Monday → 1st Monday = Jan 1
-        result = TaskTrackerCoordinator._get_nth_weekday_of_month(2024, 1, 0, 1)
+        result = self._coordinator()._get_nth_weekday_of_month(2024, 1, 0, 1)
         self.assertEqual(result, date(2024, 1, 1))
 
     def test_2nd_monday_of_jan_2024(self):
-        result = TaskTrackerCoordinator._get_nth_weekday_of_month(2024, 1, 0, 2)
+        result = self._coordinator()._get_nth_weekday_of_month(2024, 1, 0, 2)
         self.assertEqual(result, date(2024, 1, 8))
 
     def test_last_monday_of_jan_2024(self):
         # Jan 2024 has 5 Mondays: 1,8,15,22,29 → last = Jan 29
-        result = TaskTrackerCoordinator._get_nth_weekday_of_month(2024, 1, 0, -1)
+        result = self._coordinator()._get_nth_weekday_of_month(2024, 1, 0, -1)
         self.assertEqual(result, date(2024, 1, 29))
 
     def test_5th_monday_does_not_exist_in_some_months(self):
         # Feb 2024 has 4 Mondays; 5th doesn't exist
-        result = TaskTrackerCoordinator._get_nth_weekday_of_month(2024, 2, 0, 5)
+        result = self._coordinator()._get_nth_weekday_of_month(2024, 2, 0, 5)
         self.assertIsNone(result)
 
     def test_2nd_monday_of_march_2024(self):
         # 2024-03-01 is Friday; first Monday is Mar 4; 2nd = Mar 11
-        result = TaskTrackerCoordinator._get_nth_weekday_of_month(2024, 3, 0, 2)
+        result = self._coordinator()._get_nth_weekday_of_month(2024, 3, 0, 2)
         self.assertEqual(result, date(2024, 3, 11))
 
 
