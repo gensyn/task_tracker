@@ -16,7 +16,9 @@ from homeassistant.helpers.typing import ConfigType
 from .const import DOMAIN, CONF_TASK_INTERVAL_VALUE, CONF_DAY, CONF_TASK_INTERVAL_TYPE, CONF_NOTIFICATION_INTERVAL, \
     CONF_DUE_SOON_DAYS, CONF_DUE_SOON_OVERRIDE, CONF_TAGS, CONF_ACTIVE, CONF_TODO_LISTS, SERVICE_MARK_AS_DONE, \
     SERVICE_MARK_AS_DONE_SCHEMA, SERVICE_SET_LAST_DONE_DATE, SERVICE_SET_LAST_DONE_DATE_SCHEMA, CONF_DATE, \
-    CONF_SHOW_PANEL, CONF_REPEAT_MODE, CONF_REPEAT_AFTER
+    CONF_SHOW_PANEL, CONF_REPEAT_MODE, CONF_REPEAT_AFTER, \
+    CONF_REPEAT_EVERY_TYPE, CONF_REPEAT_WEEKDAY, CONF_REPEAT_WEEKS_INTERVAL, \
+    CONF_REPEAT_MONTH_DAY, CONF_REPEAT_NTH_OCCURRENCE
 from .coordinator import TaskTrackerCoordinator
 from .frontend import TaskTrackerCardRegistration
 
@@ -136,7 +138,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Migrate old config entry."""
 
-    if entry.version > 1 or entry.minor_version > 4:
+    if entry.version > 1 or entry.minor_version > 5:
         # This means the user has downgraded from a later version
         return False
 
@@ -184,6 +186,22 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             options=new_options,
             version=1,
             minor_version=4,
+        )
+
+    if entry.version == 1 and entry.minor_version == 4:
+        # 1.4 Add repeat_every schedule fields (None for all existing repeat_after entries)
+        new_options = dict(entry.options)
+        new_options.setdefault(CONF_REPEAT_EVERY_TYPE, None)
+        new_options.setdefault(CONF_REPEAT_WEEKDAY, None)
+        new_options.setdefault(CONF_REPEAT_WEEKS_INTERVAL, None)
+        new_options.setdefault(CONF_REPEAT_MONTH_DAY, None)
+        new_options.setdefault(CONF_REPEAT_NTH_OCCURRENCE, None)
+
+        hass.config_entries.async_update_entry(
+            entry,
+            options=new_options,
+            version=1,
+            minor_version=5,
         )
 
     return True

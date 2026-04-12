@@ -12,14 +12,66 @@
                 "description": "Task erstellen.",
                 "data": {
                     "name": "Name",
-                    "task_interval_value": "Taskintervall",
-                    "task_interval_type": "Einheit des Taskintervalls",
                     "repeat_mode": "Wiederholungsmodus"
                 },
                 "data_description": {
-                    "task_interval_value": "Die Zeit, nach der die Task wieder fällig wird.",
-                    "task_interval_type": "Die Zeiteinheit für das Taskintervall.",
                     "repeat_mode": "Wie das nächste Fälligkeitsdatum berechnet wird, wenn die Task abgeschlossen wurde."
+                }
+            },
+            "repeat_after": {
+                "title": "Nach Abschluss wiederholen",
+                "description": "Die Task wird nach einem festen Intervall seit der letzten Erledigung wieder fällig.",
+                "data": {
+                    "task_interval_value": "Taskintervall",
+                    "task_interval_type": "Einheit des Taskintervalls"
+                },
+                "data_description": {
+                    "task_interval_value": "Die Zeit, nach der die Task wieder fällig wird.",
+                    "task_interval_type": "Die Zeiteinheit für das Taskintervall."
+                }
+            },
+            "repeat_every": {
+                "title": "Regelmäßig wiederholen (fester Zeitplan)",
+                "description": "Wählen Sie den Zeitplantyp für diese Task.",
+                "data": {
+                    "repeat_every_type": "Zeitplantyp"
+                },
+                "data_description": {
+                    "repeat_every_type": "Die Art des wiederkehrenden Zeitplans."
+                }
+            },
+            "repeat_every_weekday": {
+                "title": "Alle N Wochen an einem Wochentag",
+                "description": "Die Task wiederholt sich jeden Wochentag alle N Wochen.",
+                "data": {
+                    "repeat_weekday": "Wochentag",
+                    "repeat_weeks_interval": "Alle (Wochen)"
+                },
+                "data_description": {
+                    "repeat_weekday": "Der Wochentag, an dem die Task wiederholt wird.",
+                    "repeat_weeks_interval": "Wie viele Wochen zwischen Wiederholungen (1 = jede Woche, 2 = jede zweite Woche usw.)."
+                }
+            },
+            "repeat_every_day_of_month": {
+                "title": "Am Nth Tag des Monats",
+                "description": "Die Task wiederholt sich an einem festen Monatstag.",
+                "data": {
+                    "repeat_month_day": "Monatstag"
+                },
+                "data_description": {
+                    "repeat_month_day": "Der Monatstag, an dem die Task wiederholt wird (1–31)."
+                }
+            },
+            "repeat_every_weekday_of_month": {
+                "title": "Am Nth Wochentag des Monats",
+                "description": "Die Task wiederholt sich am bestimmten Auftreten eines Wochentags im Monat (z. B. dem 2. Montag).",
+                "data": {
+                    "repeat_weekday": "Wochentag",
+                    "repeat_nth_occurrence": "Vorkommen"
+                },
+                "data_description": {
+                    "repeat_weekday": "Der Wochentag, an dem die Task wiederholt wird.",
+                    "repeat_nth_occurrence": "Welches Auftreten des Wochentags im Monat."
                 }
             }
         }
@@ -33,9 +85,6 @@
                 "title": "Task Tracker",
                 "description": "Task bearbeiten.",
                 "data": {
-                    "task_interval_value": "Taskintervall",
-                    "task_interval_type": "Einheit des Taskintervalls",
-                    "task_interval_override": "Taskintervall überschreiben",
                     "repeat_mode": "Wiederholungsmodus",
                     "notification_interval": "Benachrichtigungsintervall (Tage)",
                     "todo_lists": "Todo-Listen",
@@ -47,9 +96,6 @@
                     "active_override": "Aktiv überschreiben"
                 },
                 "data_description": {
-                    "task_interval_value": "Die Zeit, nach der die Task wieder fällig wird.",
-                    "task_interval_type": "Die Zeiteinheit für das Taskintervall.",
-                    "task_interval_override": "input_number (Wert in Tagen) zur Überschreibung des Taskintervalls auswählen.",
                     "repeat_mode": "Wie das nächste Fälligkeitsdatum berechnet wird, wenn die Task abgeschlossen wurde. 'Nach Abschluss wiederholen' berechnet das nächste Fälligkeitsdatum relativ zum Abschlussdatum. 'Regelmäßig wiederholen (fester Zeitplan)' hält die Task im ursprünglichen Zeitplan unabhängig davon, wann sie abgeschlossen wurde.",
                     "notification_interval": "Die Zeit in Tagen, nach dem Benachrichtigungen erneut gesendet werden.",
                     "todo_lists": "Die Todo-Listen, zu denen diese Task hinzugefügt wird.",
@@ -59,6 +105,64 @@
                     "icon": "Icon zur Darstellung der Task.",
                     "active": "Task aktivieren oder deaktivieren.",
                     "active_override": "input_boolean zur Überschreibung des Aktiv-Status auswählen."
+                }
+            },
+            "repeat_after": {
+                "title": "Nach Abschluss wiederholen",
+                "description": "Die Task wird nach einem festen Intervall seit der letzten Erledigung wieder fällig.",
+                "data": {
+                    "task_interval_value": "Taskintervall",
+                    "task_interval_type": "Einheit des Taskintervalls",
+                    "task_interval_override": "Taskintervall überschreiben"
+                },
+                "data_description": {
+                    "task_interval_value": "Die Zeit, nach der die Task wieder fällig wird.",
+                    "task_interval_type": "Die Zeiteinheit für das Taskintervall.",
+                    "task_interval_override": "input_number (Wert in Tagen) zur Überschreibung des Taskintervalls auswählen."
+                }
+            },
+            "repeat_every": {
+                "title": "Regelmäßig wiederholen (fester Zeitplan)",
+                "description": "Wählen Sie den Zeitplantyp für diese Task.",
+                "data": {
+                    "repeat_every_type": "Zeitplantyp"
+                },
+                "data_description": {
+                    "repeat_every_type": "Die Art des wiederkehrenden Zeitplans."
+                }
+            },
+            "repeat_every_weekday": {
+                "title": "Alle N Wochen an einem Wochentag",
+                "description": "Die Task wiederholt sich jeden Wochentag alle N Wochen.",
+                "data": {
+                    "repeat_weekday": "Wochentag",
+                    "repeat_weeks_interval": "Alle (Wochen)"
+                },
+                "data_description": {
+                    "repeat_weekday": "Der Wochentag, an dem die Task wiederholt wird.",
+                    "repeat_weeks_interval": "Wie viele Wochen zwischen Wiederholungen (1 = jede Woche, 2 = jede zweite Woche usw.)."
+                }
+            },
+            "repeat_every_day_of_month": {
+                "title": "Am Nth Tag des Monats",
+                "description": "Die Task wiederholt sich an einem festen Monatstag.",
+                "data": {
+                    "repeat_month_day": "Monatstag"
+                },
+                "data_description": {
+                    "repeat_month_day": "Der Monatstag, an dem die Task wiederholt wird (1–31)."
+                }
+            },
+            "repeat_every_weekday_of_month": {
+                "title": "Am Nth Wochentag des Monats",
+                "description": "Die Task wiederholt sich am bestimmten Auftreten eines Wochentags im Monat (z. B. dem 2. Montag).",
+                "data": {
+                    "repeat_weekday": "Wochentag",
+                    "repeat_nth_occurrence": "Vorkommen"
+                },
+                "data_description": {
+                    "repeat_weekday": "Der Wochentag, an dem die Task wiederholt wird.",
+                    "repeat_nth_occurrence": "Welches Auftreten des Wochentags im Monat."
                 }
             }
         }
@@ -76,6 +180,33 @@
           "options": {
             "repeat_after": "Nach Abschluss wiederholen",
             "repeat_every": "Regelmäßig wiederholen (fester Zeitplan)"
+          }
+        },
+        "repeat_every_type": {
+          "options": {
+            "repeat_every_weekday": "Alle N Wochen an einem Wochentag",
+            "repeat_every_day_of_month": "Am Nth Tag des Monats",
+            "repeat_every_weekday_of_month": "Am Nth Wochentag des Monats"
+          }
+        },
+        "weekday": {
+          "options": {
+            "monday": "Montag",
+            "tuesday": "Dienstag",
+            "wednesday": "Mittwoch",
+            "thursday": "Donnerstag",
+            "friday": "Freitag",
+            "saturday": "Samstag",
+            "sunday": "Sonntag"
+          }
+        },
+        "nth_occurrence": {
+          "options": {
+            "1": "1.",
+            "2": "2.",
+            "3": "3.",
+            "4": "4.",
+            "last": "Letzter"
           }
         }
     },
