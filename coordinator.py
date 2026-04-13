@@ -81,21 +81,31 @@ class TaskTrackerCoordinator:
         for listener in list(self._listeners):
             listener()
 
-    async def async_mark_as_done(self) -> None:
+    async def async_mark_as_done(self, use_next_occurrence: bool = False) -> None:
         """Mark the task as done and notify listeners.
 
         In ``repeat_after`` mode (default) the last-done date is set to today,
         so the next due date is calculated relative to the actual completion date.
 
-        In ``repeat_every`` mode the last-done date is set to the most recent
-        occurrence of the schedule that falls on or before today.  This means
-        a task whose ``last_done`` is far in the past (e.g. epoch-initialised)
-        is brought up-to-date in a single press rather than one interval at a
-        time.  The sensor layer ensures this is only called when the task is DUE
-        or DUE_SOON; if the task is already DONE this method is not reached.
+        In ``repeat_every`` mode the behaviour depends on *use_next_occurrence*:
+
+        * ``False`` (default, used when the task is DUE): last-done is set to
+          the most recent occurrence of the schedule on or before today.  This
+          catches up a task that has been overdue for many cycles in a single
+          press.
+        * ``True`` (used when the task is DUE_SOON, i.e. completed early):
+          last-done is set to the *next* upcoming occurrence so that the
+          completed-early press is recorded against the future cycle that is
+          about to become due, preserving the schedule going forward.
+
+        The sensor layer ensures this is only called when the task is DUE or
+        DUE_SOON; if the task is DONE or INACTIVE this method is not reached.
         """
         if self.repeat_mode == CONF_REPEAT_EVERY:
-            self.last_done = self._find_most_recent_occurrence(date.today())
+            if use_next_occurrence:
+                self.last_done = self._calculate_repeat_every_due_date()
+            else:
+                self.last_done = self._find_most_recent_occurrence(date.today())
         else:
             self.last_done = date.today()
         self._async_notify_listeners()

@@ -372,11 +372,20 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
         For ``repeat_every`` tasks the action is skipped when the task is
         already done or inactive – marking a completed future-due task as done
         again would incorrectly advance the schedule.
+
+        When the task is DUE_SOON (completed early) the next occurrence is used
+        as the new last-done date so the early completion is registered against
+        the upcoming cycle.  When the task is DUE the most recent past occurrence
+        is used instead, allowing a single press to catch up many overdue cycles.
         """
         if (self.coordinator.repeat_mode == CONF_REPEAT_EVERY
                 and self._attr_native_value in (CONST_DONE, CONST_INACTIVE)):
             return
-        await self.coordinator.async_mark_as_done()
+        use_next = (
+            self.coordinator.repeat_mode == CONF_REPEAT_EVERY
+            and self._attr_native_value == CONST_DUE_SOON
+        )
+        await self.coordinator.async_mark_as_done(use_next_occurrence=use_next)
 
     async def async_set_last_done_date(self, new_date: date) -> None:
         """Set the last done date."""
