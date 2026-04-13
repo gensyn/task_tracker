@@ -142,15 +142,19 @@ _STEP_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH_SCHEMA = vol.Schema(
 
 # ---------------------------------------------------------------------------
 # Common optional fields shared by all combined options steps for repeat_every.
-# These mirror the _STEP_INIT_SCHEMA fields (minus CONF_REPEAT_MODE).
+# Split into "head" (active/active_override – always shown first) and "tail"
+# (icon, tags, … – shown after the mode-specific fields).
 # ---------------------------------------------------------------------------
-_REPEAT_EVERY_COMMON_OPTIONS: dict = {
+_REPEAT_EVERY_HEAD_OPTIONS: dict = {
     vol.Optional(CONF_ACTIVE): bool,
     vol.Optional(CONF_ACTIVE_OVERRIDE): selector({
         "entity": {
             "domain": "input_boolean",
         }
     }),
+}
+
+_REPEAT_EVERY_TAIL_OPTIONS: dict = {
     vol.Optional(CONF_ICON, default="mdi:calendar-question"): str,
     vol.Optional(CONF_TAGS): str,
     vol.Optional(CONF_TODO_LISTS): selector({
@@ -168,8 +172,10 @@ _REPEAT_EVERY_COMMON_OPTIONS: dict = {
     vol.Optional(CONF_NOTIFICATION_INTERVAL, default=1): int,
 }
 
-# Combined options steps for repeat_every modes (mode-specific + common fields)
+# Combined options steps for repeat_every modes.
+# Field order: active / active_override → mode-specific fields → remaining common fields.
 _STEP_OPTIONS_REPEAT_EVERY_WEEKDAY_SCHEMA = vol.Schema({
+    **_REPEAT_EVERY_HEAD_OPTIONS,
     vol.Required(CONF_REPEAT_WEEKDAY, default=CONF_MONDAY): selector({
         CONF_SELECT: {
             CONF_OPTIONS: _WEEKDAYS,
@@ -178,15 +184,17 @@ _STEP_OPTIONS_REPEAT_EVERY_WEEKDAY_SCHEMA = vol.Schema({
         }
     }),
     vol.Required(CONF_REPEAT_WEEKS_INTERVAL, default=1): int,
-    **_REPEAT_EVERY_COMMON_OPTIONS,
+    **_REPEAT_EVERY_TAIL_OPTIONS,
 })
 
 _STEP_OPTIONS_REPEAT_EVERY_DAY_OF_MONTH_SCHEMA = vol.Schema({
+    **_REPEAT_EVERY_HEAD_OPTIONS,
     vol.Required(CONF_REPEAT_MONTH_DAY, default=1): int,
-    **_REPEAT_EVERY_COMMON_OPTIONS,
+    **_REPEAT_EVERY_TAIL_OPTIONS,
 })
 
 _STEP_OPTIONS_REPEAT_EVERY_WEEKDAY_OF_MONTH_SCHEMA = vol.Schema({
+    **_REPEAT_EVERY_HEAD_OPTIONS,
     vol.Required(CONF_REPEAT_WEEKDAY, default=CONF_MONDAY): selector({
         CONF_SELECT: {
             CONF_OPTIONS: _WEEKDAYS,
@@ -201,12 +209,13 @@ _STEP_OPTIONS_REPEAT_EVERY_WEEKDAY_OF_MONTH_SCHEMA = vol.Schema({
             "translation_key": "nth_occurrence",
         }
     }),
-    **_REPEAT_EVERY_COMMON_OPTIONS,
+    **_REPEAT_EVERY_TAIL_OPTIONS,
 })
 
 _STEP_OPTIONS_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH_SCHEMA = vol.Schema({
+    **_REPEAT_EVERY_HEAD_OPTIONS,
     vol.Required(CONF_REPEAT_DAYS_BEFORE_END, default=0): int,
-    **_REPEAT_EVERY_COMMON_OPTIONS,
+    **_REPEAT_EVERY_TAIL_OPTIONS,
 })
 
 

@@ -23,7 +23,7 @@ from homeassistant.util.dt import UTC
 from .const import DOMAIN, CONF_TASK_INTERVAL_VALUE, CONF_NOTIFICATION_INTERVAL, CONF_TAGS, CONF_ACTIVE, \
     CONST_DUE, CONST_DUE_SOON, CONST_INACTIVE, CONST_DONE, CONF_TASK_INTERVAL_TYPE, \
     CONF_DUE_SOON_DAYS, CONF_TODO_LISTS, CONF_DAY, CONF_ACTIVE_OVERRIDE, CONF_TASK_INTERVAL_OVERRIDE, \
-    CONF_DUE_SOON_OVERRIDE
+    CONF_DUE_SOON_OVERRIDE, CONF_REPEAT_EVERY
 from .coordinator import TaskTrackerCoordinator
 
 LOGGER = getLogger(__name__)
@@ -367,7 +367,15 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
             raise
 
     async def async_mark_as_done(self) -> None:
-        """Mark the task as done for today."""
+        """Mark the task as done for today.
+
+        For ``repeat_every`` tasks the action is skipped when the task is
+        already done or inactive – marking a completed future-due task as done
+        again would incorrectly advance the schedule.
+        """
+        if (self.coordinator.repeat_mode == CONF_REPEAT_EVERY
+                and self._attr_native_value in (CONST_DONE, CONST_INACTIVE)):
+            return
         await self.coordinator.async_mark_as_done()
 
     async def async_set_last_done_date(self, new_date: date) -> None:
