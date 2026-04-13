@@ -1075,8 +1075,8 @@ class TestCalcMostRecentWeekdayOfMonth(unittest.TestCase):
         result = self._coord()._calc_most_recent_weekday_of_month(date(2024, 1, 1), CONF_MONDAY, "1")
         self.assertEqual(result, date(2024, 1, 1))
 
-    def test_first_monday_falls_back_to_previous_month(self):
-        # Today = Jan 6 (after 1st Monday Jan 1, but Jan 8 hasn't come yet)
+    def test_first_monday_same_month_before_second_monday(self):
+        # Today = Jan 6 (after 1st Monday Jan 1, but before 2nd Monday Jan 8)
         # 1st Monday of Jan = Jan 1 ≤ Jan 6 → Jan 1
         result = self._coord()._calc_most_recent_weekday_of_month(date(2024, 1, 6), CONF_MONDAY, "1")
         self.assertEqual(result, date(2024, 1, 1))
