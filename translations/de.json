@@ -210,7 +210,7 @@
                     "todo_lists": "Todo-Listen, zu denen diese Task hinzugefügt wird.",
                     "due_soon_days": "Anzahl der Tage vor Fälligkeit, ab denen die Task als 'bald fällig' gilt.",
                     "due_soon_override": "Wähle ein input_number (Wert in Tagen), um den 'Bald fällig'-Schwellenwert zu überschreiben.",
-                    "notification_interval": "Zeit in Tagen, nach der Benachrichtigungen erneut gesendet werden."
+                    "notification_interval": "Zeitintervall in Tagen, nach dem Benachrichtigungen erneut gesendet werden."
                 }
             },
             "options_repeat_every_day_of_month": {
@@ -236,7 +236,7 @@
                     "todo_lists": "Todo-Listen, zu denen diese Task hinzugefügt wird.",
                     "due_soon_days": "Anzahl der Tage vor Fälligkeit, ab denen die Task als 'bald fällig' gilt.",
                     "due_soon_override": "Wähle ein input_number (Wert in Tagen), um den 'Bald fällig'-Schwellenwert zu überschreiben.",
-                    "notification_interval": "Zeit in Tagen, nach der Benachrichtigungen erneut gesendet werden."
+                    "notification_interval": "Zeitintervall in Tagen, nach dem Benachrichtigungen erneut gesendet werden."
                 }
             },
             "options_repeat_every_weekday_of_month": {
@@ -264,7 +264,7 @@
                     "todo_lists": "Todo-Listen, zu denen diese Task hinzugefügt wird.",
                     "due_soon_days": "Anzahl der Tage vor Fälligkeit, ab denen die Task als 'bald fällig' gilt.",
                     "due_soon_override": "Wähle ein input_number (Wert in Tagen), um den 'Bald fällig'-Schwellenwert zu überschreiben.",
-                    "notification_interval": "Zeit in Tagen, nach der Benachrichtigungen erneut gesendet werden."
+                    "notification_interval": "Zeitintervall in Tagen, nach dem Benachrichtigungen erneut gesendet werden."
                 }
             },
             "options_repeat_every_days_before_end_of_month": {
@@ -290,7 +290,7 @@
                     "todo_lists": "Todo-Listen, zu denen diese Task hinzugefügt wird.",
                     "due_soon_days": "Anzahl der Tage vor Fälligkeit, ab denen die Task als 'bald fällig' gilt.",
                     "due_soon_override": "Wähle ein input_number (Wert in Tagen), um den 'Bald fällig'-Schwellenwert zu überschreiben.",
-                    "notification_interval": "Zeit in Tagen, nach der Benachrichtigungen erneut gesendet werden."
+                    "notification_interval": "Zeitintervall in Tagen, nach dem Benachrichtigungen erneut gesendet werden."
                 }
             }
         }

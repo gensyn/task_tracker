@@ -210,7 +210,7 @@
                     "active_override": "Select an input_boolean to override the Active setting.",
                     "icon": "Icon to represent the task.",
                     "tags": "Tags to categorize the task, separated by commas.",
-                    "todo_lists": "Todo-Lists, to which this task will be added.",
+                    "todo_lists": "Todo-Lists to which this task will be added.",
                     "due_soon_days": "The number of days before the task is due to show it as due soon.",
                     "due_soon_override": "Select an input_number (value in days) to override the Due soon threshold.",
                     "notification_interval": "The time in days after which notifications are sent again."
@@ -236,7 +236,7 @@
                     "active_override": "Select an input_boolean to override the Active setting.",
                     "icon": "Icon to represent the task.",
                     "tags": "Tags to categorize the task, separated by commas.",
-                    "todo_lists": "Todo-Lists, to which this task will be added.",
+                    "todo_lists": "Todo-Lists to which this task will be added.",
                     "due_soon_days": "The number of days before the task is due to show it as due soon.",
                     "due_soon_override": "Select an input_number (value in days) to override the Due soon threshold.",
                     "notification_interval": "The time in days after which notifications are sent again."
@@ -264,7 +264,7 @@
                     "active_override": "Select an input_boolean to override the Active setting.",
                     "icon": "Icon to represent the task.",
                     "tags": "Tags to categorize the task, separated by commas.",
-                    "todo_lists": "Todo-Lists, to which this task will be added.",
+                    "todo_lists": "Todo-Lists to which this task will be added.",
                     "due_soon_days": "The number of days before the task is due to show it as due soon.",
                     "due_soon_override": "Select an input_number (value in days) to override the Due soon threshold.",
                     "notification_interval": "The time in days after which notifications are sent again."
@@ -290,7 +290,7 @@
                     "active_override": "Select an input_boolean to override the Active setting.",
                     "icon": "Icon to represent the task.",
                     "tags": "Tags to categorize the task, separated by commas.",
-                    "todo_lists": "Todo-Lists, to which this task will be added.",
+                    "todo_lists": "Todo-Lists to which this task will be added.",
                     "due_soon_days": "The number of days before the task is due to show it as due soon.",
                     "due_soon_override": "Select an input_number (value in days) to override the Due soon threshold.",
                     "notification_interval": "The time in days after which notifications are sent again."

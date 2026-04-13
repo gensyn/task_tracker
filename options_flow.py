@@ -237,10 +237,8 @@ class TaskTrackerOptionsFlow(OptionsFlowWithReload):
         if self.config_entry.options.get(CONF_REPEAT_MODE) == CONF_REPEAT_EVERY:
             # Pre-seed accumulated options with the immutable schedule identity.
             self._accumulated_options[CONF_REPEAT_MODE] = CONF_REPEAT_EVERY
-            self._accumulated_options[CONF_REPEAT_EVERY_TYPE] = (
-                self.config_entry.options.get(CONF_REPEAT_EVERY_TYPE)
-            )
             repeat_every_type = self.config_entry.options.get(CONF_REPEAT_EVERY_TYPE)
+            self._accumulated_options[CONF_REPEAT_EVERY_TYPE] = repeat_every_type
             if repeat_every_type == CONF_REPEAT_EVERY_DAY_OF_MONTH:
                 return await self.async_step_options_repeat_every_day_of_month()
             if repeat_every_type == CONF_REPEAT_EVERY_WEEKDAY_OF_MONTH:
