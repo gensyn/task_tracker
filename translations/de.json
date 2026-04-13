@@ -73,6 +73,16 @@
                     "repeat_weekday": "Der Wochentag, an dem die Task wiederholt wird.",
                     "repeat_nth_occurrence": "Welches Auftreten des Wochentags im Monat."
                 }
+            },
+            "repeat_every_days_before_end_of_month": {
+                "title": "N Tage vor Monatsende",
+                "description": "Die Task wiederholt sich eine bestimmte Anzahl von Tagen vor dem letzten Tag des Monats.",
+                "data": {
+                    "repeat_days_before_end": "Tage vor Monatsende"
+                },
+                "data_description": {
+                    "repeat_days_before_end": "Wie viele Tage vor dem letzten Tag des Monats die Task fällig wird (0 = letzter Tag, 1 = vorletzter Tag usw.)."
+                }
             }
         }
     },
@@ -164,50 +174,61 @@
                     "repeat_weekday": "Der Wochentag, an dem die Task wiederholt wird.",
                     "repeat_nth_occurrence": "Welches Auftreten des Wochentags im Monat."
                 }
+            },
+            "repeat_every_days_before_end_of_month": {
+                "title": "N Tage vor Monatsende",
+                "description": "Die Task wiederholt sich eine bestimmte Anzahl von Tagen vor dem letzten Tag des Monats.",
+                "data": {
+                    "repeat_days_before_end": "Tage vor Monatsende"
+                },
+                "data_description": {
+                    "repeat_days_before_end": "Wie viele Tage vor dem letzten Tag des Monats die Task fällig wird (0 = letzter Tag, 1 = vorletzter Tag usw.)."
+                }
             }
         }
     },
     "selector": {
         "task_interval": {
-          "options": {
-            "day": "Tag",
-            "week": "Woche",
-            "month": "Monat",
-            "year": "Jahr"
-          }
+            "options": {
+                "day": "Tag",
+                "week": "Woche",
+                "month": "Monat",
+                "year": "Jahr"
+            }
         },
         "repeat_mode": {
-          "options": {
-            "repeat_after": "Nach Abschluss wiederholen",
-            "repeat_every": "Regelmäßig wiederholen (fester Zeitplan)"
-          }
+            "options": {
+                "repeat_after": "Nach Abschluss wiederholen",
+                "repeat_every": "Regelmäßig wiederholen (fester Zeitplan)"
+            }
         },
         "repeat_every_type": {
-          "options": {
-            "repeat_every_weekday": "Alle N Wochen an einem Wochentag",
-            "repeat_every_day_of_month": "An einem bestimmten Monatstag",
-            "repeat_every_weekday_of_month": "An einem bestimmten Wochentag des Monats"
-          }
+            "options": {
+                "repeat_every_weekday": "Alle N Wochen an einem Wochentag",
+                "repeat_every_day_of_month": "An einem bestimmten Monatstag",
+                "repeat_every_weekday_of_month": "An einem bestimmten Wochentag des Monats",
+                "repeat_every_days_before_end_of_month": "N Tage vor Monatsende"
+            }
         },
         "weekday": {
-          "options": {
-            "monday": "Montag",
-            "tuesday": "Dienstag",
-            "wednesday": "Mittwoch",
-            "thursday": "Donnerstag",
-            "friday": "Freitag",
-            "saturday": "Samstag",
-            "sunday": "Sonntag"
-          }
+            "options": {
+                "monday": "Montag",
+                "tuesday": "Dienstag",
+                "wednesday": "Mittwoch",
+                "thursday": "Donnerstag",
+                "friday": "Freitag",
+                "saturday": "Samstag",
+                "sunday": "Sonntag"
+            }
         },
         "nth_occurrence": {
-          "options": {
-            "1": "1.",
-            "2": "2.",
-            "3": "3.",
-            "4": "4.",
-            "last": "Letzter"
-          }
+            "options": {
+                "1": "1.",
+                "2": "2.",
+                "3": "3.",
+                "4": "4.",
+                "last": "Letzter"
+            }
         }
     },
     "entity": {
@@ -279,10 +300,10 @@
             "due_date": {
                 "name": "Fällig&nbsp;am"
             },
-            "due_in":{
+            "due_in": {
                 "name": "Fällig&nbsp;in"
             },
-            "overdue_by":{
+            "overdue_by": {
                 "name": "Überfällig&nbsp;seit"
             },
             "mark_as_done": {

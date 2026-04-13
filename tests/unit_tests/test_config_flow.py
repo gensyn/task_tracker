@@ -14,8 +14,9 @@ from task_tracker.const import (
     CONF_TASK_INTERVAL_VALUE, CONF_TASK_INTERVAL_TYPE, CONF_DAY, CONF_WEEK,
     CONF_REPEAT_MODE, CONF_REPEAT_AFTER, CONF_REPEAT_EVERY,
     CONF_REPEAT_EVERY_TYPE, CONF_REPEAT_EVERY_WEEKDAY, CONF_REPEAT_EVERY_DAY_OF_MONTH,
-    CONF_REPEAT_EVERY_WEEKDAY_OF_MONTH,
+    CONF_REPEAT_EVERY_WEEKDAY_OF_MONTH, CONF_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH,
     CONF_REPEAT_WEEKDAY, CONF_REPEAT_WEEKS_INTERVAL, CONF_REPEAT_MONTH_DAY, CONF_REPEAT_NTH_OCCURRENCE,
+    CONF_REPEAT_DAYS_BEFORE_END,
     CONF_MONDAY, CONF_WEDNESDAY,
 )
 
@@ -207,6 +208,37 @@ class TestTaskTrackerConfigFlowRepeatEvery(unittest.IsolatedAsyncioTestCase):
         result = await flow.async_step_repeat_every_weekday_of_month(user_input=None)
         self.assertEqual(result["type"], "form")
         self.assertEqual(result["step_id"], "repeat_every_weekday_of_month")
+
+    async def test_days_before_end_of_month_type_routes_to_correct_step(self):
+        flow = await self._step1()
+        result = await flow.async_step_repeat_every(
+            user_input={CONF_REPEAT_EVERY_TYPE: CONF_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH}
+        )
+        self.assertEqual(result["type"], "form")
+        self.assertEqual(result["step_id"], "repeat_every_days_before_end_of_month")
+
+    async def test_days_before_end_of_month_step_shows_form_on_no_input(self):
+        flow = await self._step1()
+        await flow.async_step_repeat_every(
+            user_input={CONF_REPEAT_EVERY_TYPE: CONF_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH}
+        )
+        result = await flow.async_step_repeat_every_days_before_end_of_month(user_input=None)
+        self.assertEqual(result["type"], "form")
+        self.assertEqual(result["step_id"], "repeat_every_days_before_end_of_month")
+
+    async def test_days_before_end_of_month_step_creates_entry(self):
+        flow = await self._step1("Pay Taxes")
+        await flow.async_step_repeat_every(
+            user_input={CONF_REPEAT_EVERY_TYPE: CONF_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH}
+        )
+        result = await flow.async_step_repeat_every_days_before_end_of_month(user_input={
+            CONF_REPEAT_DAYS_BEFORE_END: 3,
+        })
+        self.assertEqual(result["type"], "create_entry")
+        options = result["options"]
+        self.assertEqual(options[CONF_REPEAT_MODE], CONF_REPEAT_EVERY)
+        self.assertEqual(options[CONF_REPEAT_EVERY_TYPE], CONF_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH)
+        self.assertEqual(options[CONF_REPEAT_DAYS_BEFORE_END], 3)
 
 
 class TestTaskTrackerConfigFlowOptionsFlowFactory(unittest.IsolatedAsyncioTestCase):

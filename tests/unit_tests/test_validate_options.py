@@ -16,8 +16,9 @@ from task_tracker.const import (
     CONF_ACTIVE_OVERRIDE, CONF_TASK_INTERVAL_OVERRIDE, CONF_DUE_SOON_OVERRIDE,
     CONF_REPEAT_MODE, CONF_REPEAT_AFTER, CONF_REPEAT_EVERY,
     CONF_REPEAT_EVERY_TYPE, CONF_REPEAT_EVERY_WEEKDAY, CONF_REPEAT_EVERY_DAY_OF_MONTH,
-    CONF_REPEAT_EVERY_WEEKDAY_OF_MONTH,
+    CONF_REPEAT_EVERY_WEEKDAY_OF_MONTH, CONF_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH,
     CONF_REPEAT_WEEKDAY, CONF_REPEAT_WEEKS_INTERVAL, CONF_REPEAT_MONTH_DAY, CONF_REPEAT_NTH_OCCURRENCE,
+    CONF_REPEAT_DAYS_BEFORE_END,
     CONF_MONDAY, CONF_WEDNESDAY,
 )
 
@@ -272,4 +273,53 @@ class TestValidateOptionsRepeatEvery(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result[CONF_TASK_INTERVAL_VALUE], 7)
         self.assertEqual(result[CONF_TASK_INTERVAL_TYPE], CONF_DAY)
         self.assertIsNone(result[CONF_TASK_INTERVAL_OVERRIDE])
+
+    async def test_repeat_every_days_before_end_defaults_to_zero(self):
+        """repeat_every entries should include repeat_days_before_end (default 0)."""
+        result = await validate_options({**_BASE_REPEAT_EVERY_WEEKDAY})
+        self.assertEqual(result[CONF_REPEAT_DAYS_BEFORE_END], 0)
+
+
+class TestValidateOptionsRepeatEveryDaysBeforeEndOfMonth(unittest.IsolatedAsyncioTestCase):
+    """Tests for validate_options with the days-before-end-of-month repeat type."""
+
+    def _base(self, days_before_end=3):
+        return {
+            CONF_REPEAT_MODE: CONF_REPEAT_EVERY,
+            CONF_REPEAT_EVERY_TYPE: CONF_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH,
+            CONF_REPEAT_DAYS_BEFORE_END: days_before_end,
+        }
+
+    async def test_repeat_every_type_preserved(self):
+        result = await validate_options(self._base())
+        self.assertEqual(result[CONF_REPEAT_EVERY_TYPE], CONF_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH)
+
+    async def test_days_before_end_preserved(self):
+        result = await validate_options(self._base(days_before_end=5))
+        self.assertEqual(result[CONF_REPEAT_DAYS_BEFORE_END], 5)
+
+    async def test_days_before_end_zero_preserved(self):
+        result = await validate_options(self._base(days_before_end=0))
+        self.assertEqual(result[CONF_REPEAT_DAYS_BEFORE_END], 0)
+
+    async def test_days_before_end_negative_clamped_to_zero(self):
+        result = await validate_options(self._base(days_before_end=-1))
+        self.assertEqual(result[CONF_REPEAT_DAYS_BEFORE_END], 0)
+
+    async def test_days_before_end_defaults_to_zero_when_missing(self):
+        base = {
+            CONF_REPEAT_MODE: CONF_REPEAT_EVERY,
+            CONF_REPEAT_EVERY_TYPE: CONF_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH,
+        }
+        result = await validate_options(base)
+        self.assertEqual(result[CONF_REPEAT_DAYS_BEFORE_END], 0)
+
+    async def test_repeat_after_has_days_before_end_none(self):
+        """repeat_after entries must have repeat_days_before_end set to None."""
+        result = await validate_options({
+            CONF_TASK_INTERVAL_VALUE: 7,
+            CONF_TASK_INTERVAL_TYPE: CONF_DAY,
+            CONF_REPEAT_MODE: CONF_REPEAT_AFTER,
+        })
+        self.assertIsNone(result[CONF_REPEAT_DAYS_BEFORE_END])
 

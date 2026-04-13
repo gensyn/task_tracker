@@ -31,7 +31,7 @@ from .const import (
     CONF_DAY, CONF_WEEK, CONF_MONTH, CONF_YEAR,
     CONF_REPEAT_AFTER, CONF_REPEAT_EVERY,
     CONF_REPEAT_EVERY_WEEKDAY, CONF_REPEAT_EVERY_DAY_OF_MONTH,
-    CONF_REPEAT_EVERY_WEEKDAY_OF_MONTH,
+    CONF_REPEAT_EVERY_WEEKDAY_OF_MONTH, CONF_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH,
 )
 
 LOGGER = getLogger(__name__)
@@ -49,6 +49,7 @@ class TaskTrackerCoordinator:
         repeat_weeks_interval: int = 1,
         repeat_month_day: int = 1,
         repeat_nth_occurrence: str = "1",
+        repeat_days_before_end: int = 0,
     ) -> None:
         """Initialise the coordinator."""
         self.entry_id = entry_id
@@ -63,6 +64,7 @@ class TaskTrackerCoordinator:
             if repeat_nth_occurrence in ("1", "2", "3", "4", "last")
             else "1"
         )
+        self.repeat_days_before_end: int = max(0, repeat_days_before_end or 0)
         self._listeners: list[Callable[[], None]] = []
 
     def async_add_listener(self, update_callback: Callable[[], None]) -> Callable[[], None]:
@@ -136,6 +138,8 @@ class TaskTrackerCoordinator:
             return self._calc_next_weekday_of_month(
                 last, self.repeat_weekday or "monday", self.repeat_nth_occurrence
             )
+        if etype == CONF_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH:
+            return self._calc_next_days_before_end_of_month(last, self.repeat_days_before_end)
         # Unrecognised sub-type: fall back to a 7-day interval
         return last + relativedelta(days=7)
 
@@ -172,6 +176,24 @@ class TaskTrackerCoordinator:
         next_month = last.replace(day=1) + relativedelta(months=1)
         last_day_of_next = calendar.monthrange(next_month.year, next_month.month)[1]
         return next_month.replace(day=min(day, last_day_of_next))
+
+    @staticmethod
+    def _calc_next_days_before_end_of_month(last: date, days_before: int) -> date:
+        """Return the next occurrence of (last day of month − *days_before*) strictly after *last*.
+
+        ``days_before=0`` targets the last day of the month; ``days_before=1`` targets the
+        second-to-last day, and so on.  The target day is clamped to at least the 1st so that
+        large values of *days_before* in short months never produce an invalid date.
+        """
+        last_day = calendar.monthrange(last.year, last.month)[1]
+        target_day = max(1, last_day - days_before)
+        candidate = last.replace(day=target_day)
+        if candidate > last:
+            return candidate
+        # Advance to next month
+        next_month = last.replace(day=1) + relativedelta(months=1)
+        next_last_day = calendar.monthrange(next_month.year, next_month.month)[1]
+        return next_month.replace(day=max(1, next_last_day - days_before))
 
     @staticmethod
     def _get_nth_weekday_of_month(year: int, month: int, target_weekday: int, nth: int) -> date | None:

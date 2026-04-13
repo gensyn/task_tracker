@@ -856,3 +856,59 @@ class TestCalcNextWeekdayOfMonth(unittest.TestCase):
         # last=2024-01-15; last Monday of Jan = Jan 29 (ahead of Jan 15)
         result = sensor.coordinator._calc_next_weekday_of_month(date(2024, 1, 15), CONF_MONDAY, "last")
         self.assertEqual(result, date(2024, 1, 29))
+
+
+class TestCalcNextDaysBeforeEndOfMonth(unittest.TestCase):
+    """Tests for TaskTrackerCoordinator._calc_next_days_before_end_of_month."""
+
+    def _coordinator(self):
+        return make_sensor().coordinator
+
+    def test_last_day_of_month_when_days_before_is_zero(self):
+        # 0 days before end = last day; Jan has 31 days → Jan 31
+        result = self._coordinator()._calc_next_days_before_end_of_month(date(2024, 1, 15), 0)
+        self.assertEqual(result, date(2024, 1, 31))
+
+    def test_second_to_last_day_of_month(self):
+        # 1 day before end of Jan = Jan 30
+        result = self._coordinator()._calc_next_days_before_end_of_month(date(2024, 1, 15), 1)
+        self.assertEqual(result, date(2024, 1, 30))
+
+    def test_three_days_before_end_of_month(self):
+        # 3 days before end of Jan = Jan 28
+        result = self._coordinator()._calc_next_days_before_end_of_month(date(2024, 1, 1), 3)
+        self.assertEqual(result, date(2024, 1, 28))
+
+    def test_advances_to_next_month_when_target_already_passed(self):
+        # 0 days before end; last = Jan 31 (the target itself) → must advance to Feb
+        # Feb 2024 is a leap year: last day = Feb 29
+        result = self._coordinator()._calc_next_days_before_end_of_month(date(2024, 1, 31), 0)
+        self.assertEqual(result, date(2024, 2, 29))
+
+    def test_advances_to_next_month_when_target_same_as_last(self):
+        # 1 day before end of Jan = Jan 30; last = Jan 30 → advance; 2023 non-leap:
+        # Feb has 28 days → target = Feb 27
+        result = self._coordinator()._calc_next_days_before_end_of_month(date(2023, 1, 30), 1)
+        self.assertEqual(result, date(2023, 2, 27))
+
+    def test_last_day_varies_by_month_length(self):
+        # 0 days before end of Feb 2024 (leap year: 29 days) = Feb 29
+        result = self._coordinator()._calc_next_days_before_end_of_month(date(2024, 2, 1), 0)
+        self.assertEqual(result, date(2024, 2, 29))
+
+    def test_large_days_before_end_clamped_to_first(self):
+        # 40 days before end of January (31 days): 31 - 40 = -9 → clamped to day 1
+        # candidate = Jan 1, NOT > last (Jan 1 == Jan 1) → next month Feb
+        # Feb 2024: 29 - 40 = -11 → clamped to 1 → Feb 1
+        result = self._coordinator()._calc_next_days_before_end_of_month(date(2024, 1, 1), 40)
+        self.assertEqual(result, date(2024, 2, 1))
+
+    def test_last_day_of_december(self):
+        # 0 days before end of Dec = Dec 31
+        result = self._coordinator()._calc_next_days_before_end_of_month(date(2024, 12, 1), 0)
+        self.assertEqual(result, date(2024, 12, 31))
+
+    def test_rolls_over_year_boundary(self):
+        # 0 days before end; last = Dec 31 → next target = Jan 31 of the next year
+        result = self._coordinator()._calc_next_days_before_end_of_month(date(2024, 12, 31), 0)
+        self.assertEqual(result, date(2025, 1, 31))

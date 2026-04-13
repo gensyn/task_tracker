@@ -73,6 +73,16 @@
                     "repeat_weekday": "The day of the week on which the task repeats.",
                     "repeat_nth_occurrence": "Which occurrence of that weekday in the month."
                 }
+            },
+            "repeat_every_days_before_end_of_month": {
+                "title": "N Days Before the Last of the Month",
+                "description": "The task repeats a set number of days before the last day of each month.",
+                "data": {
+                    "repeat_days_before_end": "Days Before Month End"
+                },
+                "data_description": {
+                    "repeat_days_before_end": "How many days before the last day of the month the task is due (0 = last day, 1 = second-to-last day, etc.)."
+                }
             }
         }
     },
@@ -167,229 +177,61 @@
                     "repeat_weekday": "The day of the week on which the task repeats.",
                     "repeat_nth_occurrence": "Which occurrence of that weekday in the month."
                 }
-            }
-        }
-    },
-    "selector": {
-        "task_interval": {
-          "options": {
-            "day": "Day",
-            "week": "Week",
-            "month": "Month",
-            "year": "Year"
-          }
-        },
-        "repeat_mode": {
-          "options": {
-            "repeat_after": "Repeat after completion",
-            "repeat_every": "Repeat every (fixed schedule)"
-          }
-        },
-        "repeat_every_type": {
-          "options": {
-            "repeat_every_weekday": "Every Nth weekday",
-            "repeat_every_day_of_month": "Every Nth day of the month",
-            "repeat_every_weekday_of_month": "Every Nth weekday of the month"
-          }
-        },
-        "weekday": {
-          "options": {
-            "monday": "Monday",
-            "tuesday": "Tuesday",
-            "wednesday": "Wednesday",
-            "thursday": "Thursday",
-            "friday": "Friday",
-            "saturday": "Saturday",
-            "sunday": "Sunday"
-          }
-        },
-        "nth_occurrence": {
-          "options": {
-            "1": "1st",
-            "2": "2nd",
-            "3": "3rd",
-            "4": "4th",
-            "last": "Last"
-          }
-        }
-    },
-    "entity": {
-        "sensor": {
-            "status": {
-                "state": {
-                    "done": "Done",
-                    "due": "Due",
-                    "due_soon": "Due soon",
-                    "overdue": "Overdue",
-                    "inactive": "Inactive"
-                }
-            }
-        },
-        "button": {
-            "mark_as_done": {
-                "name": "Mark as done"
-            }
-        },
-        "ui": {
-            "status": {
-                "name": "Status"
             },
-            "done": {
-                "name": "Done"
-            },
-            "due": {
-                "name": "Due"
-            },
-            "due_soon": {
-                "name": "Due soon"
-            },
-            "overdue": {
-                "name": "Overdue"
-            },
-            "inactive": {
-                "name": "Inactive"
-            },
-            "interval": {
-                "name": "Interval"
-            },
-            "day_singular": {
-                "name": "Day"
-            },
-            "week_singular": {
-                "name": "Week"
-            },
-            "month_singular": {
-                "name": "Month"
-            },
-            "year_singular": {
-                "name": "Year"
-            },
-            "day_plural": {
-                "name": "Days"
-            },
-            "week_plural": {
-                "name": "Weeks"
-            },
-            "month_plural": {
-                "name": "Months"
-            },
-            "year_plural": {
-                "name": "Years"
-            },
-            "last_done": {
-                "name": "Last&nbsp;done"
-            },
-            "due_date": {
-                "name": "Due&nbsp;date"
-            },
-            "due_in":{
-                "name": "Due&nbsp;in"
-            },
-            "overdue_by":{
-                "name": "Overdue&nbsp;by"
-            },
-            "mark_as_done": {
-                "name": "Mark as done"
-            },
-            "all": {
-                "name": "All"
-            },
-            "no_tasks_found": {
-                "name": "No tasks found."
-            },
-            "sort_by": {
-                "name": "Sort by"
-            },
-            "sort_name": {
-                "name": "Name"
-            },
-            "sort_due_date": {
-                "name": "Due date"
-            }
-        }
-    },
-    "services": {
-        "mark_as_done": {
-            "name": "Mark as done",
-            "description": "Sets the last done date of the task to today.",
-            "fields": {
-                "entity_id": {
-                    "name": "Entity ID",
-                    "description": "The ID of the task to be marked as done."
-                }
-            }
-        },
-        "set_last_done_date": {
-            "name": "Set last done date",
-            "description": "Sets the last done date of the task to a specific date.",
-            "fields": {
-                "entity_id": {
-                    "name": "Entity ID",
-                    "description": "The ID of the task to be updated."
-                },
-                "date": {
-                    "name": "Date",
-                    "description": "The new last done date."
-                }
-            }
-        }
-    }
-}
-        "abort": {
-            "already_configured": "Device is already configured"
-        },
-        "error": {
-            "unknown": "Unexpected error"
-        },
-        "step": {
-            "init": {
-                "title": "Task Tracker",
-                "description": "Configure task.",
+            "repeat_every_days_before_end_of_month": {
+                "title": "N Days Before the Last of the Month",
+                "description": "The task repeats a set number of days before the last day of each month.",
                 "data": {
-                    "task_interval_value": "Task Interval",
-                    "task_interval_type": "Task Interval Unit",
-                    "task_interval_override": "Task Interval Override",
-                    "repeat_mode": "Repeat Mode",
-                    "notification_interval": "Notification Interval (days)",
-                    "todo_lists": "Todo-Lists",
-                    "due_soon_days": "Due soon (days)",
-                    "due_soon_override": "Due soon Override (days)",
-                    "tags": "Tags",
-                    "icon": "Icon",
-                    "active": "Active",
-                    "active_override": "Active Override"
+                    "repeat_days_before_end": "Days Before Month End"
                 },
                 "data_description": {
-                    "task_interval_value": "Time after which the task becomes due again.",
-                    "task_interval_type": "The unit of time for the task interval.",
-                    "task_interval_override": "Select an input_number (value in days) to override the Task Interval.",
-                    "repeat_mode": "How the next due date is calculated when the task is completed. 'Repeat after completion' sets the next due date relative to when the task was completed. 'Repeat every (fixed schedule)' keeps the task on its original schedule regardless of when it was completed.",
-                    "notification_interval": "The time in days after which notifications are sent again.",
-                    "todo_lists": "Todo-Lists, to which this task will be added.",
-                    "due_soon_days": "The number of days before the task is due to show it as due soon.",
-                    "due_soon_override": "Select an input_number (value in days) to override the Due soon threshold.",
-                    "tags": "Tags to categorize the task, separated by commas.",
-                    "icon": "Icon to represent the task.",
-                    "active": "Enable or disable the task.",
-                    "active_override": "Select an input_boolean to override the Active setting."
+                    "repeat_days_before_end": "How many days before the last day of the month the task is due (0 = last day, 1 = second-to-last day, etc.)."
                 }
             }
         }
     },
     "selector": {
         "task_interval": {
-          "options": {
-            "day": "Day",
-            "week": "Week",
-            "month": "Month",
-            "year": "Year"
-          }
+            "options": {
+                "day": "Day",
+                "week": "Week",
+                "month": "Month",
+                "year": "Year"
+            }
         },
         "repeat_mode": {
-          "options": {
-            "repeat_after": "Repeat after completion",
-            "repeat_every": "Repeat every (fixed schedule)"
-          }
+            "options": {
+                "repeat_after": "Repeat after completion",
+                "repeat_every": "Repeat every (fixed schedule)"
+            }
+        },
+        "repeat_every_type": {
+            "options": {
+                "repeat_every_weekday": "Every Nth weekday",
+                "repeat_every_day_of_month": "Every Nth day of the month",
+                "repeat_every_weekday_of_month": "Every Nth weekday of the month",
+                "repeat_every_days_before_end_of_month": "N days before month end"
+            }
+        },
+        "weekday": {
+            "options": {
+                "monday": "Monday",
+                "tuesday": "Tuesday",
+                "wednesday": "Wednesday",
+                "thursday": "Thursday",
+                "friday": "Friday",
+                "saturday": "Saturday",
+                "sunday": "Sunday"
+            }
+        },
+        "nth_occurrence": {
+            "options": {
+                "1": "1st",
+                "2": "2nd",
+                "3": "3rd",
+                "4": "4th",
+                "last": "Last"
+            }
         }
     },
     "entity": {
@@ -461,10 +303,10 @@
             "due_date": {
                 "name": "Due&nbsp;date"
             },
-            "due_in":{
+            "due_in": {
                 "name": "Due&nbsp;in"
             },
-            "overdue_by":{
+            "overdue_by": {
                 "name": "Overdue&nbsp;by"
             },
             "mark_as_done": {

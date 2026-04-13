@@ -15,8 +15,9 @@ from .const import (
     CONF_TASK_INTERVAL_VALUE, CONF_TASK_INTERVAL_TYPE, CONF_DAY, CONF_WEEK, CONF_MONTH, CONF_YEAR,
     CONF_SELECT, CONF_DROPDOWN, CONF_OPTIONS,
     CONF_REPEAT_EVERY_TYPE, CONF_REPEAT_EVERY_WEEKDAY, CONF_REPEAT_EVERY_DAY_OF_MONTH,
-    CONF_REPEAT_EVERY_WEEKDAY_OF_MONTH,
+    CONF_REPEAT_EVERY_WEEKDAY_OF_MONTH, CONF_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH,
     CONF_REPEAT_WEEKDAY, CONF_REPEAT_WEEKS_INTERVAL, CONF_REPEAT_MONTH_DAY, CONF_REPEAT_NTH_OCCURRENCE,
+    CONF_REPEAT_DAYS_BEFORE_END,
     CONF_MONDAY, CONF_TUESDAY, CONF_WEDNESDAY, CONF_THURSDAY, CONF_FRIDAY, CONF_SATURDAY, CONF_SUNDAY,
 )
 from .options_flow import TaskTrackerOptionsFlow, validate_options
@@ -49,6 +50,7 @@ _STEP_REPEAT_EVERY_SCHEMA = vol.Schema(
                     CONF_REPEAT_EVERY_WEEKDAY,
                     CONF_REPEAT_EVERY_DAY_OF_MONTH,
                     CONF_REPEAT_EVERY_WEEKDAY_OF_MONTH,
+                    CONF_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH,
                 ],
                 CONF_MODE: CONF_DROPDOWN,
                 "translation_key": "repeat_every_type",
@@ -98,12 +100,19 @@ _STEP_REPEAT_EVERY_WEEKDAY_OF_MONTH_SCHEMA = vol.Schema(
     }
 )
 
+# Step 3b-4 – N days before the last of the month
+_STEP_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH_SCHEMA = vol.Schema(
+    {
+        vol.Required(CONF_REPEAT_DAYS_BEFORE_END, default=0): int,
+    }
+)
+
 
 class TaskTrackerConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Task Tracker."""
 
     VERSION = 1
-    MINOR_VERSION = 5
+    MINOR_VERSION = 6
 
     def __init__(self) -> None:
         """Initialise; accumulate user input across steps."""
@@ -158,6 +167,8 @@ class TaskTrackerConfigFlow(ConfigFlow, domain=DOMAIN):
             return await self.async_step_repeat_every_day_of_month()
         if etype == CONF_REPEAT_EVERY_WEEKDAY_OF_MONTH:
             return await self.async_step_repeat_every_weekday_of_month()
+        if etype == CONF_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH:
+            return await self.async_step_repeat_every_days_before_end_of_month()
         return await self.async_step_repeat_every_weekday()
 
     async def async_step_repeat_every_weekday(
@@ -200,6 +211,22 @@ class TaskTrackerConfigFlow(ConfigFlow, domain=DOMAIN):
             return self.async_show_form(
                 step_id="repeat_every_weekday_of_month",
                 data_schema=_STEP_REPEAT_EVERY_WEEKDAY_OF_MONTH_SCHEMA,
+                errors={},
+            )
+
+        self._user_input.update(user_input)
+        name = self._user_input[CONF_NAME]
+        options = await validate_options(self._user_input)
+        return self.async_create_entry(title=name, data={CONF_NAME: name}, options=options)
+
+    async def async_step_repeat_every_days_before_end_of_month(
+            self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Step 3b-4 – N days before the last of the month."""
+        if user_input is None:
+            return self.async_show_form(
+                step_id="repeat_every_days_before_end_of_month",
+                data_schema=_STEP_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH_SCHEMA,
                 errors={},
             )
 
