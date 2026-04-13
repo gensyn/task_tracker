@@ -184,6 +184,114 @@
                 "data_description": {
                     "repeat_days_before_end": "Wie viele Tage vor dem letzten Tag des Monats die Task fällig wird (0 = letzter Tag, 1 = vorletzter Tag usw.)."
                 }
+            },
+            "options_repeat_every_weekday": {
+                "title": "Alle N Wochen an einem Wochentag – Optionen",
+                "description": "Zeitplan und Taskeinstellungen aktualisieren.",
+                "data": {
+                    "repeat_weekday": "Wochentag",
+                    "repeat_weeks_interval": "Alle (Wochen)",
+                    "active": "Aktiv",
+                    "active_override": "Aktiv-Override",
+                    "icon": "Symbol",
+                    "tags": "Tags",
+                    "todo_lists": "Todo-Listen",
+                    "due_soon_days": "Bald fällig (Tage)",
+                    "due_soon_override": "Bald-fällig-Override (Tage)",
+                    "notification_interval": "Benachrichtigungsintervall (Tage)"
+                },
+                "data_description": {
+                    "repeat_weekday": "Der Wochentag, an dem die Task wiederholt wird.",
+                    "repeat_weeks_interval": "Wie viele Wochen zwischen den Vorkommen (1 = jede Woche, 2 = jede zweite Woche usw.).",
+                    "active": "Aktiviert oder deaktiviert die Task.",
+                    "active_override": "Wähle ein input_boolean, um die Aktiv-Einstellung zu überschreiben.",
+                    "icon": "Symbol für die Task.",
+                    "tags": "Tags zur Kategorisierung der Task, durch Komma getrennt.",
+                    "todo_lists": "Todo-Listen, zu denen diese Task hinzugefügt wird.",
+                    "due_soon_days": "Anzahl der Tage vor Fälligkeit, ab denen die Task als 'bald fällig' gilt.",
+                    "due_soon_override": "Wähle ein input_number (Wert in Tagen), um den 'Bald fällig'-Schwellenwert zu überschreiben.",
+                    "notification_interval": "Zeit in Tagen, nach der Benachrichtigungen erneut gesendet werden."
+                }
+            },
+            "options_repeat_every_day_of_month": {
+                "title": "Jeden Monat am N. Tag – Optionen",
+                "description": "Zeitplan und Taskeinstellungen aktualisieren.",
+                "data": {
+                    "repeat_month_day": "Tag des Monats",
+                    "active": "Aktiv",
+                    "active_override": "Aktiv-Override",
+                    "icon": "Symbol",
+                    "tags": "Tags",
+                    "todo_lists": "Todo-Listen",
+                    "due_soon_days": "Bald fällig (Tage)",
+                    "due_soon_override": "Bald-fällig-Override (Tage)",
+                    "notification_interval": "Benachrichtigungsintervall (Tage)"
+                },
+                "data_description": {
+                    "repeat_month_day": "Der Tag des Monats, an dem die Task wiederholt wird (1–31).",
+                    "active": "Aktiviert oder deaktiviert die Task.",
+                    "active_override": "Wähle ein input_boolean, um die Aktiv-Einstellung zu überschreiben.",
+                    "icon": "Symbol für die Task.",
+                    "tags": "Tags zur Kategorisierung der Task, durch Komma getrennt.",
+                    "todo_lists": "Todo-Listen, zu denen diese Task hinzugefügt wird.",
+                    "due_soon_days": "Anzahl der Tage vor Fälligkeit, ab denen die Task als 'bald fällig' gilt.",
+                    "due_soon_override": "Wähle ein input_number (Wert in Tagen), um den 'Bald fällig'-Schwellenwert zu überschreiben.",
+                    "notification_interval": "Zeit in Tagen, nach der Benachrichtigungen erneut gesendet werden."
+                }
+            },
+            "options_repeat_every_weekday_of_month": {
+                "title": "Jeden Monat am N. Wochentag – Optionen",
+                "description": "Zeitplan und Taskeinstellungen aktualisieren.",
+                "data": {
+                    "repeat_weekday": "Wochentag",
+                    "repeat_nth_occurrence": "Vorkommen",
+                    "active": "Aktiv",
+                    "active_override": "Aktiv-Override",
+                    "icon": "Symbol",
+                    "tags": "Tags",
+                    "todo_lists": "Todo-Listen",
+                    "due_soon_days": "Bald fällig (Tage)",
+                    "due_soon_override": "Bald-fällig-Override (Tage)",
+                    "notification_interval": "Benachrichtigungsintervall (Tage)"
+                },
+                "data_description": {
+                    "repeat_weekday": "Der Wochentag, an dem die Task wiederholt wird.",
+                    "repeat_nth_occurrence": "Welches Vorkommen dieses Wochentags im Monat.",
+                    "active": "Aktiviert oder deaktiviert die Task.",
+                    "active_override": "Wähle ein input_boolean, um die Aktiv-Einstellung zu überschreiben.",
+                    "icon": "Symbol für die Task.",
+                    "tags": "Tags zur Kategorisierung der Task, durch Komma getrennt.",
+                    "todo_lists": "Todo-Listen, zu denen diese Task hinzugefügt wird.",
+                    "due_soon_days": "Anzahl der Tage vor Fälligkeit, ab denen die Task als 'bald fällig' gilt.",
+                    "due_soon_override": "Wähle ein input_number (Wert in Tagen), um den 'Bald fällig'-Schwellenwert zu überschreiben.",
+                    "notification_interval": "Zeit in Tagen, nach der Benachrichtigungen erneut gesendet werden."
+                }
+            },
+            "options_repeat_every_days_before_end_of_month": {
+                "title": "N Tage vor Monatsende – Optionen",
+                "description": "Zeitplan und Taskeinstellungen aktualisieren.",
+                "data": {
+                    "repeat_days_before_end": "Tage vor Monatsende",
+                    "active": "Aktiv",
+                    "active_override": "Aktiv-Override",
+                    "icon": "Symbol",
+                    "tags": "Tags",
+                    "todo_lists": "Todo-Listen",
+                    "due_soon_days": "Bald fällig (Tage)",
+                    "due_soon_override": "Bald-fällig-Override (Tage)",
+                    "notification_interval": "Benachrichtigungsintervall (Tage)"
+                },
+                "data_description": {
+                    "repeat_days_before_end": "Wie viele Tage vor dem letzten Tag des Monats die Task fällig wird (0 = letzter Tag, 1 = vorletzter Tag usw.).",
+                    "active": "Aktiviert oder deaktiviert die Task.",
+                    "active_override": "Wähle ein input_boolean, um die Aktiv-Einstellung zu überschreiben.",
+                    "icon": "Symbol für die Task.",
+                    "tags": "Tags zur Kategorisierung der Task, durch Komma getrennt.",
+                    "todo_lists": "Todo-Listen, zu denen diese Task hinzugefügt wird.",
+                    "due_soon_days": "Anzahl der Tage vor Fälligkeit, ab denen die Task als 'bald fällig' gilt.",
+                    "due_soon_override": "Wähle ein input_number (Wert in Tagen), um den 'Bald fällig'-Schwellenwert zu überschreiben.",
+                    "notification_interval": "Zeit in Tagen, nach der Benachrichtigungen erneut gesendet werden."
+                }
             }
         }
     },

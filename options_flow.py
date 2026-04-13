@@ -140,6 +140,75 @@ _STEP_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH_SCHEMA = vol.Schema(
     }
 )
 
+# ---------------------------------------------------------------------------
+# Common optional fields shared by all combined options steps for repeat_every.
+# These mirror the _STEP_INIT_SCHEMA fields (minus CONF_REPEAT_MODE).
+# ---------------------------------------------------------------------------
+_REPEAT_EVERY_COMMON_OPTIONS: dict = {
+    vol.Optional(CONF_ACTIVE): bool,
+    vol.Optional(CONF_ACTIVE_OVERRIDE): selector({
+        "entity": {
+            "domain": "input_boolean",
+        }
+    }),
+    vol.Optional(CONF_ICON, default="mdi:calendar-question"): str,
+    vol.Optional(CONF_TAGS): str,
+    vol.Optional(CONF_TODO_LISTS): selector({
+        "entity": {
+            "domain": "todo",
+            "multiple": True,
+        }
+    }),
+    vol.Optional(CONF_DUE_SOON_DAYS, default=0): int,
+    vol.Optional(CONF_DUE_SOON_OVERRIDE): selector({
+        "entity": {
+            "domain": "input_number",
+        }
+    }),
+    vol.Optional(CONF_NOTIFICATION_INTERVAL, default=1): int,
+}
+
+# Combined options steps for repeat_every modes (mode-specific + common fields)
+_STEP_OPTIONS_REPEAT_EVERY_WEEKDAY_SCHEMA = vol.Schema({
+    vol.Required(CONF_REPEAT_WEEKDAY, default=CONF_MONDAY): selector({
+        CONF_SELECT: {
+            CONF_OPTIONS: _WEEKDAYS,
+            CONF_MODE: CONF_DROPDOWN,
+            "translation_key": "weekday",
+        }
+    }),
+    vol.Required(CONF_REPEAT_WEEKS_INTERVAL, default=1): int,
+    **_REPEAT_EVERY_COMMON_OPTIONS,
+})
+
+_STEP_OPTIONS_REPEAT_EVERY_DAY_OF_MONTH_SCHEMA = vol.Schema({
+    vol.Required(CONF_REPEAT_MONTH_DAY, default=1): int,
+    **_REPEAT_EVERY_COMMON_OPTIONS,
+})
+
+_STEP_OPTIONS_REPEAT_EVERY_WEEKDAY_OF_MONTH_SCHEMA = vol.Schema({
+    vol.Required(CONF_REPEAT_WEEKDAY, default=CONF_MONDAY): selector({
+        CONF_SELECT: {
+            CONF_OPTIONS: _WEEKDAYS,
+            CONF_MODE: CONF_DROPDOWN,
+            "translation_key": "weekday",
+        }
+    }),
+    vol.Required(CONF_REPEAT_NTH_OCCURRENCE, default="1"): selector({
+        CONF_SELECT: {
+            CONF_OPTIONS: _NTH_OCCURRENCES,
+            CONF_MODE: CONF_DROPDOWN,
+            "translation_key": "nth_occurrence",
+        }
+    }),
+    **_REPEAT_EVERY_COMMON_OPTIONS,
+})
+
+_STEP_OPTIONS_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH_SCHEMA = vol.Schema({
+    vol.Required(CONF_REPEAT_DAYS_BEFORE_END, default=0): int,
+    **_REPEAT_EVERY_COMMON_OPTIONS,
+})
+
 
 class TaskTrackerOptionsFlow(OptionsFlowWithReload):
     """Handle options for an existing Task Tracker config entry."""
@@ -152,7 +221,35 @@ class TaskTrackerOptionsFlow(OptionsFlowWithReload):
     async def async_step_init(
             self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Step 1 – common settings and repeat mode selection."""
+        """Step 1 – common settings and repeat mode selection.
+
+        For ``repeat_every`` entries the init form is skipped entirely: the
+        flow jumps directly to the mode-specific combined options step, which
+        shows both the mode-specific fields and the common fields in one page.
+        The repeat mode itself is therefore not user-editable in options for
+        ``repeat_every`` tasks.
+
+        For ``repeat_after`` entries the existing two-step flow
+        (init → repeat_after) is kept exactly as it was.
+        """
+        # For repeat_every entries: skip the init form entirely and go straight
+        # to the combined mode-specific step.
+        if self.config_entry.options.get(CONF_REPEAT_MODE) == CONF_REPEAT_EVERY:
+            # Pre-seed accumulated options with the immutable schedule identity.
+            self._accumulated_options[CONF_REPEAT_MODE] = CONF_REPEAT_EVERY
+            self._accumulated_options[CONF_REPEAT_EVERY_TYPE] = (
+                self.config_entry.options.get(CONF_REPEAT_EVERY_TYPE)
+            )
+            repeat_every_type = self.config_entry.options.get(CONF_REPEAT_EVERY_TYPE)
+            if repeat_every_type == CONF_REPEAT_EVERY_DAY_OF_MONTH:
+                return await self.async_step_options_repeat_every_day_of_month()
+            if repeat_every_type == CONF_REPEAT_EVERY_WEEKDAY_OF_MONTH:
+                return await self.async_step_options_repeat_every_weekday_of_month()
+            if repeat_every_type == CONF_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH:
+                return await self.async_step_options_repeat_every_days_before_end_of_month()
+            return await self.async_step_options_repeat_every_weekday()
+
+        # repeat_after: existing flow unchanged.
         if user_input is None:
             return self.async_show_form(
                 step_id="init",
@@ -263,6 +360,78 @@ class TaskTrackerOptionsFlow(OptionsFlowWithReload):
                 step_id="repeat_every_days_before_end_of_month",
                 data_schema=self.add_suggested_values_to_schema(
                     _STEP_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH_SCHEMA, self.config_entry.options
+                ),
+            )
+
+        self._accumulated_options.update(user_input)
+        options = await validate_options(self._accumulated_options)
+        return self.async_create_entry(data=options)
+
+    # ------------------------------------------------------------------
+    # Combined options steps for repeat_every entries.
+    # Each shows both the mode-specific fields and the common task settings
+    # (active, icon, tags, …) in a single form.  The repeat mode and the
+    # repeat_every sub-type are NOT shown – they are preserved as-is from
+    # the stored config entry options.
+    # ------------------------------------------------------------------
+
+    async def async_step_options_repeat_every_weekday(
+            self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Combined options step for repeat_every_weekday mode."""
+        if user_input is None:
+            return self.async_show_form(
+                step_id="options_repeat_every_weekday",
+                data_schema=self.add_suggested_values_to_schema(
+                    _STEP_OPTIONS_REPEAT_EVERY_WEEKDAY_SCHEMA, self.config_entry.options
+                ),
+            )
+
+        self._accumulated_options.update(user_input)
+        options = await validate_options(self._accumulated_options)
+        return self.async_create_entry(data=options)
+
+    async def async_step_options_repeat_every_day_of_month(
+            self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Combined options step for repeat_every_day_of_month mode."""
+        if user_input is None:
+            return self.async_show_form(
+                step_id="options_repeat_every_day_of_month",
+                data_schema=self.add_suggested_values_to_schema(
+                    _STEP_OPTIONS_REPEAT_EVERY_DAY_OF_MONTH_SCHEMA, self.config_entry.options
+                ),
+            )
+
+        self._accumulated_options.update(user_input)
+        options = await validate_options(self._accumulated_options)
+        return self.async_create_entry(data=options)
+
+    async def async_step_options_repeat_every_weekday_of_month(
+            self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Combined options step for repeat_every_weekday_of_month mode."""
+        if user_input is None:
+            return self.async_show_form(
+                step_id="options_repeat_every_weekday_of_month",
+                data_schema=self.add_suggested_values_to_schema(
+                    _STEP_OPTIONS_REPEAT_EVERY_WEEKDAY_OF_MONTH_SCHEMA, self.config_entry.options
+                ),
+            )
+
+        self._accumulated_options.update(user_input)
+        options = await validate_options(self._accumulated_options)
+        return self.async_create_entry(data=options)
+
+    async def async_step_options_repeat_every_days_before_end_of_month(
+            self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Combined options step for repeat_every_days_before_end_of_month mode."""
+        if user_input is None:
+            return self.async_show_form(
+                step_id="options_repeat_every_days_before_end_of_month",
+                data_schema=self.add_suggested_values_to_schema(
+                    _STEP_OPTIONS_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH_SCHEMA, self.config_entry.options
                 ),
             )
 
