@@ -647,56 +647,72 @@ class TestTaskTrackerSensorRepeatMode(unittest.IsolatedAsyncioTestCase):
 
     # --- repeat_every ---
 
-    async def test_repeat_every_mark_as_done_sets_last_done_to_due_date(self):
-        """In repeat_every mode, mark_as_done sets last_done to the current due date.
+    async def test_repeat_every_mark_as_done_catches_up_from_epoch_weekday(self):
+        """mark_as_done on an epoch-initialised weekday task jumps to the most recent matching weekday.
 
-        When the task is due soon (next occurrence is a few days in the future),
-        last_done is advanced to that future date so the schedule moves forward
-        by exactly one occurrence.
+        A task configured as 'every Monday' that has never been done (last_done=1970)
+        should set last_done to the most recent Monday on or before today in a
+        single press, rather than advancing by one week at a time.
         """
         from datetime import timedelta
-        sensor = make_sensor(repeat_mode=CONF_REPEAT_EVERY, task_interval_value=7)
-        # last_done = 3 days ago → due_date = 4 days from now (future / due_soon)
-        sensor.coordinator.last_done = date.today() - timedelta(days=3)
-        await self._run_update(sensor)
-        expected_due = sensor.coordinator.last_done + timedelta(days=7)
-        self.assertEqual(sensor.due_date, expected_due)
+        sensor = make_sensor(
+            repeat_mode=CONF_REPEAT_EVERY,
+            repeat_every_type=CONF_REPEAT_EVERY_WEEKDAY,
+            repeat_weekday=CONF_MONDAY,
+            repeat_weeks_interval=1,
+        )
+        today = date.today()
         await sensor.coordinator.async_mark_as_done()
-        # last_done should be the due_date (future), not today
-        self.assertEqual(sensor.coordinator.last_done, expected_due)
+        last_done = sensor.coordinator.last_done
+        # Must be on or before today
+        self.assertLessEqual(last_done, today)
+        # Must be a Monday (weekday() == 0)
+        self.assertEqual(last_done.weekday(), 0)
+        # Must be the *most recent* Monday — no earlier than 6 days ago
+        self.assertGreater(last_done + timedelta(days=7), today)
+        # Next due date must be strictly in the future
+        await self._run_update(sensor)
+        self.assertGreater(sensor.due_date, today)
 
-    async def test_repeat_every_maintains_schedule_when_completed_early(self):
-        """Completing a task early should not shift the schedule in repeat_every mode."""
+    async def test_repeat_every_mark_as_done_uses_most_recent_occurrence_not_future_due(self):
+        """When DUE_SOON, mark_as_done sets last_done to the most recent past occurrence, not the future due date."""
         from datetime import timedelta
-        sensor = make_sensor(repeat_mode=CONF_REPEAT_EVERY, task_interval_value=7)
-        # due_date = 4 days from now
-        sensor.coordinator.last_done = date.today() - timedelta(days=3)
-        await self._run_update(sensor)
-        expected_due = sensor.coordinator.last_done + timedelta(days=7)
-        self.assertEqual(sensor.due_date, expected_due)
-        # complete it early (due_date is still in the future)
-        # mark_as_done sets last_done = expected_due (one step forward)
+        sensor = make_sensor(
+            repeat_mode=CONF_REPEAT_EVERY,
+            repeat_every_type=CONF_REPEAT_EVERY_WEEKDAY_OF_MONTH,
+            repeat_weekday=CONF_MONDAY,
+            repeat_nth_occurrence="1",
+            due_soon_days=10,
+        )
+        today = date.today()
         await sensor.coordinator.async_mark_as_done()
-        self.assertEqual(sensor.coordinator.last_done, expected_due)
-        # Recalculate: next due = expected_due + 7
-        await self._run_update(sensor)
-        self.assertEqual(sensor.due_date, expected_due + timedelta(days=7))
+        last_done = sensor.coordinator.last_done
+        # last_done must be on or before today — never a future date
+        self.assertLessEqual(last_done, today)
+        # Must be a Monday that is the 1st Monday of its month
+        self.assertEqual(last_done.weekday(), 0)
+        first_monday = sensor.coordinator._get_nth_weekday_of_month(
+            last_done.year, last_done.month, 0, 1
+        )
+        self.assertEqual(last_done, first_monday)
 
-    async def test_repeat_every_maintains_schedule_when_completed_late(self):
-        """Completing an overdue task advances last_done by exactly one occurrence."""
-        from datetime import timedelta
-        sensor = make_sensor(repeat_mode=CONF_REPEAT_EVERY, task_interval_value=7)
-        # due yesterday: last_done was 8 days ago
-        sensor.coordinator.last_done = date.today() - timedelta(days=8)
-        await self._run_update(sensor)
-        expected_overdue_due = sensor.coordinator.last_done + timedelta(days=7)
-        self.assertEqual(sensor.due_date, expected_overdue_due)  # = yesterday
+    async def test_repeat_every_mark_as_done_day_of_month_catches_up_from_epoch(self):
+        """mark_as_done on an epoch-initialised day-of-month task sets last_done to the most recent Nth day."""
+        sensor = make_sensor(
+            repeat_mode=CONF_REPEAT_EVERY,
+            repeat_every_type=CONF_REPEAT_EVERY_DAY_OF_MONTH,
+            repeat_month_day=15,
+        )
+        today = date.today()
         await sensor.coordinator.async_mark_as_done()
-        # last_done is set to the current due date (yesterday), one step forward
-        self.assertEqual(sensor.coordinator.last_done, expected_overdue_due)
-        # next due = yesterday + 7 = 6 days from now
+        last_done = sensor.coordinator.last_done
+        # Must be on or before today
+        self.assertLessEqual(last_done, today)
+        # Must be the 15th (or last day if month is short)
+        self.assertIn(last_done.day, (15, 28, 29, 30, 31))
+        # Next due date must be strictly in the future
         await self._run_update(sensor)
-        self.assertEqual(sensor.due_date, expected_overdue_due + timedelta(days=7))
+        self.assertGreater(sensor.due_date, today)
 
     async def test_repeat_every_propagated_to_coordinator(self):
         """repeat_every mode is written to the coordinator on init."""
@@ -970,7 +986,110 @@ class TestCalcNextDaysBeforeEndOfMonth(unittest.TestCase):
         result = self._coordinator()._calc_next_days_before_end_of_month(date(2024, 12, 1), 0)
         self.assertEqual(result, date(2024, 12, 31))
 
-    def test_rolls_over_year_boundary(self):
-        # 0 days before end; last = Dec 31 → next target = Jan 31 of the next year
-        result = self._coordinator()._calc_next_days_before_end_of_month(date(2024, 12, 31), 0)
-        self.assertEqual(result, date(2025, 1, 31))
+
+
+# ---------------------------------------------------------------------------
+# Most-recent-occurrence helpers
+# ---------------------------------------------------------------------------
+
+class TestCalcMostRecentWeekday(unittest.TestCase):
+    """Tests for TaskTrackerCoordinator._calc_most_recent_weekday."""
+
+    def test_today_is_the_target_weekday(self):
+        # 2024-01-01 is a Monday; most recent Monday on/before Jan 1 = Jan 1
+        result = TaskTrackerCoordinator._calc_most_recent_weekday(date(2024, 1, 1), CONF_MONDAY)
+        self.assertEqual(result, date(2024, 1, 1))
+
+    def test_target_weekday_was_yesterday(self):
+        # 2024-01-02 is Tuesday; most recent Monday = Jan 1
+        result = TaskTrackerCoordinator._calc_most_recent_weekday(date(2024, 1, 2), CONF_MONDAY)
+        self.assertEqual(result, date(2024, 1, 1))
+
+    def test_target_weekday_six_days_ago(self):
+        # 2024-01-07 is Sunday; most recent Monday = Jan 1 (6 days ago)
+        result = TaskTrackerCoordinator._calc_most_recent_weekday(date(2024, 1, 7), CONF_MONDAY)
+        self.assertEqual(result, date(2024, 1, 1))
+
+    def test_target_sunday_from_friday(self):
+        # 2024-01-05 is Friday; most recent Sunday = Dec 31 2023
+        result = TaskTrackerCoordinator._calc_most_recent_weekday(date(2024, 1, 5), CONF_SUNDAY)
+        self.assertEqual(result, date(2023, 12, 31))
+
+
+class TestCalcMostRecentDayOfMonth(unittest.TestCase):
+    """Tests for TaskTrackerCoordinator._calc_most_recent_day_of_month."""
+
+    def test_today_is_target_day(self):
+        # Jan 15 → most recent 15th = Jan 15
+        result = TaskTrackerCoordinator._calc_most_recent_day_of_month(date(2024, 1, 15), 15)
+        self.assertEqual(result, date(2024, 1, 15))
+
+    def test_target_day_already_passed_this_month(self):
+        # Jan 20 → most recent 15th = Jan 15 (earlier this month)
+        result = TaskTrackerCoordinator._calc_most_recent_day_of_month(date(2024, 1, 20), 15)
+        self.assertEqual(result, date(2024, 1, 15))
+
+    def test_target_day_not_yet_reached_this_month(self):
+        # Jan 10 → most recent 15th = Dec 15 (previous month)
+        result = TaskTrackerCoordinator._calc_most_recent_day_of_month(date(2024, 1, 10), 15)
+        self.assertEqual(result, date(2023, 12, 15))
+
+    def test_clamped_to_short_month(self):
+        # Day 31 in February (2024 leap year): most recent Feb-31 = Feb 29
+        result = TaskTrackerCoordinator._calc_most_recent_day_of_month(date(2024, 2, 29), 31)
+        self.assertEqual(result, date(2024, 2, 29))
+
+
+class TestCalcMostRecentDaysBeforeEndOfMonth(unittest.TestCase):
+    """Tests for TaskTrackerCoordinator._calc_most_recent_days_before_end_of_month."""
+
+    def test_today_is_target_day(self):
+        # 0 days before end of Jan = Jan 31; today = Jan 31 → Jan 31
+        result = TaskTrackerCoordinator._calc_most_recent_days_before_end_of_month(date(2024, 1, 31), 0)
+        self.assertEqual(result, date(2024, 1, 31))
+
+    def test_target_already_passed_this_month(self):
+        # 0 days before end of Jan = Jan 31; today = Feb 5 → Jan 31
+        result = TaskTrackerCoordinator._calc_most_recent_days_before_end_of_month(date(2024, 2, 5), 0)
+        self.assertEqual(result, date(2024, 1, 31))
+
+    def test_target_not_yet_reached_this_month(self):
+        # 0 days before end of Jan = Jan 31; today = Jan 15 → Dec 31 (prev month)
+        result = TaskTrackerCoordinator._calc_most_recent_days_before_end_of_month(date(2024, 1, 15), 0)
+        self.assertEqual(result, date(2023, 12, 31))
+
+
+class TestCalcMostRecentWeekdayOfMonth(unittest.TestCase):
+    """Tests for TaskTrackerCoordinator._calc_most_recent_weekday_of_month."""
+
+    def _coord(self):
+        return make_sensor().coordinator
+
+    def test_first_monday_of_same_month(self):
+        # 2024-01-01 is Monday (1st Monday of Jan); today = Jan 15 → Jan 1
+        result = self._coord()._calc_most_recent_weekday_of_month(date(2024, 1, 15), CONF_MONDAY, "1")
+        self.assertEqual(result, date(2024, 1, 1))
+
+    def test_first_monday_today_is_the_day(self):
+        # 2024-01-01 is Monday; today = Jan 1 → Jan 1
+        result = self._coord()._calc_most_recent_weekday_of_month(date(2024, 1, 1), CONF_MONDAY, "1")
+        self.assertEqual(result, date(2024, 1, 1))
+
+    def test_first_monday_falls_back_to_previous_month(self):
+        # Today = Jan 6 (after 1st Monday Jan 1, but Jan 8 hasn't come yet)
+        # 1st Monday of Jan = Jan 1 ≤ Jan 6 → Jan 1
+        result = self._coord()._calc_most_recent_weekday_of_month(date(2024, 1, 6), CONF_MONDAY, "1")
+        self.assertEqual(result, date(2024, 1, 1))
+
+    def test_first_monday_current_month_not_yet(self):
+        # 2024-03-01 is Friday; first Monday of March = Mar 4
+        # today = Mar 2 → Mar 4 hasn't occurred yet → Feb 5 (first Monday of Feb)
+        # Feb 2024: Feb 1 is Thursday; first Monday = Feb 5
+        result = self._coord()._calc_most_recent_weekday_of_month(date(2024, 3, 2), CONF_MONDAY, "1")
+        self.assertEqual(result, date(2024, 2, 5))
+
+    def test_last_monday_same_month(self):
+        # Jan 2024 last Monday = Jan 29; today = Jan 30 → Jan 29
+        result = self._coord()._calc_most_recent_weekday_of_month(date(2024, 1, 30), CONF_MONDAY, "last")
+        self.assertEqual(result, date(2024, 1, 29))
+

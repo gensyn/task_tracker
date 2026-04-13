@@ -87,13 +87,15 @@ class TaskTrackerCoordinator:
         In ``repeat_after`` mode (default) the last-done date is set to today,
         so the next due date is calculated relative to the actual completion date.
 
-        In ``repeat_every`` mode the last-done date is set to the current
-        computed due date, advancing the schedule by exactly one occurrence.
-        The sensor layer ensures this is only called when the task is DUE or
-        DUE_SOON; if the task is already DONE this method is not reached.
+        In ``repeat_every`` mode the last-done date is set to the most recent
+        occurrence of the schedule that falls on or before today.  This means
+        a task whose ``last_done`` is far in the past (e.g. epoch-initialised)
+        is brought up-to-date in a single press rather than one interval at a
+        time.  The sensor layer ensures this is only called when the task is DUE
+        or DUE_SOON; if the task is already DONE this method is not reached.
         """
         if self.repeat_mode == CONF_REPEAT_EVERY:
-            self.last_done = self._calculate_repeat_every_due_date()
+            self.last_done = self._find_most_recent_occurrence(date.today())
         else:
             self.last_done = date.today()
         self._async_notify_listeners()
@@ -143,6 +145,27 @@ class TaskTrackerCoordinator:
             return self._calc_next_days_before_end_of_month(last, self.repeat_days_before_end)
         # Unrecognised sub-type: fall back to a 7-day interval
         return last + relativedelta(days=7)
+
+    def _find_most_recent_occurrence(self, today: date) -> date:
+        """Return the most recent occurrence of the schedule on or before *today*.
+
+        This is used when marking a task as done so that a single press always
+        brings ``last_done`` up to the current cycle regardless of how far in
+        the past the previous value was.
+        """
+        etype = self.repeat_every_type
+        if etype == CONF_REPEAT_EVERY_WEEKDAY:
+            return self._calc_most_recent_weekday(today, self.repeat_weekday or "monday")
+        if etype == CONF_REPEAT_EVERY_DAY_OF_MONTH:
+            return self._calc_most_recent_day_of_month(today, self.repeat_month_day)
+        if etype == CONF_REPEAT_EVERY_WEEKDAY_OF_MONTH:
+            return self._calc_most_recent_weekday_of_month(
+                today, self.repeat_weekday or "monday", self.repeat_nth_occurrence
+            )
+        if etype == CONF_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH:
+            return self._calc_most_recent_days_before_end_of_month(today, self.repeat_days_before_end)
+        # Unrecognised sub-type: fall back to today
+        return today
 
     @staticmethod
     def _weekday_number(weekday_name: str) -> int:
@@ -235,3 +258,57 @@ class TaskTrackerCoordinator:
             candidate_month += relativedelta(months=1)
         # Unreachable in practice; last-resort fallback
         return last + relativedelta(months=1)
+
+    # ------------------------------------------------------------------
+    # Most-recent-occurrence helpers (used by async_mark_as_done)
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _calc_most_recent_weekday(today: date, weekday_name: str) -> date:
+        """Return the most recent date on or before *today* that falls on *weekday_name*."""
+        target = TaskTrackerCoordinator._weekday_number(weekday_name)
+        days_back = (today.weekday() - target) % 7
+        return today - timedelta(days=days_back)
+
+    @staticmethod
+    def _calc_most_recent_day_of_month(today: date, day: int) -> date:
+        """Return the most recent date on or before *today* that is the *day*-th of its month."""
+        last_day_of_month = calendar.monthrange(today.year, today.month)[1]
+        candidate = today.replace(day=min(day, last_day_of_month))
+        if candidate <= today:
+            return candidate
+        # The target day hasn't occurred yet this month — go back to the previous month.
+        prev_month = today.replace(day=1) - relativedelta(months=1)
+        prev_last_day = calendar.monthrange(prev_month.year, prev_month.month)[1]
+        return prev_month.replace(day=min(day, prev_last_day))
+
+    @staticmethod
+    def _calc_most_recent_days_before_end_of_month(today: date, days_before: int) -> date:
+        """Return the most recent date on or before *today* that is *days_before* days before month-end."""
+        last_day = calendar.monthrange(today.year, today.month)[1]
+        candidate = today.replace(day=max(1, last_day - days_before))
+        if candidate <= today:
+            return candidate
+        prev_month = today.replace(day=1) - relativedelta(months=1)
+        prev_last_day = calendar.monthrange(prev_month.year, prev_month.month)[1]
+        return prev_month.replace(day=max(1, prev_last_day - days_before))
+
+    def _calc_most_recent_weekday_of_month(self, today: date, weekday_name: str, nth_str: str) -> date:
+        """Return the most recent *nth* weekday-of-month occurrence on or before *today*."""
+        target = self._weekday_number(weekday_name)
+        nth = -1 if nth_str == "last" else int(nth_str)
+        # Try the current month first
+        occurrence = self._get_nth_weekday_of_month(today.year, today.month, target, nth)
+        if occurrence is not None and occurrence <= today:
+            return occurrence
+        # Walk backwards month by month
+        candidate_month = today.replace(day=1) - relativedelta(months=1)
+        for _ in range(24):  # safety cap
+            occurrence = self._get_nth_weekday_of_month(
+                candidate_month.year, candidate_month.month, target, nth
+            )
+            if occurrence is not None:
+                return occurrence
+            candidate_month -= relativedelta(months=1)
+        # Unreachable in practice; last-resort fallback
+        return today
