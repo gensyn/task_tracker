@@ -700,8 +700,8 @@ class TestTaskTrackerSensorRepeatMode(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(last_done, first_monday)
 
-    async def test_repeat_every_mark_as_done_coordinator_use_next_occurrence_sets_future_due(self):
-        """coordinator.async_mark_as_done(use_next_occurrence=True) sets last_done to the next future occurrence."""
+    async def test_repeat_every_mark_as_done_coordinator_when_due_future_sets_next_occurrence(self):
+        """coordinator.async_mark_as_done() self-selects next occurrence when due date is in the future."""
         from datetime import timedelta
         sensor = make_sensor(
             repeat_mode=CONF_REPEAT_EVERY,
@@ -713,8 +713,8 @@ class TestTaskTrackerSensorRepeatMode(unittest.IsolatedAsyncioTestCase):
         sensor.coordinator.last_done = date.today()
         expected_next = sensor.coordinator._calculate_repeat_every_due_date()
         self.assertGreater(expected_next, date.today())
-        await sensor.coordinator.async_mark_as_done(use_next_occurrence=True)
-        # last_done must equal the future due date
+        await sensor.coordinator.async_mark_as_done()
+        # last_done must equal the future due date (self-determined)
         self.assertEqual(sensor.coordinator.last_done, expected_next)
 
     async def test_repeat_every_mark_as_done_day_of_month_catches_up_from_epoch(self):
@@ -760,18 +760,23 @@ class TestTaskTrackerSensorRepeatMode(unittest.IsolatedAsyncioTestCase):
             CONF_REPEAT_AFTER,
         )
 
-    async def test_repeat_every_sensor_mark_as_done_skipped_when_done(self):
-        """sensor.async_mark_as_done does nothing when the task state is DONE."""
+    async def test_repeat_every_sensor_mark_as_done_done_state_sets_next_occurrence(self):
+        """sensor.async_mark_as_done when DONE sets last_done to the next occurrence.
+
+        Per spec: if the task is in state DONE, set last_done to the next
+        occurrence so the early completion is registered against the upcoming cycle.
+        """
         from datetime import timedelta
         sensor = make_sensor(repeat_mode=CONF_REPEAT_EVERY, task_interval_value=7)
         # Set last_done so due_date is 30 days from now (DONE state)
         sensor.coordinator.last_done = date.today() + timedelta(days=23)
         await self._run_update(sensor)
         self.assertEqual(sensor._attr_native_value, CONST_DONE)
-        original_last_done = sensor.coordinator.last_done
+        expected_next = sensor.coordinator._calculate_repeat_every_due_date()
+        self.assertGreater(expected_next, date.today())
         await sensor.async_mark_as_done()
-        # last_done must not have changed
-        self.assertEqual(sensor.coordinator.last_done, original_last_done)
+        # last_done must be set to the next occurrence
+        self.assertEqual(sensor.coordinator.last_done, expected_next)
 
     async def test_repeat_every_sensor_mark_as_done_skipped_when_inactive(self):
         """sensor.async_mark_as_done does nothing when the task is inactive."""
