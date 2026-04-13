@@ -434,6 +434,66 @@
             },
             "sort_due_date": {
                 "name": "Due date"
+            },
+            "schedule": {
+                "name": "Schedule"
+            },
+            "every": {
+                "name": "Every"
+            },
+            "on": {
+                "name": "on"
+            },
+            "day_of_month_prefix": {
+                "name": "Day"
+            },
+            "of_month": {
+                "name": "of month"
+            },
+            "days_before_end_of_month_singular": {
+                "name": "day before end of month"
+            },
+            "days_before_end_of_month_plural": {
+                "name": "days before end of month"
+            },
+            "last_day_of_month": {
+                "name": "Last day of month"
+            },
+            "monday": {
+                "name": "Monday"
+            },
+            "tuesday": {
+                "name": "Tuesday"
+            },
+            "wednesday": {
+                "name": "Wednesday"
+            },
+            "thursday": {
+                "name": "Thursday"
+            },
+            "friday": {
+                "name": "Friday"
+            },
+            "saturday": {
+                "name": "Saturday"
+            },
+            "sunday": {
+                "name": "Sunday"
+            },
+            "occurrence_1": {
+                "name": "1st"
+            },
+            "occurrence_2": {
+                "name": "2nd"
+            },
+            "occurrence_3": {
+                "name": "3rd"
+            },
+            "occurrence_4": {
+                "name": "4th"
+            },
+            "occurrence_last": {
+                "name": "Last"
             }
         }
     },

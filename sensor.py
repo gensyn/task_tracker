@@ -23,7 +23,9 @@ from homeassistant.util.dt import UTC
 from .const import DOMAIN, CONF_TASK_INTERVAL_VALUE, CONF_NOTIFICATION_INTERVAL, CONF_TAGS, CONF_ACTIVE, \
     CONST_DUE, CONST_DUE_SOON, CONST_INACTIVE, CONST_DONE, CONF_TASK_INTERVAL_TYPE, \
     CONF_DUE_SOON_DAYS, CONF_TODO_LISTS, CONF_DAY, CONF_ACTIVE_OVERRIDE, CONF_TASK_INTERVAL_OVERRIDE, \
-    CONF_DUE_SOON_OVERRIDE, CONF_REPEAT_EVERY
+    CONF_DUE_SOON_OVERRIDE, CONF_REPEAT_EVERY, \
+    CONF_REPEAT_EVERY_WEEKDAY, CONF_REPEAT_EVERY_DAY_OF_MONTH, \
+    CONF_REPEAT_EVERY_WEEKDAY_OF_MONTH, CONF_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH
 from .coordinator import TaskTrackerCoordinator
 
 LOGGER = getLogger(__name__)
@@ -210,20 +212,29 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
             "due_date": str(self.due_date),
             "due_in": self.due_in,
             "overdue_by": overdue_by,
-            "task_interval_value": effective_task_interval_value,
-            "task_interval_type": effective_task_interval_type,
             "repeat_mode": self.coordinator.repeat_mode,
-            "repeat_every_type": self.coordinator.repeat_every_type,
-            "repeat_weekday": self.coordinator.repeat_weekday,
-            "repeat_weeks_interval": self.coordinator.repeat_weeks_interval,
-            "repeat_month_day": self.coordinator.repeat_month_day,
-            "repeat_nth_occurrence": self.coordinator.repeat_nth_occurrence,
             "icon": self.icon,
             "tags": self.tags,
             "todo_lists": self.todo_lists,
             "due_soon_days": effective_due_soon_days,
             "notification_interval": self.notification_interval,
         }
+        if self.coordinator.repeat_mode == CONF_REPEAT_EVERY:
+            repeat_every_type = self.coordinator.repeat_every_type
+            self._attr_extra_state_attributes["repeat_every_type"] = repeat_every_type
+            if repeat_every_type == CONF_REPEAT_EVERY_WEEKDAY:
+                self._attr_extra_state_attributes["repeat_weekday"] = self.coordinator.repeat_weekday
+                self._attr_extra_state_attributes["repeat_weeks_interval"] = self.coordinator.repeat_weeks_interval
+            elif repeat_every_type == CONF_REPEAT_EVERY_DAY_OF_MONTH:
+                self._attr_extra_state_attributes["repeat_month_day"] = self.coordinator.repeat_month_day
+            elif repeat_every_type == CONF_REPEAT_EVERY_WEEKDAY_OF_MONTH:
+                self._attr_extra_state_attributes["repeat_weekday"] = self.coordinator.repeat_weekday
+                self._attr_extra_state_attributes["repeat_nth_occurrence"] = self.coordinator.repeat_nth_occurrence
+            elif repeat_every_type == CONF_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH:
+                self._attr_extra_state_attributes["repeat_days_before_end"] = self.coordinator.repeat_days_before_end
+        else:
+            self._attr_extra_state_attributes["task_interval_value"] = effective_task_interval_value
+            self._attr_extra_state_attributes["task_interval_type"] = effective_task_interval_type
         for todo_list in self.todo_lists:
             await self.async_sync_todo_list(todo_list)
 

@@ -431,6 +431,66 @@
             },
             "sort_due_date": {
                 "name": "Fälligkeitsdatum"
+            },
+            "schedule": {
+                "name": "Zeitplan"
+            },
+            "every": {
+                "name": "Alle"
+            },
+            "on": {
+                "name": "am"
+            },
+            "day_of_month_prefix": {
+                "name": "Tag"
+            },
+            "of_month": {
+                "name": "des Monats"
+            },
+            "days_before_end_of_month_singular": {
+                "name": "Tag vor Monatsende"
+            },
+            "days_before_end_of_month_plural": {
+                "name": "Tage vor Monatsende"
+            },
+            "last_day_of_month": {
+                "name": "Letzter Tag des Monats"
+            },
+            "monday": {
+                "name": "Montag"
+            },
+            "tuesday": {
+                "name": "Dienstag"
+            },
+            "wednesday": {
+                "name": "Mittwoch"
+            },
+            "thursday": {
+                "name": "Donnerstag"
+            },
+            "friday": {
+                "name": "Freitag"
+            },
+            "saturday": {
+                "name": "Samstag"
+            },
+            "sunday": {
+                "name": "Sonntag"
+            },
+            "occurrence_1": {
+                "name": "1."
+            },
+            "occurrence_2": {
+                "name": "2."
+            },
+            "occurrence_3": {
+                "name": "3."
+            },
+            "occurrence_4": {
+                "name": "4."
+            },
+            "occurrence_last": {
+                "name": "Letzter"
             }
         }
     },
