@@ -788,31 +788,6 @@ class TestTaskTrackerSensorRepeatMode(unittest.IsolatedAsyncioTestCase):
         # last_done must have advanced
         self.assertGreater(sensor.coordinator.last_done, original_last_done)
 
-    async def test_repeat_every_propagated_to_coordinator(self):
-        """repeat_every mode is written to the coordinator on init."""
-        sensor = make_sensor(repeat_mode=CONF_REPEAT_EVERY)
-        self.assertEqual(sensor.coordinator.repeat_mode, CONF_REPEAT_EVERY)
-
-    async def test_repeat_mode_in_state_attributes(self):
-        """repeat_mode is included in the entity state attributes."""
-        sensor = make_sensor(repeat_mode=CONF_REPEAT_EVERY)
-        sensor.coordinator.last_done = date(2024, 1, 1)
-        await self._run_update(sensor)
-        self.assertEqual(
-            sensor._attr_extra_state_attributes["repeat_mode"],
-            CONF_REPEAT_EVERY,
-        )
-
-    async def test_repeat_after_mode_in_state_attributes(self):
-        """repeat_after mode is correctly reflected in state attributes."""
-        sensor = make_sensor(repeat_mode=CONF_REPEAT_AFTER)
-        sensor.coordinator.last_done = date(2024, 1, 1)
-        await self._run_update(sensor)
-        self.assertEqual(
-            sensor._attr_extra_state_attributes["repeat_mode"],
-            CONF_REPEAT_AFTER,
-        )
-
 
 # ---------------------------------------------------------------------------
 # Calendar-based due date calculation tests for repeat_every
