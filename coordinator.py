@@ -87,27 +87,13 @@ class TaskTrackerCoordinator:
         In ``repeat_after`` mode (default) the last-done date is set to today,
         so the next due date is calculated relative to the actual completion date.
 
-        In ``repeat_every`` mode the last-done date is advanced to the most
-        recent scheduled occurrence so that the next computed due date falls
-        strictly in the future.  For tasks that are due soon (the next
-        occurrence is already in the future) the last-done date is set to that
-        upcoming due date, advancing the schedule by one occurrence.
+        In ``repeat_every`` mode the last-done date is set to the current
+        computed due date, advancing the schedule by exactly one occurrence.
+        The sensor layer ensures this is only called when the task is DUE or
+        DUE_SOON; if the task is already DONE this method is not reached.
         """
         if self.repeat_mode == CONF_REPEAT_EVERY:
-            today = date.today()
-            # Always advance by at least one occurrence.
             self.last_done = self._calculate_repeat_every_due_date()
-            # For overdue tasks the first step may still be in the past; keep
-            # advancing until the next computed due date is strictly in the future.
-            while True:
-                next_due = self._calculate_repeat_every_due_date()
-                if next_due > today:
-                    break
-                if next_due <= self.last_done:
-                    # Safety guard: _calculate_repeat_every_due_date must always
-                    # return a date strictly after last_done; if not, stop.
-                    break
-                self.last_done = next_due
         else:
             self.last_done = date.today()
         self._async_notify_listeners()

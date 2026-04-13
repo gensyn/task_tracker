@@ -683,7 +683,7 @@ class TestTaskTrackerSensorRepeatMode(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(sensor.due_date, expected_due + timedelta(days=7))
 
     async def test_repeat_every_maintains_schedule_when_completed_late(self):
-        """Completing an overdue task advances last_done past all overdue occurrences."""
+        """Completing an overdue task advances last_done by exactly one occurrence."""
         from datetime import timedelta
         sensor = make_sensor(repeat_mode=CONF_REPEAT_EVERY, task_interval_value=7)
         # due yesterday: last_done was 8 days ago
@@ -692,23 +692,11 @@ class TestTaskTrackerSensorRepeatMode(unittest.IsolatedAsyncioTestCase):
         expected_overdue_due = sensor.coordinator.last_done + timedelta(days=7)
         self.assertEqual(sensor.due_date, expected_overdue_due)  # = yesterday
         await sensor.coordinator.async_mark_as_done()
-        # last_done should be yesterday (most recent occurrence ≤ today)
+        # last_done is set to the current due date (yesterday), one step forward
         self.assertEqual(sensor.coordinator.last_done, expected_overdue_due)
         # next due = yesterday + 7 = 6 days from now
         await self._run_update(sensor)
         self.assertEqual(sensor.due_date, expected_overdue_due + timedelta(days=7))
-
-    async def test_repeat_every_mark_as_done_catches_up_from_far_past(self):
-        """An epoch-initialised task catches up to the current date on mark_as_done."""
-        from datetime import timedelta
-        sensor = make_sensor(repeat_mode=CONF_REPEAT_EVERY, task_interval_value=7)
-        sensor.coordinator.last_done = date(1970, 1, 1)
-        await sensor.coordinator.async_mark_as_done()
-        # After catching up, the next due date must be strictly in the future.
-        next_due = sensor.coordinator._calculate_repeat_every_due_date()
-        self.assertGreater(next_due, date.today())
-        # last_done should be within one interval of today
-        self.assertGreaterEqual(sensor.coordinator.last_done, date.today() - timedelta(days=7))
 
     async def test_repeat_every_propagated_to_coordinator(self):
         """repeat_every mode is written to the coordinator on init."""
