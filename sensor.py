@@ -381,10 +381,7 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
         if (self.coordinator.repeat_mode == CONF_REPEAT_EVERY
                 and self._attr_native_value in (CONST_DONE, CONST_INACTIVE)):
             return
-        use_next = (
-            self.coordinator.repeat_mode == CONF_REPEAT_EVERY
-            and self._attr_native_value == CONST_DUE_SOON
-        )
+        use_next = self._attr_native_value == CONST_DUE_SOON
         await self.coordinator.async_mark_as_done(use_next_occurrence=use_next)
 
     async def async_set_last_done_date(self, new_date: date) -> None:

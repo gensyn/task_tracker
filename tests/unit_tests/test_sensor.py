@@ -700,6 +700,23 @@ class TestTaskTrackerSensorRepeatMode(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(last_done, first_monday)
 
+    async def test_repeat_every_mark_as_done_coordinator_use_next_occurrence_sets_future_due(self):
+        """coordinator.async_mark_as_done(use_next_occurrence=True) sets last_done to the next future occurrence."""
+        from datetime import timedelta
+        sensor = make_sensor(
+            repeat_mode=CONF_REPEAT_EVERY,
+            repeat_every_type=CONF_REPEAT_EVERY_WEEKDAY,
+            repeat_weekday=CONF_MONDAY,
+            repeat_weeks_interval=1,
+        )
+        # Set last_done to today; next Monday is exactly 7 days out (always future)
+        sensor.coordinator.last_done = date.today()
+        expected_next = sensor.coordinator._calculate_repeat_every_due_date()
+        self.assertGreater(expected_next, date.today())
+        await sensor.coordinator.async_mark_as_done(use_next_occurrence=True)
+        # last_done must equal the future due date
+        self.assertEqual(sensor.coordinator.last_done, expected_next)
+
     async def test_repeat_every_mark_as_done_day_of_month_catches_up_from_epoch(self):
         """mark_as_done on an epoch-initialised day-of-month task sets last_done to the most recent Nth day."""
         sensor = make_sensor(
