@@ -75,7 +75,7 @@
                 }
             },
             "repeat_every_days_before_end_of_month": {
-                "title": "N Days Before the Last of the Month",
+                "title": "N Days Before the End of the Month",
                 "description": "The task repeats a set number of days before the last day of each month.",
                 "data": {
                     "repeat_days_before_end": "Days Before Month End"
@@ -179,7 +179,7 @@
                 }
             },
             "repeat_every_days_before_end_of_month": {
-                "title": "N Days Before the Last of the Month",
+                "title": "N Days Before the End of the Month",
                 "description": "The task repeats a set number of days before the last day of each month.",
                 "data": {
                     "repeat_days_before_end": "Days Before Month End"
