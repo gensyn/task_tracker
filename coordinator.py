@@ -87,27 +87,35 @@ class TaskTrackerCoordinator:
         In ``repeat_after`` mode (default) the last-done date is set to today,
         so the next due date is calculated relative to the actual completion date.
 
-        In ``repeat_every`` mode the behaviour is determined automatically by
-        comparing the upcoming due date to today:
+        In ``repeat_every`` mode there are three cases:
 
-        * If the due date is today or in the past (task is DUE): last-done is
-          set to the most recent occurrence of the schedule on or before today.
-          This catches up a task that has been overdue for many cycles in a
+        * ``last_done > today`` (pre-marked DONE via an early completion press):
+          the upcoming cycle has already been registered; pressing again is a
+          no-op so that the schedule is not advanced indefinitely.  This ensures
+          idempotency – pressing the button many times when the task is DONE
+          always results in the same ``last_done``.
+
+        * ``last_done ≤ today`` and ``due_date > today`` (either DUE_SOON or
+          genuinely DONE with last_done in the past): the task has not yet been
+          marked for the upcoming cycle, so ``last_done`` is advanced to that
+          upcoming due date.  Pressing again then falls into the pre-marked case
+          above and becomes a no-op.
+
+        * ``last_done ≤ today`` and ``due_date ≤ today`` (task is DUE or
+          overdue): ``last_done`` is set to the most recent occurrence of the
+          schedule on or before today, catching up any overdue cycles in a
           single press.
-        * If the due date is in the future (task is DUE_SOON or DONE): last-done
-          is set to that future due date so the early completion is registered
-          against the upcoming cycle, preserving the schedule going forward.
-
-        This logic lives entirely in the coordinator so that all callers
-        (sensor entity, button entity, services) get consistent behaviour
-        without needing to pass any hint about the current task state.
         """
         if self.repeat_mode == CONF_REPEAT_EVERY:
+            today = date.today()
+            if self.last_done > today:
+                # Already pre-marked a future cycle; pressing again is a no-op.
+                return
             due_date = self._calculate_repeat_every_due_date()
-            if due_date > date.today():
+            if due_date > today:
                 self.last_done = due_date
             else:
-                self.last_done = self._find_most_recent_occurrence(date.today())
+                self.last_done = self._find_most_recent_occurrence(today)
         else:
             self.last_done = date.today()
         self._async_notify_listeners()
