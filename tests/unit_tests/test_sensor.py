@@ -55,6 +55,7 @@ def make_sensor(
             repeat_weeks_interval=repeat_weeks_interval,
             repeat_month_day=repeat_month_day,
             repeat_nth_occurrence=repeat_nth_occurrence,
+            due_soon_days=due_soon_days,
         )
     return TaskTrackerSensor(
         coordinator=coordinator,
@@ -700,22 +701,28 @@ class TestTaskTrackerSensorRepeatMode(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(last_done, first_monday)
 
-    async def test_repeat_every_mark_as_done_coordinator_when_due_future_sets_next_occurrence(self):
-        """coordinator.async_mark_as_done() self-selects next occurrence when due date is in the future."""
+    async def test_repeat_every_mark_as_done_coordinator_done_is_noop(self):
+        """coordinator.async_mark_as_done() is a no-op when the task is DONE.
+
+        When last_done is in the past but the due date is beyond the due-soon
+        window (task is DONE), pressing mark-as-done via the coordinator must
+        leave last_done unchanged.  This covers the button and service paths
+        which call the coordinator directly.
+        """
         from datetime import timedelta
         sensor = make_sensor(
             repeat_mode=CONF_REPEAT_EVERY,
             repeat_every_type=CONF_REPEAT_EVERY_WEEKDAY,
             repeat_weekday=CONF_MONDAY,
             repeat_weeks_interval=1,
+            due_soon_days=0,
         )
-        # Set last_done to today; next Monday is exactly 7 days out (always future)
+        # last_done = today; next Monday is always in the future → DONE with due_soon_days=0
         sensor.coordinator.last_done = date.today()
-        expected_next = sensor.coordinator._calculate_repeat_every_due_date()
-        self.assertGreater(expected_next, date.today())
+        original_last_done = sensor.coordinator.last_done
         await sensor.coordinator.async_mark_as_done()
-        # last_done must equal the future due date (self-determined)
-        self.assertEqual(sensor.coordinator.last_done, expected_next)
+        # Must be a no-op
+        self.assertEqual(sensor.coordinator.last_done, original_last_done)
 
     async def test_repeat_every_mark_as_done_day_of_month_catches_up_from_epoch(self):
         """mark_as_done on an epoch-initialised day-of-month task sets last_done to the most recent Nth day."""
@@ -778,28 +785,26 @@ class TestTaskTrackerSensorRepeatMode(unittest.IsolatedAsyncioTestCase):
         # last_done must not have changed
         self.assertEqual(sensor.coordinator.last_done, future_last_done)
 
-    async def test_repeat_every_sensor_mark_as_done_done_genuine_advances_to_due_date(self):
-        """sensor.async_mark_as_done when genuinely DONE advances last_done to the upcoming due date.
+    async def test_repeat_every_sensor_mark_as_done_done_genuine_is_noop(self):
+        """sensor.async_mark_as_done when genuinely DONE (last_done in past, due date far ahead) is a no-op.
 
-        When last_done is in the past but the due date is far in the future (task
-        is DONE without having been pre-marked), pressing once should set
-        last_done to the upcoming due date, and pressing a second time should
-        be a no-op (idempotency).
+        When the task is in state DONE (due date is beyond the due-soon window),
+        pressing mark-as-done must leave last_done unchanged.  This applies via
+        the sensor path; the button path is covered by the coordinator-level test.
         """
         from datetime import timedelta
         sensor = make_sensor(repeat_mode=CONF_REPEAT_EVERY, task_interval_value=7, due_soon_days=2)
-        # last_done 1 day ago → due in 6 days → genuinely DONE (outside due_soon window)
+        # last_done 1 day ago → due in 6 days → genuinely DONE (outside due_soon_days=2 window)
         sensor.coordinator.last_done = date.today() - timedelta(days=1)
         await self._run_update(sensor)
         self.assertEqual(sensor._attr_native_value, CONST_DONE)
-        expected_due = sensor.coordinator._calculate_repeat_every_due_date()
-        self.assertGreater(expected_due, date.today())
+        original_last_done = sensor.coordinator.last_done
         await sensor.async_mark_as_done()
-        # First press: last_done advances to the upcoming due date
-        self.assertEqual(sensor.coordinator.last_done, expected_due)
-        # Second press: last_done is now in the future → no-op
+        # Must be a no-op
+        self.assertEqual(sensor.coordinator.last_done, original_last_done)
+        # Pressing again is also a no-op
         await sensor.async_mark_as_done()
-        self.assertEqual(sensor.coordinator.last_done, expected_due)
+        self.assertEqual(sensor.coordinator.last_done, original_last_done)
 
     async def test_repeat_every_sensor_mark_as_done_skipped_when_inactive(self):
         """sensor.async_mark_as_done does nothing when the task is inactive."""

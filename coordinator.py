@@ -50,6 +50,7 @@ class TaskTrackerCoordinator:
         repeat_month_day: int = 1,
         repeat_nth_occurrence: str = "1",
         repeat_days_before_end: int = 0,
+        due_soon_days: int = 0,
     ) -> None:
         """Initialise the coordinator."""
         self.entry_id = entry_id
@@ -65,6 +66,7 @@ class TaskTrackerCoordinator:
             else "1"
         )
         self.repeat_days_before_end: int = max(0, repeat_days_before_end or 0)
+        self.due_soon_days: int = max(0, due_soon_days or 0)
         self._listeners: list[Callable[[], None]] = []
 
     def async_add_listener(self, update_callback: Callable[[], None]) -> Callable[[], None]:
@@ -89,22 +91,25 @@ class TaskTrackerCoordinator:
 
         In ``repeat_every`` mode there are three cases:
 
-        * ``last_done > today`` (pre-marked DONE via an early completion press):
-          the upcoming cycle has already been registered; pressing again is a
-          no-op so that the schedule is not advanced indefinitely.  This ensures
-          idempotency – pressing the button many times when the task is DONE
-          always results in the same ``last_done``.
+        * ``last_done > today`` (pre-marked DONE via an early DUE_SOON completion
+          press): the upcoming cycle has already been registered; pressing again
+          is a no-op so that the schedule is not advanced.
 
-        * ``last_done ≤ today`` and ``due_date > today`` (either DUE_SOON or
-          genuinely DONE with last_done in the past): the task has not yet been
-          marked for the upcoming cycle, so ``last_done`` is advanced to that
-          upcoming due date.  Pressing again then falls into the pre-marked case
-          above and becomes a no-op.
+        * ``due_in > due_soon_days`` (genuinely DONE — the due date is beyond the
+          due-soon window): pressing is a no-op.  Only DUE_SOON or DUE states
+          perform work.
 
-        * ``last_done ≤ today`` and ``due_date ≤ today`` (task is DUE or
-          overdue): ``last_done`` is set to the most recent occurrence of the
-          schedule on or before today, catching up any overdue cycles in a
-          single press.
+        * ``0 < due_in ≤ due_soon_days`` (DUE_SOON): ``last_done`` is set to the
+          upcoming due date so the early completion is recorded against the right
+          cycle.
+
+        * ``due_in == 0`` (DUE or overdue): ``last_done`` is set to the most
+          recent occurrence of the schedule on or before today, catching up any
+          overdue cycles in a single press.
+
+        This logic lives entirely in the coordinator so that all callers
+        (sensor entity, button entity, services) get consistent behaviour
+        without needing to pass any hint about the current task state.
         """
         if self.repeat_mode == CONF_REPEAT_EVERY:
             today = date.today()
@@ -112,7 +117,11 @@ class TaskTrackerCoordinator:
                 # Already pre-marked a future cycle; pressing again is a no-op.
                 return
             due_date = self._calculate_repeat_every_due_date()
-            if due_date > today:
+            due_in = (due_date - today).days if due_date > today else 0
+            if due_in > self.due_soon_days:
+                # Task is DONE (not yet in the due-soon window); no-op.
+                return
+            if due_in > 0:
                 self.last_done = due_date
             else:
                 self.last_done = self._find_most_recent_occurrence(today)

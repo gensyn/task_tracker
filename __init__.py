@@ -129,6 +129,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         repeat_month_day=entry.options.get(CONF_REPEAT_MONTH_DAY, 1),
         repeat_nth_occurrence=entry.options.get(CONF_REPEAT_NTH_OCCURRENCE, "1"),
         repeat_days_before_end=entry.options.get(CONF_REPEAT_DAYS_BEFORE_END, 0),
+        due_soon_days=entry.options.get(CONF_DUE_SOON_DAYS, 0),
     )
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
     await hass.config_entries.async_forward_entry_setups(entry, _PLATFORMS)
