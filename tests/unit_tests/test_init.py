@@ -17,6 +17,7 @@ from task_tracker.const import (
     CONF_ACTIVE, CONF_TASK_INTERVAL_VALUE, CONF_TASK_INTERVAL_TYPE,
     CONF_TAGS, CONF_TODO_LISTS, CONF_DUE_SOON_DAYS, CONF_DUE_SOON_OVERRIDE,
     CONF_NOTIFICATION_INTERVAL, CONF_DAY,
+    CONF_REPEAT_MODE, CONF_REPEAT_AFTER,
     DOMAIN,
 )
 from task_tracker.coordinator import TaskTrackerCoordinator
@@ -114,11 +115,141 @@ class TestAsyncMigrateEntry(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(new_options[CONF_DUE_SOON_DAYS], 0)
         self.assertIsNone(new_options[CONF_DUE_SOON_OVERRIDE])
 
+    async def test_migrates_version_1_3_to_1_4(self):
+        entry = ConfigEntry(
+            entry_id="test",
+            version=1,
+            minor_version=3,
+            options={
+                CONF_ACTIVE: True,
+                CONF_TASK_INTERVAL_VALUE: 7,
+                CONF_TASK_INTERVAL_TYPE: CONF_DAY,
+                CONF_DUE_SOON_DAYS: 0,
+                CONF_TODO_LISTS: [],
+                CONF_NOTIFICATION_INTERVAL: 1,
+            },
+        )
+
+        mock_hass = MagicMock()
+
+        result = await async_migrate_entry(mock_hass, entry)
+
+        self.assertTrue(result)
+        mock_hass.config_entries.async_update_entry.assert_called_once()
+        call_kwargs = mock_hass.config_entries.async_update_entry.call_args[1]
+        self.assertEqual(call_kwargs["version"], 1)
+        self.assertEqual(call_kwargs["minor_version"], 4)
+        new_options = call_kwargs["options"]
+        # repeat_mode defaults to repeat_after to preserve existing behaviour
+        self.assertEqual(new_options[CONF_REPEAT_MODE], CONF_REPEAT_AFTER)
+
+    async def test_migrates_version_1_3_to_1_4_preserves_existing_repeat_mode(self):
+        """If repeat_mode is already present it should not be overwritten."""
+        from task_tracker.const import CONF_REPEAT_EVERY
+        entry = ConfigEntry(
+            entry_id="test",
+            version=1,
+            minor_version=3,
+            options={
+                CONF_ACTIVE: True,
+                CONF_TASK_INTERVAL_VALUE: 7,
+                CONF_TASK_INTERVAL_TYPE: CONF_DAY,
+                CONF_DUE_SOON_DAYS: 0,
+                CONF_TODO_LISTS: [],
+                CONF_NOTIFICATION_INTERVAL: 1,
+                CONF_REPEAT_MODE: CONF_REPEAT_EVERY,
+            },
+        )
+
+        mock_hass = MagicMock()
+
+        result = await async_migrate_entry(mock_hass, entry)
+
+        self.assertTrue(result)
+        call_kwargs = mock_hass.config_entries.async_update_entry.call_args[1]
+        new_options = call_kwargs["options"]
+        self.assertEqual(new_options[CONF_REPEAT_MODE], CONF_REPEAT_EVERY)
+
     async def test_returns_true_for_current_version(self):
-        entry = ConfigEntry(version=1, minor_version=3)
+        entry = ConfigEntry(version=1, minor_version=6)
         mock_hass = MagicMock()
         result = await async_migrate_entry(mock_hass, entry)
         self.assertTrue(result)
+
+    async def test_migrates_version_1_4_to_1_5_adds_repeat_every_fields(self):
+        """1.4→1.5 should backfill repeat_every schedule fields to None."""
+        from task_tracker.const import (
+            CONF_REPEAT_EVERY_TYPE, CONF_REPEAT_WEEKDAY, CONF_REPEAT_WEEKS_INTERVAL,
+            CONF_REPEAT_MONTH_DAY, CONF_REPEAT_NTH_OCCURRENCE,
+        )
+        entry = ConfigEntry(
+            entry_id="test",
+            version=1,
+            minor_version=4,
+            options={
+                CONF_ACTIVE: True,
+                CONF_TASK_INTERVAL_VALUE: 7,
+                CONF_TASK_INTERVAL_TYPE: CONF_DAY,
+                CONF_DUE_SOON_DAYS: 0,
+                CONF_TODO_LISTS: [],
+                CONF_NOTIFICATION_INTERVAL: 1,
+                CONF_REPEAT_MODE: CONF_REPEAT_AFTER,
+            },
+        )
+
+        mock_hass = MagicMock()
+
+        result = await async_migrate_entry(mock_hass, entry)
+
+        self.assertTrue(result)
+        mock_hass.config_entries.async_update_entry.assert_called_once()
+        call_kwargs = mock_hass.config_entries.async_update_entry.call_args[1]
+        self.assertEqual(call_kwargs["version"], 1)
+        self.assertEqual(call_kwargs["minor_version"], 5)
+        new_options = call_kwargs["options"]
+        self.assertIsNone(new_options[CONF_REPEAT_EVERY_TYPE])
+        self.assertIsNone(new_options[CONF_REPEAT_WEEKDAY])
+        self.assertIsNone(new_options[CONF_REPEAT_WEEKS_INTERVAL])
+        self.assertIsNone(new_options[CONF_REPEAT_MONTH_DAY])
+        self.assertIsNone(new_options[CONF_REPEAT_NTH_OCCURRENCE])
+
+    async def test_migrates_version_1_5_to_1_6_adds_repeat_days_before_end(self):
+        """1.5→1.6 should backfill repeat_days_before_end to None."""
+        from task_tracker.const import (
+            CONF_REPEAT_EVERY_TYPE, CONF_REPEAT_WEEKDAY, CONF_REPEAT_WEEKS_INTERVAL,
+            CONF_REPEAT_MONTH_DAY, CONF_REPEAT_NTH_OCCURRENCE, CONF_REPEAT_DAYS_BEFORE_END,
+        )
+        entry = ConfigEntry(
+            entry_id="test",
+            version=1,
+            minor_version=5,
+            options={
+                CONF_ACTIVE: True,
+                CONF_TASK_INTERVAL_VALUE: 7,
+                CONF_TASK_INTERVAL_TYPE: CONF_DAY,
+                CONF_DUE_SOON_DAYS: 0,
+                CONF_TODO_LISTS: [],
+                CONF_NOTIFICATION_INTERVAL: 1,
+                CONF_REPEAT_MODE: CONF_REPEAT_AFTER,
+                CONF_REPEAT_EVERY_TYPE: None,
+                CONF_REPEAT_WEEKDAY: None,
+                CONF_REPEAT_WEEKS_INTERVAL: None,
+                CONF_REPEAT_MONTH_DAY: None,
+                CONF_REPEAT_NTH_OCCURRENCE: None,
+            },
+        )
+
+        mock_hass = MagicMock()
+
+        result = await async_migrate_entry(mock_hass, entry)
+
+        self.assertTrue(result)
+        mock_hass.config_entries.async_update_entry.assert_called_once()
+        call_kwargs = mock_hass.config_entries.async_update_entry.call_args[1]
+        self.assertEqual(call_kwargs["version"], 1)
+        self.assertEqual(call_kwargs["minor_version"], 6)
+        new_options = call_kwargs["options"]
+        self.assertIsNone(new_options[CONF_REPEAT_DAYS_BEFORE_END])
 
     async def test_returns_false_for_future_major_version(self):
         entry = ConfigEntry(version=2, minor_version=1)
@@ -127,7 +258,7 @@ class TestAsyncMigrateEntry(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(result)
 
     async def test_returns_false_for_future_minor_version(self):
-        entry = ConfigEntry(version=1, minor_version=4)
+        entry = ConfigEntry(version=1, minor_version=7)
         mock_hass = MagicMock()
         result = await async_migrate_entry(mock_hass, entry)
         self.assertFalse(result)

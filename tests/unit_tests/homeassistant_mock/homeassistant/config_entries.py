@@ -18,7 +18,10 @@ class ConfigFlow:
             cls.DOMAIN = domain
 
     def async_show_form(self, step_id=None, data_schema=None, errors=None):
-        return {"type": "form", "step_id": step_id}
+        result = {"type": "form", "step_id": step_id}
+        if errors:
+            result["errors"] = errors
+        return result
 
     def async_create_entry(self, title=None, data=None, options=None):
         result = {"type": "create_entry", "title": title, "data": data or {}}

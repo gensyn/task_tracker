@@ -10,7 +10,7 @@ A powerful Home Assistant custom component for managing recurring tasks with aut
 
 ## ✨ Features
 
-- ✅ **Recurring Task Management** - Create tasks with customizable intervals (days, weeks, months, years)
+- ✅ **Recurring Task Management** - Create tasks with flexible repeat modes: after completion or on a fixed schedule
 - 📅 **Automatic Due Date Tracking** - Never forget when a task needs to be done
 - 📝 **Todo List Integration** - Automatically sync with Home Assistant's Local Todo lists
 - 🎨 **Custom Lovelace Card** - Beautiful task display in Lovelace
@@ -45,17 +45,63 @@ A powerful Home Assistant custom component for managing recurring tasks with aut
 
 ### 🆕 Task Creation
 
-To create a new task: 
+To create a new task:
 
 1. Navigate to `Settings > Devices & Services`
 2. Click `Add Integration`
 3. Search for **Task Tracker**
 4. Fill in the task details:
    - **Name** - Display name for your task
-   - **Task Interval** - How often the task repeats (combined with interval unit)
-   - **Task Interval Unit** - Day, week, month or year
+   - **Repeat Mode** - How the due date is recalculated (see [Repeat Modes](#-repeat-modes) below)
 
-![Create task](assets/1_create.png)
+<table>
+<tr>
+<td><img src="assets/1a_create.png" alt="Enter name and select mode"/><br/><b>Enter name and select mode</b></td>
+<td><img src="assets/1b_create.png" alt="Repeat After Completion"/><br/><b>Repeat After Completion</b></td>
+</tr>
+<tr>
+<td><img src="assets/1c_create.png" alt="Repeat on a Fixed Schedule"/><br/><b>Repeat on a Fixed Schedule</b></td>
+<td><img src="assets/1d_create.png" alt="Repeat Every N Weeks on a Weekday"/><br/><b>Example for Repeat After Completion:<br/>Repeat Every N Weeks on a Weekday</b></td>
+</tr>
+</table>
+
+Depending on the chosen repeat mode, you will be guided through one or more additional steps to configure the schedule details (see [Repeat Modes](#-repeat-modes)).
+
+---
+
+## 🔄 Repeat Modes
+
+Task Tracker supports two repeat modes, selected during task creation and changeable at any time via the task options.
+
+### Repeat after completion
+
+The next due date is calculated **relative to when the task was last completed**. For example, if a task has a 7-day interval and you complete it on a Wednesday, the next due date will be the following Wednesday — regardless of the original schedule.
+
+**Schedule configuration:** Choose a numeric interval and a unit (Day / Week / Month / Year).
+
+| Field | Description |
+|-------|-------------|
+| **Task Interval** | How many units between completions |
+| **Task Interval Unit** | Day, Week, Month, or Year |
+
+### Repeat every (fixed schedule)
+
+The task repeats on a **fixed calendar schedule**, independent of when it was completed. Completing early or late does not shift the next due date.
+
+**Schedule types:**
+
+| Schedule Type | Description | Example |
+|---------------|-------------|---------|
+| **Every Nth weekday** | Every *N* weeks on a chosen day of the week | Every week on Monday; Every 2 weeks on Friday |
+| **Every Nth day of the month** | A fixed day number each month | Every 15th of the month |
+| **Every Nth weekday of the month** | A specific occurrence of a weekday each month | Every 2nd Tuesday; Every last Friday |
+| **N days before month end** | A fixed number of days before the last day of the month | 3 days before month end |
+
+#### Mark as done behaviour for fixed schedules
+
+- When a task is **due** (or overdue): marking it done records the most recent past occurrence as the completion date.
+- When a task is **due soon**: marking it done records the next upcoming occurrence, so no occurrence is accidentally skipped.
+- When a task is **done**: marking it done has no effect.
 
 ---
 
@@ -69,18 +115,49 @@ Access task settings through the cog icon ⚙️ on the integration page.
 
 ![Task settings](assets/3_options.png)
 
-| Option | Description                                                                               |
-|--------|-------------------------------------------------------------------------------------------|
-| **Active** | Pause tasks when disabled (sensor shows `inactive` state)                                 |
-| **Active Override** | Select an `input_boolean` helper to override the Active setting at runtime               |
-| **Task Interval & Unit** | Modify how often the task repeats                                                         |
+| Option                    | Description                                                                                                     |
+|---------------------------|-----------------------------------------------------------------------------------------------------------------|
+| **Active**                | Pause tasks when disabled (sensor shows `inactive` state)                                                       |
+| **Active Override**       | Select an `input_boolean` helper to override the Active setting at runtime                                      |
+| **Icon**                  | Choose an icon for the sensor (available as attribute for notifications)                                        |
+| **Tags**                  | Add keywords for filtering in automations/templates (e.g., assignees, notification times)                       |
+| **Todo Lists**            | Select Todo lists for automatic task addition when due or due soon                                              |
+| **Due Soon**              | Number of days before due date when the sensor switches to `due_soon` state and the task is added to todo lists |
+| **Due Soon Override**     | Select an `input_number` helper (value in days) to override the Due Soon threshold at runtime                   |
+| **Notification Interval** | Reference value for automation/template notification timing                                                     |
+
+**Options specific to *Repeat after completion*:**
+
+| Option                     | Description                                                                              |
+|----------------------------|------------------------------------------------------------------------------------------|
+| **Task Interval & Unit**   | Modify how often the task repeats                                                        |
 | **Task Interval Override** | Select an `input_number` helper (value in days) to override the Task Interval at runtime |
-| **Material Design Icon** | Choose an icon for the sensor (available as attribute for notifications)                  |
-| **Tags** | Add keywords for filtering in automations/templates (e.g., assignees, notification times) |
-| **Todo Lists** | Select Todo lists for automatic task addition when due or due soon                        |
-| **Due Soon** | Number of days before due date when the sensor switches to `due_soon` state and the task is added to todo lists |
-| **Due Soon Override** | Select an `input_number` helper (value in days) to override the Due Soon threshold at runtime |
-| **Notification Interval** | Reference value for automation/template notification timing                               |
+
+**Options specific to *Repeat Every Nth weekday*:**
+
+| Option            | Description                                   |
+|-------------------|-----------------------------------------------|
+| **Weekday**       | Modify the weekday                            |
+| **Every (weeks)** | Modify the number of weeks between occurences |
+
+**Options specific to *Repeat Every Nth Day of the Month*:**
+
+| Option              | Description           |
+|---------------------|-----------------------|
+| **Day Of Month**    | Modify the day number |
+
+**Options specific to *Repeat Every Nth weekday of the month *:**
+
+| Option        | Description                         |
+|---------------|-------------------------------------|
+| **Weekday**   | Modify the weekday                  |
+| **Occurence** | Modify the occurence of the weekday |
+
+**Options specific to *Repeat Every N Days Before the End of the Month*:**
+
+| Option                    | Description                                      |
+|---------------------------|--------------------------------------------------|
+| **Days Before Month end** | Modify the number of days before the month's end |
 
 > **Note:** Tags and notification intervals require you to implement filtering logic in your own automations.
 >
@@ -96,6 +173,11 @@ Display tasks beautifully with the included custom card.  Click the ✓ icon to 
 type: custom:task-tracker-card
 entity: sensor.task_tracker_mow_the_lawn
 ```
+
+The card shows the schedule in a human-readable form that reflects the repeat mode:
+
+- **Repeat after completion** — displays the interval, e.g. *Every 3 days*, *Every 2 weeks*
+- **Repeat every (fixed schedule)** — displays the calendar schedule, e.g. *Every week on Monday*, *Every 15th*, *Every 2nd Tuesday*, *3 days before month end*
 
 #### Card States
 
@@ -126,7 +208,7 @@ The panel shows all tasks in one place with live state filtering:
 | **Done** | Tasks completed within their current interval |
 | **Inactive** | Tasks with the *Active* option turned off |
 
-Each task card displays the same information as the Lovelace card (status, interval, last done date, due date, days until due / overdue by) and includes a ✓ button to mark the task as done immediately.
+Each task card displays the same information as the Lovelace card (status, schedule, last done date, due date, days until due / overdue by) and includes a ✓ button to mark the task as done immediately.
 
 #### Disabling the sidebar panel
 
@@ -158,7 +240,12 @@ Task Tracker provides the following services in the `task_tracker` domain:
 
 #### `task_tracker.mark_as_done`
 
-Marks a task as completed by setting the last done date to today and recalculating the next due date.
+Marks a task as completed by setting the last done date to:
+  - today, for mode "repeat after completion"
+  - the date of the previous occurrence (might be today), for mode "repeat every (fixed schedule)" when in state DUE
+  - the date of the next occurrence, for mode "repeat every (fixed schedule)" when in state DUE_SOON
+
+Then recalculates the next due date.
 
 **Example:**
 ```yaml

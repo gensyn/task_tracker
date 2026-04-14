@@ -7,11 +7,9 @@ from functools import partial
 from logging import getLogger
 from typing import Any, Callable
 
-from dateutil.relativedelta import relativedelta
 from homeassistant.components.sensor import (
     SensorEntity, RestoreSensor,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_NAME, CONF_ICON, CONF_ENTITY_ID, EVENT_STATE_CHANGED
 from homeassistant.core import HomeAssistant, EventStateChangedData, callback
 from homeassistant.exceptions import ServiceValidationError, HomeAssistantError
@@ -22,10 +20,12 @@ from homeassistant.helpers.event import async_call_later
 from homeassistant.util import slugify
 from homeassistant.util.dt import UTC
 
-from .const import DOMAIN, CONF_TASK_INTERVAL_VALUE, CONF_NOTIFICATION_INTERVAL, CONF_TAGS, CONF_ACTIVE, CONF_WEEK, \
-    CONF_MONTH, CONF_YEAR, CONST_DUE, CONST_DUE_SOON, CONST_INACTIVE, CONST_DONE, CONF_TASK_INTERVAL_TYPE, \
+from .const import DOMAIN, CONF_TASK_INTERVAL_VALUE, CONF_NOTIFICATION_INTERVAL, CONF_TAGS, CONF_ACTIVE, \
+    CONST_DUE, CONST_DUE_SOON, CONST_INACTIVE, CONST_DONE, CONF_TASK_INTERVAL_TYPE, \
     CONF_DUE_SOON_DAYS, CONF_TODO_LISTS, CONF_DAY, CONF_ACTIVE_OVERRIDE, CONF_TASK_INTERVAL_OVERRIDE, \
-    CONF_DUE_SOON_OVERRIDE
+    CONF_DUE_SOON_OVERRIDE, CONF_REPEAT_EVERY, \
+    CONF_REPEAT_EVERY_WEEKDAY, CONF_REPEAT_EVERY_DAY_OF_MONTH, \
+    CONF_REPEAT_EVERY_WEEKDAY_OF_MONTH, CONF_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH
 from .coordinator import TaskTrackerCoordinator
 
 LOGGER = getLogger(__name__)
@@ -185,16 +185,6 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
                     pass
         return self.due_soon_days
 
-    def _calculate_due_date(self, interval_value: int, interval_type: str) -> date:
-        """Return the due date computed from *last_done* and the given interval."""
-        if interval_type == CONF_WEEK:
-            return self.coordinator.last_done + relativedelta(weeks=interval_value)
-        if interval_type == CONF_MONTH:
-            return self.coordinator.last_done + relativedelta(months=interval_value)
-        if interval_type == CONF_YEAR:
-            return self.coordinator.last_done + relativedelta(years=interval_value)
-        return self.coordinator.last_done + relativedelta(days=interval_value)
-
     async def async_update(self) -> None:
         """Recalculate state, attributes, and sync all configured todo lists."""
         self._attr_native_value = CONST_DONE
@@ -203,7 +193,7 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
         effective_task_interval_value, effective_task_interval_type = self._resolve_task_interval_override()
         effective_due_soon_days = self._resolve_due_soon_override()
 
-        self.due_date = self._calculate_due_date(effective_task_interval_value, effective_task_interval_type)
+        self.due_date = self.coordinator.calculate_due_date(effective_task_interval_value, effective_task_interval_type)
         self.due_in: int = (self.due_date - date.today()).days if self.due_date > date.today() else 0
         overdue_by: int = (date.today() - self.due_date).days if self.due_date < date.today() else 0
 
@@ -222,14 +212,29 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
             "due_date": str(self.due_date),
             "due_in": self.due_in,
             "overdue_by": overdue_by,
-            "task_interval_value": effective_task_interval_value,
-            "task_interval_type": effective_task_interval_type,
+            "repeat_mode": self.coordinator.repeat_mode,
             "icon": self.icon,
             "tags": self.tags,
             "todo_lists": self.todo_lists,
             "due_soon_days": effective_due_soon_days,
             "notification_interval": self.notification_interval,
         }
+        if self.coordinator.repeat_mode == CONF_REPEAT_EVERY:
+            repeat_every_type = self.coordinator.repeat_every_type
+            self._attr_extra_state_attributes["repeat_every_type"] = repeat_every_type
+            if repeat_every_type == CONF_REPEAT_EVERY_WEEKDAY:
+                self._attr_extra_state_attributes["repeat_weekday"] = self.coordinator.repeat_weekday
+                self._attr_extra_state_attributes["repeat_weeks_interval"] = self.coordinator.repeat_weeks_interval
+            elif repeat_every_type == CONF_REPEAT_EVERY_DAY_OF_MONTH:
+                self._attr_extra_state_attributes["repeat_month_day"] = self.coordinator.repeat_month_day
+            elif repeat_every_type == CONF_REPEAT_EVERY_WEEKDAY_OF_MONTH:
+                self._attr_extra_state_attributes["repeat_weekday"] = self.coordinator.repeat_weekday
+                self._attr_extra_state_attributes["repeat_nth_occurrence"] = self.coordinator.repeat_nth_occurrence
+            elif repeat_every_type == CONF_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH:
+                self._attr_extra_state_attributes["repeat_days_before_end"] = self.coordinator.repeat_days_before_end
+        else:
+            self._attr_extra_state_attributes["task_interval_value"] = effective_task_interval_value
+            self._attr_extra_state_attributes["task_interval_type"] = effective_task_interval_type
         for todo_list in self.todo_lists:
             await self.async_sync_todo_list(todo_list)
 
@@ -373,7 +378,16 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
             raise
 
     async def async_mark_as_done(self) -> None:
-        """Mark the task as done for today."""
+        """Mark the task as done for today.
+
+        For ``repeat_every`` tasks the action is skipped when the task is
+        inactive.  The coordinator itself determines whether to use the most
+        recent past occurrence (DUE) or the next upcoming occurrence
+        (DUE_SOON / DONE) based on the computed due date.
+        """
+        if (self.coordinator.repeat_mode == CONF_REPEAT_EVERY
+                and self._attr_native_value == CONST_INACTIVE):
+            return
         await self.coordinator.async_mark_as_done()
 
     async def async_set_last_done_date(self, new_date: date) -> None:

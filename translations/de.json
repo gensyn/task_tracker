@@ -1,193 +1,527 @@
 {
-    "config": {
-        "abort": {
-            "already_configured": "Device ist bereits konfiguriert"
-        },
-        "error": {
-            "unknown": "Unerwarteter Fehler"
-        },
-        "step": {
-            "user": {
-                "title": "Task Tracker",
-                "description": "Task erstellen.",
-                "data": {
-                    "name": "Name",
-                    "task_interval_value": "Taskintervall",
-                    "task_interval_type": "Einheit des Taskintervalls"
-                },
-                "data_description": {
-                    "task_interval_value": "Die Zeit, nach der die Task wieder fällig wird.",
-                    "task_interval_type": "Die Zeiteinheit für das Taskintervall."
-                }
-            }
-        }
+  "config": {
+    "abort": {
+      "already_configured": "Device ist bereits konfiguriert"
     },
-    "options": {
-        "error": {
-            "unknown": "Unerwarteter Fehler"
-        },
-        "step": {
-            "init": {
-                "title": "Task Tracker",
-                "description": "Task bearbeiten.",
-                "data": {
-                    "task_interval_value": "Taskintervall",
-                    "task_interval_type": "Einheit des Taskintervalls",
-                    "task_interval_override": "Taskintervall überschreiben",
-                    "notification_interval": "Benachrichtigungsintervall (Tage)",
-                    "todo_lists": "Todo-Listen",
-                    "due_soon_days": "Bald fällig (Tage)",
-                    "due_soon_override": "Bald fällig überschreiben (Tage)",
-                    "tags": "Tags",
-                    "icon": "Icon",
-                    "active": "Aktiv",
-                    "active_override": "Aktiv überschreiben"
-                },
-                "data_description": {
-                    "task_interval_value": "Die Zeit, nach der die Task wieder fällig wird.",
-                    "task_interval_type": "Die Zeiteinheit für das Taskintervall.",
-                    "task_interval_override": "input_number (Wert in Tagen) zur Überschreibung des Taskintervalls auswählen.",
-                    "notification_interval": "Die Zeit in Tagen, nach dem Benachrichtigungen erneut gesendet werden.",
-                    "todo_lists": "Die Todo-Listen, zu denen diese Task hinzugefügt wird.",
-                    "due_soon_days": "Die Anzahl der Tage vor Fälligkeit der Task, um sie als bald fällig anzuzeigen.",
-                    "due_soon_override": "input_number (Wert in Tagen) zur Überschreibung der Bald-fällig-Schwelle auswählen.",
-                    "tags": "Tags zur Kategorisierung der Task, getrennt durch Kommas.",
-                    "icon": "Icon zur Darstellung der Task.",
-                    "active": "Task aktivieren oder deaktivieren.",
-                    "active_override": "input_boolean zur Überschreibung des Aktiv-Status auswählen."
-                }
-            }
-        }
+    "error": {
+      "unknown": "Unerwarteter Fehler",
+      "invalid_month_day": "Der Tag im Monat muss zwischen 1 und 31 liegen",
+      "invalid_days_before_end": "Die Anzahl der Tage vor Monatsende muss zwischen 0 und 30 liegen"
     },
-    "selector": {
-        "task_interval": {
-          "options": {
-            "day": "Tag",
-            "week": "Woche",
-            "month": "Monat",
-            "year": "Jahr"
-          }
-        }
-    },
-    "entity": {
-        "sensor": {
-            "status": {
-                "state": {
-                    "done": "Erledigt",
-                    "due": "Fällig",
-                    "due_soon": "Bald fällig",
-                    "overdue": "Überfällig",
-                    "inactive": "Inaktiv"
-                }
-            }
+    "step": {
+      "user": {
+        "title": "Task Tracker",
+        "description": "Task erstellen.",
+        "data": {
+          "name": "Name",
+          "repeat_mode": "Wiederholungsmodus"
         },
-        "button": {
-            "mark_as_done": {
-                "name": "Als erledigt markieren"
-            }
-        },
-        "ui": {
-            "status": {
-                "name": "Status"
-            },
-            "done": {
-                "name": "Erledigt"
-            },
-            "due": {
-                "name": "Fällig"
-            },
-            "due_soon": {
-                "name": "Bald fällig"
-            },
-            "overdue": {
-                "name": "Überfällig"
-            },
-            "inactive": {
-                "name": "Inaktiv"
-            },
-            "interval": {
-                "name": "Intervall"
-            },
-            "day_singular": {
-                "name": "Tag"
-            },
-            "week_singular": {
-                "name": "Woche"
-            },
-            "month_singular": {
-                "name": "Monat"
-            },
-            "year_singular": {
-                "name": "Jahr"
-            },
-            "day_plural": {
-                "name": "Tage"
-            },
-            "week_plural": {
-                "name": "Wochen"
-            },
-            "month_plural": {
-                "name": "Monate"
-            },
-            "year_plural": {
-                "name": "Jahre"
-            },
-            "last_done": {
-                "name": "Zuletzt&nbsp;erledigt"
-            },
-            "due_date": {
-                "name": "Fällig&nbsp;am"
-            },
-            "due_in":{
-                "name": "Fällig&nbsp;in"
-            },
-            "overdue_by":{
-                "name": "Überfällig&nbsp;seit"
-            },
-            "mark_as_done": {
-                "name": "Als erledigt markieren"
-            },
-            "all": {
-                "name": "Alle"
-            },
-            "no_tasks_found": {
-                "name": "Keine Tasks gefunden."
-            },
-            "sort_by": {
-                "name": "Sortieren nach"
-            },
-            "sort_name": {
-                "name": "Name"
-            },
-            "sort_due_date": {
-                "name": "Fälligkeitsdatum"
-            }
+        "data_description": {
+          "repeat_mode": "Wie das nächste Fälligkeitsdatum berechnet wird, wenn die Task abgeschlossen wurde."
         }
-    },
-    "services": {
-        "mark_as_done": {
-            "name": "Als erledigt markieren",
-            "description": "Setzt das Zuletzt-Erledigt-Datum der Task auf das aktuelle Datum.",
-            "fields": {
-                "entity_id": {
-                    "name": "Entity ID",
-                    "description": "Die ID der Task, die als erledigt markiert werden soll."
-                }
-            }
+      },
+      "repeat_after": {
+        "title": "Nach Abschluss wiederholen",
+        "description": "Die Task wird nach einem festen Intervall seit der letzten Erledigung wieder fällig.",
+        "data": {
+          "task_interval_value": "Taskintervall",
+          "task_interval_type": "Einheit des Taskintervalls"
         },
-        "set_last_done_date": {
-            "name": "Zuletzt-Erledigt-Datum setzen",
-            "description": "Setzt das Zuletzt-Erledigt-Datum der Task auf ein bestimmtes Datum.",
-            "fields": {
-                "entity_id": {
-                    "name": "Entity ID",
-                    "description": "Die ID der Task, die angepasst werden soll."
-                },
-                "date": {
-                    "name": "Datum",
-                    "description": "Das neue Zuletzt-Erledigt-Datum."
-                }
-            }
+        "data_description": {
+          "task_interval_value": "Die Zeit, nach der die Task wieder fällig wird.",
+          "task_interval_type": "Die Zeiteinheit für das Taskintervall."
         }
+      },
+      "repeat_every": {
+        "title": "Regelmäßig wiederholen (fester Zeitplan)",
+        "description": "Wählen Sie den Zeitplantyp für diese Task.",
+        "data": {
+          "repeat_every_type": "Zeitplantyp"
+        },
+        "data_description": {
+          "repeat_every_type": "Die Art des wiederkehrenden Zeitplans."
+        }
+      },
+      "repeat_every_weekday": {
+        "title": "Alle N Wochen an einem Wochentag",
+        "description": "Die Task wiederholt sich jeden Wochentag alle N Wochen.",
+        "data": {
+          "repeat_weekday": "Wochentag",
+          "repeat_weeks_interval": "Alle (Wochen)"
+        },
+        "data_description": {
+          "repeat_weekday": "Der Wochentag, an dem die Task wiederholt wird.",
+          "repeat_weeks_interval": "Wie viele Wochen zwischen Wiederholungen (1 = jede Woche, 2 = jede zweite Woche usw.)."
+        }
+      },
+      "repeat_every_day_of_month": {
+        "title": "An einem bestimmten Monatstag",
+        "description": "Die Task wiederholt sich an einem festen Monatstag.",
+        "data": {
+          "repeat_month_day": "Monatstag"
+        },
+        "data_description": {
+          "repeat_month_day": "Der Monatstag, an dem die Task wiederholt wird (1–31)."
+        }
+      },
+      "repeat_every_weekday_of_month": {
+        "title": "An einem bestimmten Wochentag des Monats",
+        "description": "Die Task wiederholt sich am gewählten Vorkommen eines Wochentags im Monat (z. B. dem 2. Montag).",
+        "data": {
+          "repeat_weekday": "Wochentag",
+          "repeat_nth_occurrence": "Vorkommen"
+        },
+        "data_description": {
+          "repeat_weekday": "Der Wochentag, an dem die Task wiederholt wird.",
+          "repeat_nth_occurrence": "Welches Auftreten des Wochentags im Monat."
+        }
+      },
+      "repeat_every_days_before_end_of_month": {
+        "title": "N Tage vor Monatsende",
+        "description": "Die Task wiederholt sich eine bestimmte Anzahl von Tagen vor dem letzten Tag des Monats.",
+        "data": {
+          "repeat_days_before_end": "Tage vor Monatsende"
+        },
+        "data_description": {
+          "repeat_days_before_end": "Wie viele Tage vor dem letzten Tag des Monats die Task fällig wird (0 = letzter Tag, 1 = vorletzter Tag usw.)."
+        }
+      }
     }
+  },
+  "options": {
+    "error": {
+      "unknown": "Unerwarteter Fehler",
+      "invalid_month_day": "Der Tag im Monat muss zwischen 1 und 31 liegen",
+      "invalid_days_before_end": "Die Anzahl der Tage vor Monatsende muss zwischen 0 und 30 liegen"
+    },
+    "step": {
+      "init": {
+        "title": "Task Tracker",
+        "description": "Task bearbeiten.",
+        "data": {
+          "repeat_mode": "Wiederholungsmodus",
+          "notification_interval": "Benachrichtigungsintervall (Tage)",
+          "todo_lists": "Todo-Listen",
+          "due_soon_days": "Bald fällig (Tage)",
+          "due_soon_override": "Bald fällig überschreiben (Tage)",
+          "tags": "Tags",
+          "icon": "Icon",
+          "active": "Aktiv",
+          "active_override": "Aktiv überschreiben"
+        },
+        "data_description": {
+          "repeat_mode": "Wie das nächste Fälligkeitsdatum berechnet wird, wenn die Task abgeschlossen wurde. 'Nach Abschluss wiederholen' berechnet das nächste Fälligkeitsdatum relativ zum Abschlussdatum. 'Regelmäßig wiederholen (fester Zeitplan)' hält die Task im ursprünglichen Zeitplan unabhängig davon, wann sie abgeschlossen wurde.",
+          "notification_interval": "Die Zeit in Tagen, nach dem Benachrichtigungen erneut gesendet werden.",
+          "todo_lists": "Die Todo-Listen, zu denen diese Task hinzugefügt wird.",
+          "due_soon_days": "Die Anzahl der Tage vor Fälligkeit der Task, um sie als bald fällig anzuzeigen.",
+          "due_soon_override": "input_number (Wert in Tagen) zur Überschreibung der Bald-fällig-Schwelle auswählen.",
+          "tags": "Tags zur Kategorisierung der Task, getrennt durch Kommas.",
+          "icon": "Icon zur Darstellung der Task.",
+          "active": "Task aktivieren oder deaktivieren.",
+          "active_override": "input_boolean zur Überschreibung des Aktiv-Status auswählen."
+        }
+      },
+      "repeat_after": {
+        "title": "Nach Abschluss wiederholen",
+        "description": "Die Task wird nach einem festen Intervall seit der letzten Erledigung wieder fällig.",
+        "data": {
+          "task_interval_value": "Taskintervall",
+          "task_interval_type": "Einheit des Taskintervalls",
+          "task_interval_override": "Taskintervall überschreiben"
+        },
+        "data_description": {
+          "task_interval_value": "Die Zeit, nach der die Task wieder fällig wird.",
+          "task_interval_type": "Die Zeiteinheit für das Taskintervall.",
+          "task_interval_override": "input_number (Wert in Tagen) zur Überschreibung des Taskintervalls auswählen."
+        }
+      },
+      "repeat_every": {
+        "title": "Regelmäßig wiederholen (fester Zeitplan)",
+        "description": "Wählen Sie den Zeitplantyp für diese Task.",
+        "data": {
+          "repeat_every_type": "Zeitplantyp"
+        },
+        "data_description": {
+          "repeat_every_type": "Die Art des wiederkehrenden Zeitplans."
+        }
+      },
+      "repeat_every_weekday": {
+        "title": "Alle N Wochen an einem Wochentag",
+        "description": "Die Task wiederholt sich jeden Wochentag alle N Wochen.",
+        "data": {
+          "repeat_weekday": "Wochentag",
+          "repeat_weeks_interval": "Alle (Wochen)"
+        },
+        "data_description": {
+          "repeat_weekday": "Der Wochentag, an dem die Task wiederholt wird.",
+          "repeat_weeks_interval": "Wie viele Wochen zwischen Wiederholungen (1 = jede Woche, 2 = jede zweite Woche usw.)."
+        }
+      },
+      "repeat_every_day_of_month": {
+        "title": "An einem bestimmten Monatstag",
+        "description": "Die Task wiederholt sich an einem festen Monatstag.",
+        "data": {
+          "repeat_month_day": "Monatstag"
+        },
+        "data_description": {
+          "repeat_month_day": "Der Monatstag, an dem die Task wiederholt wird (1–31)."
+        }
+      },
+      "repeat_every_weekday_of_month": {
+        "title": "An einem bestimmten Wochentag des Monats",
+        "description": "Die Task wiederholt sich am gewählten Vorkommen eines Wochentags im Monat (z. B. dem 2. Montag).",
+        "data": {
+          "repeat_weekday": "Wochentag",
+          "repeat_nth_occurrence": "Vorkommen"
+        },
+        "data_description": {
+          "repeat_weekday": "Der Wochentag, an dem die Task wiederholt wird.",
+          "repeat_nth_occurrence": "Welches Auftreten des Wochentags im Monat."
+        }
+      },
+      "repeat_every_days_before_end_of_month": {
+        "title": "N Tage vor Monatsende",
+        "description": "Die Task wiederholt sich eine bestimmte Anzahl von Tagen vor dem letzten Tag des Monats.",
+        "data": {
+          "repeat_days_before_end": "Tage vor Monatsende"
+        },
+        "data_description": {
+          "repeat_days_before_end": "Wie viele Tage vor dem letzten Tag des Monats die Task fällig wird (0 = letzter Tag, 1 = vorletzter Tag usw.)."
+        }
+      },
+      "options_repeat_every_weekday": {
+        "title": "Alle N Wochen an einem Wochentag – Optionen",
+        "description": "Zeitplan und Taskeinstellungen aktualisieren.",
+        "data": {
+          "repeat_weekday": "Wochentag",
+          "repeat_weeks_interval": "Alle (Wochen)",
+          "active": "Aktiv",
+          "active_override": "Aktiv-Override",
+          "icon": "Symbol",
+          "tags": "Tags",
+          "todo_lists": "Todo-Listen",
+          "due_soon_days": "Bald fällig (Tage)",
+          "due_soon_override": "Bald-fällig-Override (Tage)",
+          "notification_interval": "Benachrichtigungsintervall (Tage)"
+        },
+        "data_description": {
+          "repeat_weekday": "Der Wochentag, an dem die Task wiederholt wird.",
+          "repeat_weeks_interval": "Wie viele Wochen zwischen den Vorkommen (1 = jede Woche, 2 = jede zweite Woche usw.).",
+          "active": "Aktiviert oder deaktiviert die Task.",
+          "active_override": "Wähle ein input_boolean, um die Aktiv-Einstellung zu überschreiben.",
+          "icon": "Symbol für die Task.",
+          "tags": "Tags zur Kategorisierung der Task, durch Komma getrennt.",
+          "todo_lists": "Todo-Listen, zu denen diese Task hinzugefügt wird.",
+          "due_soon_days": "Anzahl der Tage vor Fälligkeit, ab denen die Task als 'bald fällig' gilt.",
+          "due_soon_override": "Wähle ein input_number (Wert in Tagen), um den 'Bald fällig'-Schwellenwert zu überschreiben.",
+          "notification_interval": "Zeitintervall in Tagen, nach dem Benachrichtigungen erneut gesendet werden."
+        }
+      },
+      "options_repeat_every_day_of_month": {
+        "title": "Jeden Monat am N. Tag – Optionen",
+        "description": "Zeitplan und Taskeinstellungen aktualisieren.",
+        "data": {
+          "repeat_month_day": "Tag des Monats",
+          "active": "Aktiv",
+          "active_override": "Aktiv-Override",
+          "icon": "Symbol",
+          "tags": "Tags",
+          "todo_lists": "Todo-Listen",
+          "due_soon_days": "Bald fällig (Tage)",
+          "due_soon_override": "Bald-fällig-Override (Tage)",
+          "notification_interval": "Benachrichtigungsintervall (Tage)"
+        },
+        "data_description": {
+          "repeat_month_day": "Der Tag des Monats, an dem die Task wiederholt wird (1–31).",
+          "active": "Aktiviert oder deaktiviert die Task.",
+          "active_override": "Wähle ein input_boolean, um die Aktiv-Einstellung zu überschreiben.",
+          "icon": "Symbol für die Task.",
+          "tags": "Tags zur Kategorisierung der Task, durch Komma getrennt.",
+          "todo_lists": "Todo-Listen, zu denen diese Task hinzugefügt wird.",
+          "due_soon_days": "Anzahl der Tage vor Fälligkeit, ab denen die Task als 'bald fällig' gilt.",
+          "due_soon_override": "Wähle ein input_number (Wert in Tagen), um den 'Bald fällig'-Schwellenwert zu überschreiben.",
+          "notification_interval": "Zeitintervall in Tagen, nach dem Benachrichtigungen erneut gesendet werden."
+        }
+      },
+      "options_repeat_every_weekday_of_month": {
+        "title": "Jeden Monat am N. Wochentag – Optionen",
+        "description": "Zeitplan und Taskeinstellungen aktualisieren.",
+        "data": {
+          "repeat_weekday": "Wochentag",
+          "repeat_nth_occurrence": "Vorkommen",
+          "active": "Aktiv",
+          "active_override": "Aktiv-Override",
+          "icon": "Symbol",
+          "tags": "Tags",
+          "todo_lists": "Todo-Listen",
+          "due_soon_days": "Bald fällig (Tage)",
+          "due_soon_override": "Bald-fällig-Override (Tage)",
+          "notification_interval": "Benachrichtigungsintervall (Tage)"
+        },
+        "data_description": {
+          "repeat_weekday": "Der Wochentag, an dem die Task wiederholt wird.",
+          "repeat_nth_occurrence": "Welches Vorkommen dieses Wochentags im Monat.",
+          "active": "Aktiviert oder deaktiviert die Task.",
+          "active_override": "Wähle ein input_boolean, um die Aktiv-Einstellung zu überschreiben.",
+          "icon": "Symbol für die Task.",
+          "tags": "Tags zur Kategorisierung der Task, durch Komma getrennt.",
+          "todo_lists": "Todo-Listen, zu denen diese Task hinzugefügt wird.",
+          "due_soon_days": "Anzahl der Tage vor Fälligkeit, ab denen die Task als 'bald fällig' gilt.",
+          "due_soon_override": "Wähle ein input_number (Wert in Tagen), um den 'Bald fällig'-Schwellenwert zu überschreiben.",
+          "notification_interval": "Zeitintervall in Tagen, nach dem Benachrichtigungen erneut gesendet werden."
+        }
+      },
+      "options_repeat_every_days_before_end_of_month": {
+        "title": "N Tage vor Monatsende – Optionen",
+        "description": "Zeitplan und Taskeinstellungen aktualisieren.",
+        "data": {
+          "repeat_days_before_end": "Tage vor Monatsende",
+          "active": "Aktiv",
+          "active_override": "Aktiv-Override",
+          "icon": "Symbol",
+          "tags": "Tags",
+          "todo_lists": "Todo-Listen",
+          "due_soon_days": "Bald fällig (Tage)",
+          "due_soon_override": "Bald-fällig-Override (Tage)",
+          "notification_interval": "Benachrichtigungsintervall (Tage)"
+        },
+        "data_description": {
+          "repeat_days_before_end": "Wie viele Tage vor dem letzten Tag des Monats die Task fällig wird (0 = letzter Tag, 1 = vorletzter Tag usw.).",
+          "active": "Aktiviert oder deaktiviert die Task.",
+          "active_override": "Wähle ein input_boolean, um die Aktiv-Einstellung zu überschreiben.",
+          "icon": "Symbol für die Task.",
+          "tags": "Tags zur Kategorisierung der Task, durch Komma getrennt.",
+          "todo_lists": "Todo-Listen, zu denen diese Task hinzugefügt wird.",
+          "due_soon_days": "Anzahl der Tage vor Fälligkeit, ab denen die Task als 'bald fällig' gilt.",
+          "due_soon_override": "Wähle ein input_number (Wert in Tagen), um den 'Bald fällig'-Schwellenwert zu überschreiben.",
+          "notification_interval": "Zeitintervall in Tagen, nach dem Benachrichtigungen erneut gesendet werden."
+        }
+      }
+    }
+  },
+  "selector": {
+    "task_interval": {
+      "options": {
+        "day": "Tag",
+        "week": "Woche",
+        "month": "Monat",
+        "year": "Jahr"
+      }
+    },
+    "repeat_mode": {
+      "options": {
+        "repeat_after": "Nach Abschluss wiederholen",
+        "repeat_every": "Regelmäßig wiederholen (fester Zeitplan)"
+      }
+    },
+    "repeat_every_type": {
+      "options": {
+        "repeat_every_weekday": "Alle N Wochen an einem Wochentag",
+        "repeat_every_day_of_month": "An einem bestimmten Monatstag",
+        "repeat_every_weekday_of_month": "An einem bestimmten Wochentag des Monats",
+        "repeat_every_days_before_end_of_month": "N Tage vor Monatsende"
+      }
+    },
+    "weekday": {
+      "options": {
+        "monday": "Montag",
+        "tuesday": "Dienstag",
+        "wednesday": "Mittwoch",
+        "thursday": "Donnerstag",
+        "friday": "Freitag",
+        "saturday": "Samstag",
+        "sunday": "Sonntag"
+      }
+    },
+    "nth_occurrence": {
+      "options": {
+        "1": "1.",
+        "2": "2.",
+        "3": "3.",
+        "4": "4.",
+        "last": "Letzter"
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "status": {
+        "state": {
+          "done": "Erledigt",
+          "due": "Fällig",
+          "due_soon": "Bald fällig",
+          "overdue": "Überfällig",
+          "inactive": "Inaktiv"
+        }
+      }
+    },
+    "button": {
+      "mark_as_done": {
+        "name": "Als erledigt markieren"
+      }
+    },
+    "ui": {
+      "status": {
+        "name": "Status"
+      },
+      "done": {
+        "name": "Erledigt"
+      },
+      "due": {
+        "name": "Fällig"
+      },
+      "due_soon": {
+        "name": "Bald fällig"
+      },
+      "overdue": {
+        "name": "Überfällig"
+      },
+      "inactive": {
+        "name": "Inaktiv"
+      },
+      "interval": {
+        "name": "Intervall"
+      },
+      "day_singular": {
+        "name": "Tag"
+      },
+      "week_singular": {
+        "name": "Woche"
+      },
+      "month_singular": {
+        "name": "Monat"
+      },
+      "year_singular": {
+        "name": "Jahr"
+      },
+      "day_plural": {
+        "name": "Tage"
+      },
+      "week_plural": {
+        "name": "Wochen"
+      },
+      "month_plural": {
+        "name": "Monate"
+      },
+      "year_plural": {
+        "name": "Jahre"
+      },
+      "last_done": {
+        "name": "Zuletzt&nbsp;erledigt"
+      },
+      "due_date": {
+        "name": "Fällig&nbsp;am"
+      },
+      "due_in": {
+        "name": "Fällig&nbsp;in"
+      },
+      "overdue_by": {
+        "name": "Überfällig&nbsp;seit"
+      },
+      "mark_as_done": {
+        "name": "Als erledigt markieren"
+      },
+      "all": {
+        "name": "Alle"
+      },
+      "no_tasks_found": {
+        "name": "Keine Tasks gefunden."
+      },
+      "sort_by": {
+        "name": "Sortieren nach"
+      },
+      "sort_name": {
+        "name": "Name"
+      },
+      "sort_due_date": {
+        "name": "Fälligkeitsdatum"
+      },
+      "schedule": {
+        "name": "Zeitplan"
+      },
+      "every": {
+        "name": "Alle"
+      },
+      "on": {
+        "name": "am"
+      },
+      "day_of_month_prefix": {
+        "name": "Tag"
+      },
+      "of_month": {
+        "name": "des Monats"
+      },
+      "days_before_end_of_month_singular": {
+        "name": "Tag vor Monatsende"
+      },
+      "days_before_end_of_month_plural": {
+        "name": "Tage vor Monatsende"
+      },
+      "last_day_of_month": {
+        "name": "Letzter Tag des Monats"
+      },
+      "monday": {
+        "name": "Montag"
+      },
+      "tuesday": {
+        "name": "Dienstag"
+      },
+      "wednesday": {
+        "name": "Mittwoch"
+      },
+      "thursday": {
+        "name": "Donnerstag"
+      },
+      "friday": {
+        "name": "Freitag"
+      },
+      "saturday": {
+        "name": "Samstag"
+      },
+      "sunday": {
+        "name": "Sonntag"
+      },
+      "occurrence_1": {
+        "name": "1."
+      },
+      "occurrence_2": {
+        "name": "2."
+      },
+      "occurrence_3": {
+        "name": "3."
+      },
+      "occurrence_4": {
+        "name": "4."
+      },
+      "occurrence_last": {
+        "name": "Letzter"
+      }
+    }
+  },
+  "services": {
+    "mark_as_done": {
+      "name": "Als erledigt markieren",
+      "description": "Setzt das Zuletzt-Erledigt-Datum der Task auf das aktuelle Datum.",
+      "fields": {
+        "entity_id": {
+          "name": "Entity ID",
+          "description": "Die ID der Task, die als erledigt markiert werden soll."
+        }
+      }
+    },
+    "set_last_done_date": {
+      "name": "Zuletzt-Erledigt-Datum setzen",
+      "description": "Setzt das Zuletzt-Erledigt-Datum der Task auf ein bestimmtes Datum.",
+      "fields": {
+        "entity_id": {
+          "name": "Entity ID",
+          "description": "Die ID der Task, die angepasst werden soll."
+        },
+        "date": {
+          "name": "Datum",
+          "description": "Das neue Zuletzt-Erledigt-Datum."
+        }
+      }
+    }
+  }
 }

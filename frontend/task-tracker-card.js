@@ -37,6 +37,42 @@ class TaskTracker extends HTMLElement {
     }
   }
 
+  _scheduleStr(attrs) {
+    const repeatMode = attrs.repeat_mode;
+    if (repeatMode !== "repeat_every") {
+      const val = attrs.task_interval_value;
+      const type = attrs.task_interval_type;
+      const sp = val === 1 ? "singular" : "plural";
+      return [this._t("interval"), `${val}\u00a0${this._t(`${type}_${sp}`)}`];
+    }
+    const t = attrs.repeat_every_type;
+    if (t === "repeat_every_weekday") {
+      const n = attrs.repeat_weeks_interval || 1;
+      const sp = n === 1 ? "singular" : "plural";
+      const weekday = this._t(attrs.repeat_weekday);
+      const nStr = n === 1 ? "" : `\u00a0${n}`;
+      return [this._t("schedule"),
+        `${this._t("every")}${nStr}\u00a0${this._t(`week_${sp}`)}\u00a0${this._t("on")}\u00a0${weekday}`];
+    }
+    if (t === "repeat_every_day_of_month") {
+      return [this._t("schedule"),
+        `${this._t("day_of_month_prefix")}\u00a0${attrs.repeat_month_day}\u00a0${this._t("of_month")}`];
+    }
+    if (t === "repeat_every_weekday_of_month") {
+      const nth = this._t(`occurrence_${attrs.repeat_nth_occurrence}`);
+      const weekday = this._t(attrs.repeat_weekday);
+      return [this._t("schedule"),
+        `${nth}\u00a0${weekday}\u00a0${this._t("of_month")}`];
+    }
+    if (t === "repeat_every_days_before_end_of_month") {
+      const n = attrs.repeat_days_before_end ?? 0;
+      if (n === 0) return [this._t("schedule"), this._t("last_day_of_month")];
+      const sp = n === 1 ? "singular" : "plural";
+      return [this._t("schedule"), `${n}\u00a0${this._t(`days_before_end_of_month_${sp}`)}`];
+    }
+    return [this._t("schedule"), "—"];
+  }
+
   _render() {
     if (!this._hass || !this.config) return;
 
@@ -57,11 +93,7 @@ class TaskTracker extends HTMLElement {
         year: "numeric",
       });
 
-    const taskIntervalVal = attrs.task_interval_value;
-    const taskIntervalType = attrs.task_interval_type;
-    const singularPlural = taskIntervalVal === 1 ? "singular" : "plural";
-    const intervalTypeStr = this._t(`${taskIntervalType}_${singularPlural}`);
-    const intervalStr = `${taskIntervalVal}\u00a0${intervalTypeStr}`;
+    const [scheduleLabel, scheduleValue] = this._scheduleStr(attrs);
 
     const lastDoneStr = formatDate(attrs.last_done);
     const dueDateStr = formatDate(attrs.due_date);
@@ -145,8 +177,8 @@ class TaskTracker extends HTMLElement {
         <div class="card-content">
           <table>
             <tr>
-              <td>${this._t("interval")}</td>
-              <td>${intervalStr}</td>
+              <td>${scheduleLabel}</td>
+              <td>${scheduleValue}</td>
             </tr>
             <tr>
               <td>${this._t("last_done")}</td>
