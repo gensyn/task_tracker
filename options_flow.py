@@ -21,52 +21,7 @@ from .const import (
 _WEEKDAYS = [CONF_MONDAY, CONF_TUESDAY, CONF_WEDNESDAY, CONF_THURSDAY, CONF_FRIDAY, CONF_SATURDAY, CONF_SUNDAY]
 _NTH_OCCURRENCES = ["1", "2", "3", "4", "last"]
 
-# Step 1 (init) – common task settings for repeat_after mode (no mode selector;
-# changing the mode of an existing task is not supported).
-_STEP_INIT_SCHEMA = vol.Schema(
-    {
-        vol.Optional(CONF_ACTIVE): bool,
-        vol.Optional(CONF_ACTIVE_OVERRIDE): selector({
-            "entity": {
-                "domain": "input_boolean",
-            }
-        }),
-        vol.Optional(CONF_ICON, default="mdi:calendar-question"): str,
-        vol.Optional(CONF_TAGS): str,
-        vol.Optional(CONF_TODO_LISTS): selector({
-            "entity": {
-                "domain": "todo",
-                "multiple": True,
-            }
-        }),
-        vol.Optional(CONF_DUE_SOON_DAYS, default=0): int,
-        vol.Optional(CONF_DUE_SOON_OVERRIDE): selector({
-            "entity": {
-                "domain": "input_number",
-            }
-        }),
-        vol.Optional(CONF_NOTIFICATION_INTERVAL, default=1): int,
-    }
-)
 
-# Step 2a – repeat_after interval settings
-_STEP_REPEAT_AFTER_SCHEMA = vol.Schema(
-    {
-        vol.Required(CONF_TASK_INTERVAL_VALUE, default=7): int,
-        vol.Required(CONF_TASK_INTERVAL_TYPE): selector({
-            CONF_SELECT: {
-                CONF_OPTIONS: [CONF_DAY, CONF_WEEK, CONF_MONTH, CONF_YEAR],
-                CONF_MODE: CONF_DROPDOWN,
-                "translation_key": "task_interval",
-            }
-        }),
-        vol.Optional(CONF_TASK_INTERVAL_OVERRIDE): selector({
-            "entity": {
-                "domain": "input_number",
-            }
-        }),
-    }
-)
 
 # Step 2b – repeat_every sub-type selection
 _STEP_REPEAT_EVERY_SCHEMA = vol.Schema(
@@ -135,7 +90,7 @@ _STEP_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH_SCHEMA = vol.Schema(
 )
 
 # ---------------------------------------------------------------------------
-# Common optional fields shared by all combined options steps for repeat_every.
+# Common optional fields shared by all combined options steps.
 # Split into "head" (active/active_override – always shown first) and "tail"
 # (icon, tags, … – shown after the mode-specific fields).
 # ---------------------------------------------------------------------------
@@ -165,6 +120,26 @@ _REPEAT_EVERY_TAIL_OPTIONS: dict = {
     }),
     vol.Optional(CONF_NOTIFICATION_INTERVAL, default=1): int,
 }
+
+# Combined options steps for repeat_after mode.
+# Field order: active / active_override → interval fields → remaining common fields.
+_STEP_OPTIONS_REPEAT_AFTER_SCHEMA = vol.Schema({
+    **_REPEAT_EVERY_HEAD_OPTIONS,
+    vol.Required(CONF_TASK_INTERVAL_VALUE, default=7): int,
+    vol.Required(CONF_TASK_INTERVAL_TYPE): selector({
+        CONF_SELECT: {
+            CONF_OPTIONS: [CONF_DAY, CONF_WEEK, CONF_MONTH, CONF_YEAR],
+            CONF_MODE: CONF_DROPDOWN,
+            "translation_key": "task_interval",
+        }
+    }),
+    vol.Optional(CONF_TASK_INTERVAL_OVERRIDE): selector({
+        "entity": {
+            "domain": "input_number",
+        }
+    }),
+    **_REPEAT_EVERY_TAIL_OPTIONS,
+})
 
 # Combined options steps for repeat_every modes.
 # Field order: active / active_override → mode-specific fields → remaining common fields.
@@ -238,14 +213,12 @@ class TaskTrackerOptionsFlow(OptionsFlowWithReload):
     async def async_step_init(
             self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Step 1 – common settings for repeat_after tasks.
+        """Step 1 – options entry point; routes to the appropriate combined step.
 
-        For ``repeat_every`` entries the init form is skipped entirely: the
-        flow jumps directly to the mode-specific combined options step, which
-        shows both the mode-specific fields and the common fields in one page.
-
-        For ``repeat_after`` entries the mode is fixed (changing it is not
-        supported) and the two-step flow (init → repeat_after) is used.
+        For all modes the init form is skipped entirely: the flow jumps directly
+        to the mode-specific combined options step, which shows both the
+        mode-specific fields and the common fields in one page.  The repeat mode
+        (and, for ``repeat_every`` tasks, the sub-type) are preserved as-is.
         """
         # For repeat_every entries: skip the init form entirely and go straight
         # to the combined mode-specific step.
@@ -262,29 +235,19 @@ class TaskTrackerOptionsFlow(OptionsFlowWithReload):
                 return await self.async_step_options_repeat_every_days_before_end_of_month()
             return await self.async_step_options_repeat_every_weekday()
 
-        # repeat_after: show common settings form (mode is fixed; changing it is
-        # not supported).
+        # repeat_after: skip the init form, go straight to the combined step.
         self._accumulated_options[CONF_REPEAT_MODE] = CONF_REPEAT_AFTER
-        if user_input is None:
-            return self.async_show_form(
-                step_id="init",
-                data_schema=self.add_suggested_values_to_schema(
-                    _STEP_INIT_SCHEMA, self.config_entry.options
-                ),
-            )
+        return await self.async_step_options_repeat_after()
 
-        self._accumulated_options.update(user_input)
-        return await self.async_step_repeat_after()
-
-    async def async_step_repeat_after(
+    async def async_step_options_repeat_after(
             self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Step 2a – interval settings for repeat_after mode."""
+        """Combined options step for repeat_after mode."""
         if user_input is None:
             return self.async_show_form(
-                step_id="repeat_after",
+                step_id="options_repeat_after",
                 data_schema=self.add_suggested_values_to_schema(
-                    _STEP_REPEAT_AFTER_SCHEMA, self.config_entry.options
+                    _STEP_OPTIONS_REPEAT_AFTER_SCHEMA, self.config_entry.options
                 ),
             )
 

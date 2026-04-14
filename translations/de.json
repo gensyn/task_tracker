@@ -95,46 +95,6 @@
       "invalid_days_before_end": "Die Anzahl der Tage vor Monatsende muss zwischen 0 und 30 liegen"
     },
     "step": {
-      "init": {
-        "title": "Task Tracker",
-        "description": "Task bearbeiten.",
-        "data": {
-          "repeat_mode": "Wiederholungsmodus",
-          "notification_interval": "Benachrichtigungsintervall (Tage)",
-          "todo_lists": "Todo-Listen",
-          "due_soon_days": "Bald fällig (Tage)",
-          "due_soon_override": "Bald fällig überschreiben (Tage)",
-          "tags": "Tags",
-          "icon": "Icon",
-          "active": "Aktiv",
-          "active_override": "Aktiv überschreiben"
-        },
-        "data_description": {
-          "repeat_mode": "Wie das nächste Fälligkeitsdatum berechnet wird, wenn die Task abgeschlossen wurde. 'Nach Abschluss wiederholen' berechnet das nächste Fälligkeitsdatum relativ zum Abschlussdatum. 'Regelmäßig wiederholen (fester Zeitplan)' hält die Task im ursprünglichen Zeitplan unabhängig davon, wann sie abgeschlossen wurde.",
-          "notification_interval": "Die Zeit in Tagen, nach dem Benachrichtigungen erneut gesendet werden.",
-          "todo_lists": "Die Todo-Listen, zu denen diese Task hinzugefügt wird.",
-          "due_soon_days": "Die Anzahl der Tage vor Fälligkeit der Task, um sie als bald fällig anzuzeigen.",
-          "due_soon_override": "input_number (Wert in Tagen) zur Überschreibung der Bald-fällig-Schwelle auswählen.",
-          "tags": "Tags zur Kategorisierung der Task, getrennt durch Kommas.",
-          "icon": "Icon zur Darstellung der Task.",
-          "active": "Task aktivieren oder deaktivieren.",
-          "active_override": "input_boolean zur Überschreibung des Aktiv-Status auswählen."
-        }
-      },
-      "repeat_after": {
-        "title": "Nach Abschluss wiederholen",
-        "description": "Die Task wird nach einem festen Intervall seit der letzten Erledigung wieder fällig.",
-        "data": {
-          "task_interval_value": "Taskintervall",
-          "task_interval_type": "Einheit des Taskintervalls",
-          "task_interval_override": "Taskintervall überschreiben"
-        },
-        "data_description": {
-          "task_interval_value": "Die Zeit, nach der die Task wieder fällig wird.",
-          "task_interval_type": "Die Zeiteinheit für das Taskintervall.",
-          "task_interval_override": "input_number (Wert in Tagen) zur Überschreibung des Taskintervalls auswählen."
-        }
-      },
       "repeat_every": {
         "title": "Regelmäßig wiederholen (fester Zeitplan)",
         "description": "Wählen Sie den Zeitplantyp für diese Task.",
@@ -289,6 +249,36 @@
           "repeat_days_before_end": "Wie viele Tage vor dem letzten Tag des Monats die Task fällig wird (0 = letzter Tag, 1 = vorletzter Tag usw.).",
           "active": "Aktiviert oder deaktiviert die Task.",
           "active_override": "Wähle ein input_boolean, um die Aktiv-Einstellung zu überschreiben.",
+          "icon": "Symbol für die Task.",
+          "tags": "Tags zur Kategorisierung der Task, durch Komma getrennt.",
+          "todo_lists": "Todo-Listen, zu denen diese Task hinzugefügt wird.",
+          "due_soon_days": "Anzahl der Tage vor Fälligkeit, ab denen die Task als 'bald fällig' gilt.",
+          "due_soon_override": "Wähle ein input_number (Wert in Tagen), um den 'Bald fällig'-Schwellenwert zu überschreiben.",
+          "notification_interval": "Zeitintervall in Tagen, nach dem Benachrichtigungen erneut gesendet werden."
+        }
+      },
+      "options_repeat_after": {
+        "title": "Nach Abschluss wiederholen – Optionen",
+        "description": "Intervall und Taskeinstellungen aktualisieren.",
+        "data": {
+          "active": "Aktiv",
+          "active_override": "Aktiv-Override",
+          "task_interval_value": "Taskintervall",
+          "task_interval_type": "Einheit des Taskintervalls",
+          "task_interval_override": "Taskintervall überschreiben",
+          "icon": "Symbol",
+          "tags": "Tags",
+          "todo_lists": "Todo-Listen",
+          "due_soon_days": "Bald fällig (Tage)",
+          "due_soon_override": "Bald-fällig-Override (Tage)",
+          "notification_interval": "Benachrichtigungsintervall (Tage)"
+        },
+        "data_description": {
+          "active": "Aktiviert oder deaktiviert die Task.",
+          "active_override": "Wähle ein input_boolean, um die Aktiv-Einstellung zu überschreiben.",
+          "task_interval_value": "Die Zeit, nach der die Task wieder fällig wird.",
+          "task_interval_type": "Die Zeiteinheit für das Taskintervall.",
+          "task_interval_override": "input_number (Wert in Tagen) zur Überschreibung des Taskintervalls auswählen.",
           "icon": "Symbol für die Task.",
           "tags": "Tags zur Kategorisierung der Task, durch Komma getrennt.",
           "todo_lists": "Todo-Listen, zu denen diese Task hinzugefügt wird.",
