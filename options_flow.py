@@ -21,20 +21,14 @@ from .const import (
 _WEEKDAYS = [CONF_MONDAY, CONF_TUESDAY, CONF_WEDNESDAY, CONF_THURSDAY, CONF_FRIDAY, CONF_SATURDAY, CONF_SUNDAY]
 _NTH_OCCURRENCES = ["1", "2", "3", "4", "last"]
 
-# Step 1 (init) – common task settings that apply regardless of repeat mode
+# Step 1 (init) – common task settings for repeat_after mode (no mode selector;
+# changing the mode of an existing task is not supported).
 _STEP_INIT_SCHEMA = vol.Schema(
     {
         vol.Optional(CONF_ACTIVE): bool,
         vol.Optional(CONF_ACTIVE_OVERRIDE): selector({
             "entity": {
                 "domain": "input_boolean",
-            }
-        }),
-        vol.Required(CONF_REPEAT_MODE, default=CONF_REPEAT_AFTER): selector({
-            CONF_SELECT: {
-                CONF_OPTIONS: [CONF_REPEAT_AFTER, CONF_REPEAT_EVERY],
-                CONF_MODE: CONF_DROPDOWN,
-                "translation_key": "repeat_mode",
             }
         }),
         vol.Optional(CONF_ICON, default="mdi:calendar-question"): str,
@@ -244,16 +238,14 @@ class TaskTrackerOptionsFlow(OptionsFlowWithReload):
     async def async_step_init(
             self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Step 1 – common settings and repeat mode selection.
+        """Step 1 – common settings for repeat_after tasks.
 
         For ``repeat_every`` entries the init form is skipped entirely: the
         flow jumps directly to the mode-specific combined options step, which
         shows both the mode-specific fields and the common fields in one page.
-        The repeat mode itself is therefore not user-editable in options for
-        ``repeat_every`` tasks.
 
-        For ``repeat_after`` entries the existing two-step flow
-        (init → repeat_after) is kept exactly as it was.
+        For ``repeat_after`` entries the mode is fixed (changing it is not
+        supported) and the two-step flow (init → repeat_after) is used.
         """
         # For repeat_every entries: skip the init form entirely and go straight
         # to the combined mode-specific step.
@@ -270,7 +262,9 @@ class TaskTrackerOptionsFlow(OptionsFlowWithReload):
                 return await self.async_step_options_repeat_every_days_before_end_of_month()
             return await self.async_step_options_repeat_every_weekday()
 
-        # repeat_after: existing flow unchanged.
+        # repeat_after: show common settings form (mode is fixed; changing it is
+        # not supported).
+        self._accumulated_options[CONF_REPEAT_MODE] = CONF_REPEAT_AFTER
         if user_input is None:
             return self.async_show_form(
                 step_id="init",
@@ -280,9 +274,6 @@ class TaskTrackerOptionsFlow(OptionsFlowWithReload):
             )
 
         self._accumulated_options.update(user_input)
-
-        if user_input[CONF_REPEAT_MODE] == CONF_REPEAT_EVERY:
-            return await self.async_step_repeat_every()
         return await self.async_step_repeat_after()
 
     async def async_step_repeat_after(
