@@ -50,8 +50,9 @@ class TaskTracker extends HTMLElement {
       const n = attrs.repeat_weeks_interval || 1;
       const sp = n === 1 ? "singular" : "plural";
       const weekday = this._t(attrs.repeat_weekday);
+      const nStr = n === 1 ? "" : `\u00a0${n}`;
       return [this._t("schedule"),
-        `${this._t("every")}\u00a0${n}\u00a0${this._t(`week_${sp}`)}\u00a0${this._t("on")}\u00a0${weekday}`];
+        `${this._t("every")}${nStr}\u00a0${this._t(`week_${sp}`)}\u00a0${this._t("on")}\u00a0${weekday}`];
     }
     if (t === "repeat_every_day_of_month") {
       return [this._t("schedule"),
