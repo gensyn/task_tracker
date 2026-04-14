@@ -240,6 +240,54 @@ class TestTaskTrackerConfigFlowRepeatEvery(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(options[CONF_REPEAT_EVERY_TYPE], CONF_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH)
         self.assertEqual(options[CONF_REPEAT_DAYS_BEFORE_END], 3)
 
+    async def test_day_of_month_step_rejects_day_zero(self):
+        flow = await self._step1()
+        await flow.async_step_repeat_every(
+            user_input={CONF_REPEAT_EVERY_TYPE: CONF_REPEAT_EVERY_DAY_OF_MONTH}
+        )
+        result = await flow.async_step_repeat_every_day_of_month(user_input={
+            CONF_REPEAT_MONTH_DAY: 0,
+        })
+        self.assertEqual(result["type"], "form")
+        self.assertIn(CONF_REPEAT_MONTH_DAY, result.get("errors", {}))
+        self.assertEqual(result["errors"][CONF_REPEAT_MONTH_DAY], "invalid_month_day")
+
+    async def test_day_of_month_step_rejects_day_above_31(self):
+        flow = await self._step1()
+        await flow.async_step_repeat_every(
+            user_input={CONF_REPEAT_EVERY_TYPE: CONF_REPEAT_EVERY_DAY_OF_MONTH}
+        )
+        result = await flow.async_step_repeat_every_day_of_month(user_input={
+            CONF_REPEAT_MONTH_DAY: 32,
+        })
+        self.assertEqual(result["type"], "form")
+        self.assertIn(CONF_REPEAT_MONTH_DAY, result.get("errors", {}))
+        self.assertEqual(result["errors"][CONF_REPEAT_MONTH_DAY], "invalid_month_day")
+
+    async def test_days_before_end_step_rejects_negative(self):
+        flow = await self._step1()
+        await flow.async_step_repeat_every(
+            user_input={CONF_REPEAT_EVERY_TYPE: CONF_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH}
+        )
+        result = await flow.async_step_repeat_every_days_before_end_of_month(user_input={
+            CONF_REPEAT_DAYS_BEFORE_END: -1,
+        })
+        self.assertEqual(result["type"], "form")
+        self.assertIn(CONF_REPEAT_DAYS_BEFORE_END, result.get("errors", {}))
+        self.assertEqual(result["errors"][CONF_REPEAT_DAYS_BEFORE_END], "invalid_days_before_end")
+
+    async def test_days_before_end_step_rejects_above_30(self):
+        flow = await self._step1()
+        await flow.async_step_repeat_every(
+            user_input={CONF_REPEAT_EVERY_TYPE: CONF_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH}
+        )
+        result = await flow.async_step_repeat_every_days_before_end_of_month(user_input={
+            CONF_REPEAT_DAYS_BEFORE_END: 31,
+        })
+        self.assertEqual(result["type"], "form")
+        self.assertIn(CONF_REPEAT_DAYS_BEFORE_END, result.get("errors", {}))
+        self.assertEqual(result["errors"][CONF_REPEAT_DAYS_BEFORE_END], "invalid_days_before_end")
+
 
 class TestTaskTrackerConfigFlowOptionsFlowFactory(unittest.IsolatedAsyncioTestCase):
 

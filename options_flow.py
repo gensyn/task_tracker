@@ -219,6 +219,20 @@ _STEP_OPTIONS_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH_SCHEMA = vol.Schema({
 })
 
 
+def _validate_month_day(value: int | None) -> dict[str, str]:
+    """Return an errors dict if *value* is not a valid day of month (1–31)."""
+    if value is None or not 1 <= value <= 31:
+        return {CONF_REPEAT_MONTH_DAY: "invalid_month_day"}
+    return {}
+
+
+def _validate_days_before_end(value: int | None) -> dict[str, str]:
+    """Return an errors dict if *value* is not a valid days-before-end-of-month (0–30)."""
+    if value is None or not 0 <= value <= 30:
+        return {CONF_REPEAT_DAYS_BEFORE_END: "invalid_days_before_end"}
+    return {}
+
+
 class TaskTrackerOptionsFlow(OptionsFlowWithReload):
     """Handle options for an existing Task Tracker config entry."""
 
@@ -338,6 +352,16 @@ class TaskTrackerOptionsFlow(OptionsFlowWithReload):
                 ),
             )
 
+        errors = _validate_month_day(user_input.get(CONF_REPEAT_MONTH_DAY))
+        if errors:
+            return self.async_show_form(
+                step_id="repeat_every_day_of_month",
+                data_schema=self.add_suggested_values_to_schema(
+                    _STEP_REPEAT_EVERY_DAY_OF_MONTH_SCHEMA, user_input
+                ),
+                errors=errors,
+            )
+
         self._accumulated_options.update(user_input)
         options = await validate_options(self._accumulated_options)
         return self.async_create_entry(data=options)
@@ -368,6 +392,16 @@ class TaskTrackerOptionsFlow(OptionsFlowWithReload):
                 data_schema=self.add_suggested_values_to_schema(
                     _STEP_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH_SCHEMA, self.config_entry.options
                 ),
+            )
+
+        errors = _validate_days_before_end(user_input.get(CONF_REPEAT_DAYS_BEFORE_END))
+        if errors:
+            return self.async_show_form(
+                step_id="repeat_every_days_before_end_of_month",
+                data_schema=self.add_suggested_values_to_schema(
+                    _STEP_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH_SCHEMA, user_input
+                ),
+                errors=errors,
             )
 
         self._accumulated_options.update(user_input)
@@ -410,6 +444,16 @@ class TaskTrackerOptionsFlow(OptionsFlowWithReload):
                 ),
             )
 
+        errors = _validate_month_day(user_input.get(CONF_REPEAT_MONTH_DAY))
+        if errors:
+            return self.async_show_form(
+                step_id="options_repeat_every_day_of_month",
+                data_schema=self.add_suggested_values_to_schema(
+                    _STEP_OPTIONS_REPEAT_EVERY_DAY_OF_MONTH_SCHEMA, user_input
+                ),
+                errors=errors,
+            )
+
         self._accumulated_options.update(user_input)
         options = await validate_options(self._accumulated_options)
         return self.async_create_entry(data=options)
@@ -440,6 +484,16 @@ class TaskTrackerOptionsFlow(OptionsFlowWithReload):
                 data_schema=self.add_suggested_values_to_schema(
                     _STEP_OPTIONS_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH_SCHEMA, self.config_entry.options
                 ),
+            )
+
+        errors = _validate_days_before_end(user_input.get(CONF_REPEAT_DAYS_BEFORE_END))
+        if errors:
+            return self.async_show_form(
+                step_id="options_repeat_every_days_before_end_of_month",
+                data_schema=self.add_suggested_values_to_schema(
+                    _STEP_OPTIONS_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH_SCHEMA, user_input
+                ),
+                errors=errors,
             )
 
         self._accumulated_options.update(user_input)
@@ -507,15 +561,24 @@ async def validate_options(user_input: dict[str, Any]) -> dict[str, Any]:
         if weeks_interval is None or weeks_interval < 1:
             weeks_interval = 1
         month_day = user_input.get(CONF_REPEAT_MONTH_DAY, 1)
-        if month_day is None or month_day < 1:
+        if month_day is None:
             month_day = 1
-        month_day = min(31, month_day)
+        if not 1 <= month_day <= 31:
+            raise vol.Invalid(
+                f"Day of month must be between 1 and 31, got {month_day}",
+                path=[CONF_REPEAT_MONTH_DAY],
+            )
         nth_occurrence = user_input.get(CONF_REPEAT_NTH_OCCURRENCE, "1")
         if nth_occurrence not in _NTH_OCCURRENCES:
             nth_occurrence = "1"
         days_before_end = user_input.get(CONF_REPEAT_DAYS_BEFORE_END, 0)
-        if days_before_end is None or days_before_end < 0:
+        if days_before_end is None:
             days_before_end = 0
+        if not 0 <= days_before_end <= 30:
+            raise vol.Invalid(
+                f"Days before month end must be between 0 and 30, got {days_before_end}",
+                path=[CONF_REPEAT_DAYS_BEFORE_END],
+            )
         result.update({
             # Keep interval fields with safe defaults for backward compat
             CONF_TASK_INTERVAL_VALUE: 7,

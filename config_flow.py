@@ -20,7 +20,7 @@ from .const import (
     CONF_REPEAT_DAYS_BEFORE_END,
     CONF_MONDAY, CONF_TUESDAY, CONF_WEDNESDAY, CONF_THURSDAY, CONF_FRIDAY, CONF_SATURDAY, CONF_SUNDAY,
 )
-from .options_flow import TaskTrackerOptionsFlow, validate_options
+from .options_flow import TaskTrackerOptionsFlow, validate_options, _validate_month_day, _validate_days_before_end
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -198,6 +198,14 @@ class TaskTrackerConfigFlow(ConfigFlow, domain=DOMAIN):
                 errors={},
             )
 
+        errors = _validate_month_day(user_input.get(CONF_REPEAT_MONTH_DAY))
+        if errors:
+            return self.async_show_form(
+                step_id="repeat_every_day_of_month",
+                data_schema=_STEP_REPEAT_EVERY_DAY_OF_MONTH_SCHEMA,
+                errors=errors,
+            )
+
         self._user_input.update(user_input)
         name = self._user_input[CONF_NAME]
         options = await validate_options(self._user_input)
@@ -228,6 +236,14 @@ class TaskTrackerConfigFlow(ConfigFlow, domain=DOMAIN):
                 step_id="repeat_every_days_before_end_of_month",
                 data_schema=_STEP_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH_SCHEMA,
                 errors={},
+            )
+
+        errors = _validate_days_before_end(user_input.get(CONF_REPEAT_DAYS_BEFORE_END))
+        if errors:
+            return self.async_show_form(
+                step_id="repeat_every_days_before_end_of_month",
+                data_schema=_STEP_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH_SCHEMA,
+                errors=errors,
             )
 
         self._user_input.update(user_input)

@@ -2,6 +2,8 @@ import sys
 import unittest
 from pathlib import Path
 
+import voluptuous as vol
+
 absolute_mock_path = str(Path(__file__).parent / "homeassistant_mock")
 sys.path.insert(0, absolute_mock_path)
 
@@ -232,21 +234,21 @@ class TestValidateOptionsRepeatEvery(unittest.IsolatedAsyncioTestCase):
         })
         self.assertEqual(result[CONF_REPEAT_MONTH_DAY], 15)
 
-    async def test_repeat_month_day_minimum_is_one(self):
-        result = await validate_options({
-            CONF_REPEAT_MODE: CONF_REPEAT_EVERY,
-            CONF_REPEAT_EVERY_TYPE: CONF_REPEAT_EVERY_DAY_OF_MONTH,
-            CONF_REPEAT_MONTH_DAY: 0,
-        })
-        self.assertEqual(result[CONF_REPEAT_MONTH_DAY], 1)
+    async def test_repeat_month_day_below_minimum_raises(self):
+        with self.assertRaises(vol.Invalid):
+            await validate_options({
+                CONF_REPEAT_MODE: CONF_REPEAT_EVERY,
+                CONF_REPEAT_EVERY_TYPE: CONF_REPEAT_EVERY_DAY_OF_MONTH,
+                CONF_REPEAT_MONTH_DAY: 0,
+            })
 
-    async def test_repeat_month_day_maximum_is_31(self):
-        result = await validate_options({
-            CONF_REPEAT_MODE: CONF_REPEAT_EVERY,
-            CONF_REPEAT_EVERY_TYPE: CONF_REPEAT_EVERY_DAY_OF_MONTH,
-            CONF_REPEAT_MONTH_DAY: 50,
-        })
-        self.assertEqual(result[CONF_REPEAT_MONTH_DAY], 31)
+    async def test_repeat_month_day_above_maximum_raises(self):
+        with self.assertRaises(vol.Invalid):
+            await validate_options({
+                CONF_REPEAT_MODE: CONF_REPEAT_EVERY,
+                CONF_REPEAT_EVERY_TYPE: CONF_REPEAT_EVERY_DAY_OF_MONTH,
+                CONF_REPEAT_MONTH_DAY: 50,
+            })
 
     async def test_repeat_nth_occurrence_preserved(self):
         for value in ("1", "2", "3", "4", "last"):
@@ -302,9 +304,13 @@ class TestValidateOptionsRepeatEveryDaysBeforeEndOfMonth(unittest.IsolatedAsynci
         result = await validate_options(self._base(days_before_end=0))
         self.assertEqual(result[CONF_REPEAT_DAYS_BEFORE_END], 0)
 
-    async def test_days_before_end_negative_clamped_to_zero(self):
-        result = await validate_options(self._base(days_before_end=-1))
-        self.assertEqual(result[CONF_REPEAT_DAYS_BEFORE_END], 0)
+    async def test_days_before_end_negative_raises(self):
+        with self.assertRaises(vol.Invalid):
+            await validate_options(self._base(days_before_end=-1))
+
+    async def test_days_before_end_above_maximum_raises(self):
+        with self.assertRaises(vol.Invalid):
+            await validate_options(self._base(days_before_end=31))
 
     async def test_days_before_end_defaults_to_zero_when_missing(self):
         base = {

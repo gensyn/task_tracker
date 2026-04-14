@@ -191,6 +191,84 @@ class TestOptionsFlowRepeatAfterUnchanged(unittest.IsolatedAsyncioTestCase):
 
 
 # ---------------------------------------------------------------------------
+# Tests: validation in non-combined options steps (switching from repeat_after
+# to repeat_every in the options flow)
+# ---------------------------------------------------------------------------
+
+class TestOptionsFlowRepeatEveryDayOfMonthValidation(unittest.IsolatedAsyncioTestCase):
+    """Validation tests for async_step_repeat_every_day_of_month in options flow."""
+
+    async def _start(self):
+        """Submit init with repeat_every mode from a repeat_after entry."""
+        flow = _make_flow(_make_repeat_after_entry())
+        await flow.async_step_init(user_input={
+            CONF_ACTIVE: True,
+            CONF_REPEAT_MODE: CONF_REPEAT_EVERY,
+            CONF_ICON: "mdi:calendar",
+            CONF_TAGS: "",
+            CONF_TODO_LISTS: [],
+            CONF_DUE_SOON_DAYS: 0,
+            CONF_NOTIFICATION_INTERVAL: 1,
+        })
+        await flow.async_step_repeat_every(
+            user_input={CONF_REPEAT_EVERY_TYPE: CONF_REPEAT_EVERY_DAY_OF_MONTH}
+        )
+        return flow
+
+    async def test_rejects_month_day_zero(self):
+        flow = await self._start()
+        result = await flow.async_step_repeat_every_day_of_month(
+            user_input={CONF_REPEAT_MONTH_DAY: 0}
+        )
+        self.assertEqual(result["type"], "form")
+        self.assertEqual(result["errors"].get(CONF_REPEAT_MONTH_DAY), "invalid_month_day")
+
+    async def test_rejects_month_day_above_31(self):
+        flow = await self._start()
+        result = await flow.async_step_repeat_every_day_of_month(
+            user_input={CONF_REPEAT_MONTH_DAY: 32}
+        )
+        self.assertEqual(result["type"], "form")
+        self.assertEqual(result["errors"].get(CONF_REPEAT_MONTH_DAY), "invalid_month_day")
+
+
+class TestOptionsFlowRepeatEveryDaysBeforeEndValidation(unittest.IsolatedAsyncioTestCase):
+    """Validation tests for async_step_repeat_every_days_before_end_of_month in options flow."""
+
+    async def _start(self):
+        flow = _make_flow(_make_repeat_after_entry())
+        await flow.async_step_init(user_input={
+            CONF_ACTIVE: True,
+            CONF_REPEAT_MODE: CONF_REPEAT_EVERY,
+            CONF_ICON: "mdi:calendar",
+            CONF_TAGS: "",
+            CONF_TODO_LISTS: [],
+            CONF_DUE_SOON_DAYS: 0,
+            CONF_NOTIFICATION_INTERVAL: 1,
+        })
+        await flow.async_step_repeat_every(
+            user_input={CONF_REPEAT_EVERY_TYPE: CONF_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH}
+        )
+        return flow
+
+    async def test_rejects_negative(self):
+        flow = await self._start()
+        result = await flow.async_step_repeat_every_days_before_end_of_month(
+            user_input={CONF_REPEAT_DAYS_BEFORE_END: -1}
+        )
+        self.assertEqual(result["type"], "form")
+        self.assertEqual(result["errors"].get(CONF_REPEAT_DAYS_BEFORE_END), "invalid_days_before_end")
+
+    async def test_rejects_above_30(self):
+        flow = await self._start()
+        result = await flow.async_step_repeat_every_days_before_end_of_month(
+            user_input={CONF_REPEAT_DAYS_BEFORE_END: 31}
+        )
+        self.assertEqual(result["type"], "form")
+        self.assertEqual(result["errors"].get(CONF_REPEAT_DAYS_BEFORE_END), "invalid_days_before_end")
+
+
+# ---------------------------------------------------------------------------
 # Tests: combined options step – repeat_every_weekday
 # ---------------------------------------------------------------------------
 
@@ -285,6 +363,40 @@ class TestOptionsRepeatEveryDayOfMonth(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(opts[CONF_REPEAT_EVERY_TYPE], CONF_REPEAT_EVERY_DAY_OF_MONTH)
         self.assertEqual(opts[CONF_REPEAT_MONTH_DAY], 15)
         self.assertEqual(opts[CONF_NOTIFICATION_INTERVAL], 2)
+
+    async def test_rejects_month_day_zero(self):
+        flow = self._make_flow()
+        flow._accumulated_options[CONF_REPEAT_MODE] = CONF_REPEAT_EVERY
+        flow._accumulated_options[CONF_REPEAT_EVERY_TYPE] = CONF_REPEAT_EVERY_DAY_OF_MONTH
+        result = await flow.async_step_options_repeat_every_day_of_month(user_input={
+            CONF_REPEAT_MONTH_DAY: 0,
+            CONF_ACTIVE: True,
+            CONF_ICON: "mdi:calendar",
+            CONF_TAGS: "",
+            CONF_TODO_LISTS: [],
+            CONF_DUE_SOON_DAYS: 0,
+            CONF_NOTIFICATION_INTERVAL: 1,
+        })
+        self.assertEqual(result["type"], "form")
+        self.assertIn(CONF_REPEAT_MONTH_DAY, result.get("errors", {}))
+        self.assertEqual(result["errors"][CONF_REPEAT_MONTH_DAY], "invalid_month_day")
+
+    async def test_rejects_month_day_above_31(self):
+        flow = self._make_flow()
+        flow._accumulated_options[CONF_REPEAT_MODE] = CONF_REPEAT_EVERY
+        flow._accumulated_options[CONF_REPEAT_EVERY_TYPE] = CONF_REPEAT_EVERY_DAY_OF_MONTH
+        result = await flow.async_step_options_repeat_every_day_of_month(user_input={
+            CONF_REPEAT_MONTH_DAY: 32,
+            CONF_ACTIVE: True,
+            CONF_ICON: "mdi:calendar",
+            CONF_TAGS: "",
+            CONF_TODO_LISTS: [],
+            CONF_DUE_SOON_DAYS: 0,
+            CONF_NOTIFICATION_INTERVAL: 1,
+        })
+        self.assertEqual(result["type"], "form")
+        self.assertIn(CONF_REPEAT_MONTH_DAY, result.get("errors", {}))
+        self.assertEqual(result["errors"][CONF_REPEAT_MONTH_DAY], "invalid_month_day")
 
     async def test_routed_from_init(self):
         flow = self._make_flow()
@@ -399,3 +511,37 @@ class TestOptionsRepeatEveryDaysBeforeEndOfMonth(unittest.IsolatedAsyncioTestCas
         self.assertEqual(opts[CONF_DUE_SOON_DAYS], 2)
         self.assertEqual(opts[CONF_DUE_SOON_OVERRIDE], "input_number.threshold")
         self.assertEqual(opts[CONF_NOTIFICATION_INTERVAL], 5)
+
+    async def test_rejects_days_before_end_negative(self):
+        flow = self._make_flow()
+        flow._accumulated_options[CONF_REPEAT_MODE] = CONF_REPEAT_EVERY
+        flow._accumulated_options[CONF_REPEAT_EVERY_TYPE] = CONF_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH
+        result = await flow.async_step_options_repeat_every_days_before_end_of_month(user_input={
+            CONF_REPEAT_DAYS_BEFORE_END: -1,
+            CONF_ACTIVE: True,
+            CONF_ICON: "mdi:calendar",
+            CONF_TAGS: "",
+            CONF_TODO_LISTS: [],
+            CONF_DUE_SOON_DAYS: 0,
+            CONF_NOTIFICATION_INTERVAL: 1,
+        })
+        self.assertEqual(result["type"], "form")
+        self.assertIn(CONF_REPEAT_DAYS_BEFORE_END, result.get("errors", {}))
+        self.assertEqual(result["errors"][CONF_REPEAT_DAYS_BEFORE_END], "invalid_days_before_end")
+
+    async def test_rejects_days_before_end_above_30(self):
+        flow = self._make_flow()
+        flow._accumulated_options[CONF_REPEAT_MODE] = CONF_REPEAT_EVERY
+        flow._accumulated_options[CONF_REPEAT_EVERY_TYPE] = CONF_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH
+        result = await flow.async_step_options_repeat_every_days_before_end_of_month(user_input={
+            CONF_REPEAT_DAYS_BEFORE_END: 31,
+            CONF_ACTIVE: True,
+            CONF_ICON: "mdi:calendar",
+            CONF_TAGS: "",
+            CONF_TODO_LISTS: [],
+            CONF_DUE_SOON_DAYS: 0,
+            CONF_NOTIFICATION_INTERVAL: 1,
+        })
+        self.assertEqual(result["type"], "form")
+        self.assertIn(CONF_REPEAT_DAYS_BEFORE_END, result.get("errors", {}))
+        self.assertEqual(result["errors"][CONF_REPEAT_DAYS_BEFORE_END], "invalid_days_before_end")
