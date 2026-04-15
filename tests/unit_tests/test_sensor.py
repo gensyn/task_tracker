@@ -675,6 +675,35 @@ class TestTaskTrackerSensorRepeatMode(unittest.IsolatedAsyncioTestCase):
         await self._run_update(sensor)
         self.assertGreater(sensor.due_date, today)
 
+    async def test_repeat_every_weekday_mark_as_done_respects_weeks_interval(self):
+        """mark_as_done with weeks_interval > 1 must land on a cycle date, not just the latest weekday.
+
+        Scenario from the bug report: every 3 weeks on Tuesday.
+          last_done = 2026-02-24 (Tuesday, week 0)
+          cycle dates: 2026-03-17 (week 3), 2026-04-07 (week 6), 2026-04-28 (week 9), …
+          today      = 2026-04-14 (Tuesday, 7 weeks after last_done)
+
+        Expected: last_done → 2026-04-07 (the most recent cycle date ≤ today).
+        Wrong:    last_done → 2026-04-14 (the latest Tuesday, ignoring the cycle).
+        """
+        from datetime import timedelta
+        sensor = make_sensor(
+            repeat_mode=CONF_REPEAT_EVERY,
+            repeat_every_type=CONF_REPEAT_EVERY_WEEKDAY,
+            repeat_weekday=CONF_TUESDAY,
+            repeat_weeks_interval=3,
+            due_soon_days=0,
+        )
+        sensor.coordinator.last_done = date(2026, 2, 24)  # Tuesday
+        with patch("task_tracker.coordinator.date") as mock_date:
+            mock_date.today.return_value = date(2026, 4, 14)
+            mock_date.side_effect = lambda *args, **kwargs: date(*args, **kwargs)
+            await sensor.coordinator.async_mark_as_done()
+        self.assertEqual(sensor.coordinator.last_done, date(2026, 4, 7))
+        # Next due date should be 3 weeks after 2026-04-07 = 2026-04-28
+        next_due = sensor.coordinator._calculate_repeat_every_due_date()
+        self.assertEqual(next_due, date(2026, 4, 28))
+
     async def test_repeat_every_mark_as_done_coordinator_direct_uses_most_recent(self):
         """Calling coordinator.async_mark_as_done() directly always uses the most recent occurrence.
 

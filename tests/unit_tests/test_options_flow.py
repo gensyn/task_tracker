@@ -84,12 +84,12 @@ def _make_flow(config_entry: ConfigEntry) -> TaskTrackerOptionsFlow:
 class TestOptionsFlowInitRouting(unittest.IsolatedAsyncioTestCase):
     """async_step_init should branch on the stored repeat_mode."""
 
-    async def test_repeat_after_shows_init_form(self):
-        """For repeat_after entries the existing init form is shown."""
+    async def test_repeat_after_routes_to_options_repeat_after(self):
+        """For repeat_after entries the combined options_repeat_after form is shown."""
         flow = _make_flow(_make_repeat_after_entry())
         result = await flow.async_step_init(user_input=None)
         self.assertEqual(result["type"], "form")
-        self.assertEqual(result["step_id"], "init")
+        self.assertEqual(result["step_id"], "options_repeat_after")
 
     async def test_repeat_every_weekday_skips_init_form(self):
         """For repeat_every_weekday entries the init form is bypassed."""
@@ -138,43 +138,37 @@ class TestOptionsFlowInitRouting(unittest.IsolatedAsyncioTestCase):
 
 
 # ---------------------------------------------------------------------------
-# Tests: repeat_after options flow unchanged
+# Tests: repeat_after combined options step
 # ---------------------------------------------------------------------------
 
-class TestOptionsFlowRepeatAfterUnchanged(unittest.IsolatedAsyncioTestCase):
-    """The repeat_after options flow must be exactly preserved."""
+class TestOptionsFlowRepeatAfterCombined(unittest.IsolatedAsyncioTestCase):
+    """The repeat_after options flow uses a single combined step (options_repeat_after)."""
 
-    async def _start(self, **extra_options):
-        flow = _make_flow(_make_repeat_after_entry(**extra_options))
-        # Submit the init form with repeat_after mode
-        await flow.async_step_init(user_input={
-            CONF_ACTIVE: True,
-            CONF_REPEAT_MODE: CONF_REPEAT_AFTER,
-            CONF_ICON: "mdi:calendar",
-            CONF_TAGS: "",
-            CONF_TODO_LISTS: [],
-            CONF_DUE_SOON_DAYS: 0,
-            CONF_NOTIFICATION_INTERVAL: 1,
-        })
-        return flow
+    def _make_flow(self):
+        return _make_flow(_make_repeat_after_entry())
 
-    async def test_init_routes_to_repeat_after_step(self):
-        flow = _make_flow(_make_repeat_after_entry())
-        result = await flow.async_step_init(user_input={
-            CONF_ACTIVE: True,
-            CONF_REPEAT_MODE: CONF_REPEAT_AFTER,
-            CONF_ICON: "mdi:calendar",
-            CONF_TAGS: "",
-            CONF_TODO_LISTS: [],
-            CONF_DUE_SOON_DAYS: 0,
-            CONF_NOTIFICATION_INTERVAL: 1,
-        })
+    async def test_init_routes_to_options_repeat_after(self):
+        flow = self._make_flow()
+        result = await flow.async_step_init(user_input=None)
         self.assertEqual(result["type"], "form")
-        self.assertEqual(result["step_id"], "repeat_after")
+        self.assertEqual(result["step_id"], "options_repeat_after")
 
-    async def test_repeat_after_creates_entry(self):
-        flow = await self._start()
-        result = await flow.async_step_repeat_after(user_input={
+    async def test_shows_form_on_no_input(self):
+        flow = self._make_flow()
+        result = await flow.async_step_options_repeat_after(user_input=None)
+        self.assertEqual(result["type"], "form")
+        self.assertEqual(result["step_id"], "options_repeat_after")
+
+    async def test_creates_entry_with_all_fields(self):
+        flow = self._make_flow()
+        flow._accumulated_options[CONF_REPEAT_MODE] = CONF_REPEAT_AFTER
+        result = await flow.async_step_options_repeat_after(user_input={
+            CONF_ACTIVE: True,
+            CONF_ICON: "mdi:calendar",
+            CONF_TAGS: "",
+            CONF_TODO_LISTS: [],
+            CONF_DUE_SOON_DAYS: 0,
+            CONF_NOTIFICATION_INTERVAL: 1,
             CONF_TASK_INTERVAL_VALUE: 14,
             CONF_TASK_INTERVAL_TYPE: CONF_DAY,
         })
@@ -183,33 +177,31 @@ class TestOptionsFlowRepeatAfterUnchanged(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(opts[CONF_TASK_INTERVAL_VALUE], 14)
         self.assertEqual(opts[CONF_REPEAT_MODE], CONF_REPEAT_AFTER)
 
-    async def test_repeat_after_shows_form_on_no_input(self):
-        flow = await self._start()
-        result = await flow.async_step_repeat_after(user_input=None)
-        self.assertEqual(result["type"], "form")
-        self.assertEqual(result["step_id"], "repeat_after")
+    async def test_repeat_mode_pre_seeded_from_init(self):
+        """init pre-seeds CONF_REPEAT_MODE so validate_options sees it."""
+        flow = self._make_flow()
+        await flow.async_step_init(user_input=None)
+        self.assertEqual(flow._accumulated_options[CONF_REPEAT_MODE], CONF_REPEAT_AFTER)
 
 
 # ---------------------------------------------------------------------------
-# Tests: validation in non-combined options steps (switching from repeat_after
-# to repeat_every in the options flow)
+# Tests: validation in non-combined options steps (repeat_every sub-type
+# validation in the options flow)
 # ---------------------------------------------------------------------------
 
 class TestOptionsFlowRepeatEveryDayOfMonthValidation(unittest.IsolatedAsyncioTestCase):
     """Validation tests for async_step_repeat_every_day_of_month in options flow."""
 
     async def _start(self):
-        """Submit init with repeat_every mode from a repeat_after entry."""
+        """Set up a flow with repeat_every/day_of_month accumulated options."""
         flow = _make_flow(_make_repeat_after_entry())
-        await flow.async_step_init(user_input={
-            CONF_ACTIVE: True,
-            CONF_REPEAT_MODE: CONF_REPEAT_EVERY,
-            CONF_ICON: "mdi:calendar",
-            CONF_TAGS: "",
-            CONF_TODO_LISTS: [],
-            CONF_DUE_SOON_DAYS: 0,
-            CONF_NOTIFICATION_INTERVAL: 1,
-        })
+        flow._accumulated_options[CONF_ACTIVE] = True
+        flow._accumulated_options[CONF_REPEAT_MODE] = CONF_REPEAT_EVERY
+        flow._accumulated_options[CONF_ICON] = "mdi:calendar"
+        flow._accumulated_options[CONF_TAGS] = ""
+        flow._accumulated_options[CONF_TODO_LISTS] = []
+        flow._accumulated_options[CONF_DUE_SOON_DAYS] = 0
+        flow._accumulated_options[CONF_NOTIFICATION_INTERVAL] = 1
         await flow.async_step_repeat_every(
             user_input={CONF_REPEAT_EVERY_TYPE: CONF_REPEAT_EVERY_DAY_OF_MONTH}
         )
@@ -237,15 +229,13 @@ class TestOptionsFlowRepeatEveryDaysBeforeEndValidation(unittest.IsolatedAsyncio
 
     async def _start(self):
         flow = _make_flow(_make_repeat_after_entry())
-        await flow.async_step_init(user_input={
-            CONF_ACTIVE: True,
-            CONF_REPEAT_MODE: CONF_REPEAT_EVERY,
-            CONF_ICON: "mdi:calendar",
-            CONF_TAGS: "",
-            CONF_TODO_LISTS: [],
-            CONF_DUE_SOON_DAYS: 0,
-            CONF_NOTIFICATION_INTERVAL: 1,
-        })
+        flow._accumulated_options[CONF_ACTIVE] = True
+        flow._accumulated_options[CONF_REPEAT_MODE] = CONF_REPEAT_EVERY
+        flow._accumulated_options[CONF_ICON] = "mdi:calendar"
+        flow._accumulated_options[CONF_TAGS] = ""
+        flow._accumulated_options[CONF_TODO_LISTS] = []
+        flow._accumulated_options[CONF_DUE_SOON_DAYS] = 0
+        flow._accumulated_options[CONF_NOTIFICATION_INTERVAL] = 1
         await flow.async_step_repeat_every(
             user_input={CONF_REPEAT_EVERY_TYPE: CONF_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH}
         )
