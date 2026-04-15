@@ -184,7 +184,9 @@ class TaskTrackerCoordinator:
         """
         etype = self.repeat_every_type
         if etype == CONF_REPEAT_EVERY_WEEKDAY:
-            return self._calc_most_recent_weekday(today, self.repeat_weekday or "monday")
+            return self._calc_most_recent_weekday_in_cycle(
+                today, self.repeat_weekday or "monday", self.repeat_weeks_interval
+            )
         if etype == CONF_REPEAT_EVERY_DAY_OF_MONTH:
             return self._calc_most_recent_day_of_month(today, self.repeat_month_day)
         if etype == CONF_REPEAT_EVERY_WEEKDAY_OF_MONTH:
@@ -298,6 +300,38 @@ class TaskTrackerCoordinator:
         target = TaskTrackerCoordinator._weekday_number(weekday_name)
         days_back = (today.weekday() - target) % 7
         return today - timedelta(days=days_back)
+
+    def _calc_most_recent_weekday_in_cycle(
+        self, today: date, weekday_name: str, weeks_interval: int
+    ) -> date:
+        """Return the most recent cycle occurrence of *weekday_name* on or before *today*.
+
+        Cycle occurrences are spaced *weeks_interval* weeks apart, anchored at
+        the ``last_done`` date.  The first cycle date is computed with the same
+        logic as ``_calc_next_weekday`` so that the forward and backward
+        calculations stay consistent.
+
+        When *weeks_interval* is 1 every occurrence of that weekday is a valid
+        cycle date, so the result is identical to ``_calc_most_recent_weekday``.
+        """
+        anchor = self.last_done
+        # Compute the first cycle date strictly after anchor (mirrors _calc_next_weekday)
+        target = self._weekday_number(weekday_name)
+        days_ahead = (target - anchor.weekday()) % 7
+        if days_ahead == 0:
+            first_cycle = anchor + timedelta(weeks=weeks_interval)
+        else:
+            first_cycle = anchor + timedelta(days=days_ahead) + timedelta(weeks=weeks_interval - 1)
+
+        if first_cycle > today:
+            # The first cycle date is already in the future — return anchor as a
+            # safe fallback (this path is not reached in normal overdue flow).
+            return anchor
+
+        # Find the largest N such that first_cycle + N * weeks_interval weeks <= today
+        days_elapsed = (today - first_cycle).days
+        periods_elapsed = days_elapsed // (weeks_interval * 7)
+        return first_cycle + timedelta(weeks=periods_elapsed * weeks_interval)
 
     @staticmethod
     def _calc_most_recent_day_of_month(today: date, day: int) -> date:
