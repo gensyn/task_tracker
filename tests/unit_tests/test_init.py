@@ -265,12 +265,12 @@ class TestAsyncMigrateEntry(unittest.IsolatedAsyncioTestCase):
         result = await async_migrate_entry(mock_hass, entry)
         self.assertFalse(result)
 
-    async def test_migrates_version_1_6_to_1_7_adds_repeat_year_month(self):
-        """1.6→1.7 should backfill repeat_year_month to None."""
+    async def test_migrates_version_1_6_to_1_7_adds_repeat_month(self):
+        """1.6→1.7 should backfill repeat_month to None."""
         from task_tracker.const import (
             CONF_REPEAT_EVERY_TYPE, CONF_REPEAT_WEEKDAY, CONF_REPEAT_WEEKS_INTERVAL,
             CONF_REPEAT_MONTH_DAY, CONF_REPEAT_NTH_OCCURRENCE, CONF_REPEAT_DAYS_BEFORE_END,
-            CONF_REPEAT_YEAR_MONTH,
+            CONF_REPEAT_MONTH,
         )
         entry = ConfigEntry(
             entry_id="test",
@@ -303,7 +303,7 @@ class TestAsyncMigrateEntry(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(call_kwargs["version"], 1)
         self.assertEqual(call_kwargs["minor_version"], 7)
         new_options = call_kwargs["options"]
-        self.assertIsNone(new_options[CONF_REPEAT_YEAR_MONTH])
+        self.assertIsNone(new_options[CONF_REPEAT_MONTH])
 
 
 class TestGetCoordinator(unittest.IsolatedAsyncioTestCase):

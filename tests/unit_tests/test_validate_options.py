@@ -21,7 +21,7 @@ from task_tracker.const import (
     CONF_REPEAT_EVERY_WEEKDAY_OF_MONTH, CONF_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH,
     CONF_REPEAT_EVERY_SPECIFIC_DATE,
     CONF_REPEAT_WEEKDAY, CONF_REPEAT_WEEKS_INTERVAL, CONF_REPEAT_MONTH_DAY, CONF_REPEAT_NTH_OCCURRENCE,
-    CONF_REPEAT_DAYS_BEFORE_END, CONF_REPEAT_YEAR_MONTH,
+    CONF_REPEAT_DAYS_BEFORE_END, CONF_REPEAT_MONTH,
     CONF_MONDAY, CONF_WEDNESDAY,
 )
 
@@ -339,7 +339,7 @@ class TestValidateOptionsRepeatEverySpecificDate(unittest.IsolatedAsyncioTestCas
         return {
             CONF_REPEAT_MODE: CONF_REPEAT_EVERY,
             CONF_REPEAT_EVERY_TYPE: CONF_REPEAT_EVERY_SPECIFIC_DATE,
-            CONF_REPEAT_YEAR_MONTH: year_month,
+            CONF_REPEAT_MONTH: year_month,
             CONF_REPEAT_MONTH_DAY: month_day,
         }
 
@@ -349,7 +349,7 @@ class TestValidateOptionsRepeatEverySpecificDate(unittest.IsolatedAsyncioTestCas
 
     async def test_year_month_preserved(self):
         result = await validate_options(self._base(year_month=6))
-        self.assertEqual(result[CONF_REPEAT_YEAR_MONTH], 6)
+        self.assertEqual(result[CONF_REPEAT_MONTH], 6)
 
     async def test_month_day_preserved(self):
         result = await validate_options(self._base(month_day=20))
@@ -366,7 +366,7 @@ class TestValidateOptionsRepeatEverySpecificDate(unittest.IsolatedAsyncioTestCas
     async def test_year_month_boundary_values_valid(self):
         for m in (1, 6, 12):
             result = await validate_options(self._base(year_month=m))
-            self.assertEqual(result[CONF_REPEAT_YEAR_MONTH], m)
+            self.assertEqual(result[CONF_REPEAT_MONTH], m)
 
     async def test_month_day_below_minimum_raises(self):
         with self.assertRaises(vol.Invalid):
@@ -382,13 +382,13 @@ class TestValidateOptionsRepeatEverySpecificDate(unittest.IsolatedAsyncioTestCas
             self.assertEqual(result[CONF_REPEAT_MONTH_DAY], d)
 
     async def test_repeat_after_has_year_month_none(self):
-        """repeat_after entries must have repeat_year_month set to None."""
+        """repeat_after entries must have repeat_month set to None."""
         result = await validate_options({
             CONF_TASK_INTERVAL_VALUE: 7,
             CONF_TASK_INTERVAL_TYPE: CONF_DAY,
             CONF_REPEAT_MODE: CONF_REPEAT_AFTER,
         })
-        self.assertIsNone(result[CONF_REPEAT_YEAR_MONTH])
+        self.assertIsNone(result[CONF_REPEAT_MONTH])
 
     async def test_repeat_every_defaults_year_month_to_one(self):
         """If year_month is missing, validate_options defaults it to 1."""
@@ -398,4 +398,4 @@ class TestValidateOptionsRepeatEverySpecificDate(unittest.IsolatedAsyncioTestCas
             CONF_REPEAT_MONTH_DAY: 15,
         }
         result = await validate_options(base)
-        self.assertEqual(result[CONF_REPEAT_YEAR_MONTH], 1)
+        self.assertEqual(result[CONF_REPEAT_MONTH], 1)

@@ -18,10 +18,10 @@ from .const import (
     CONF_REPEAT_EVERY_WEEKDAY_OF_MONTH, CONF_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH,
     CONF_REPEAT_EVERY_SPECIFIC_DATE,
     CONF_REPEAT_WEEKDAY, CONF_REPEAT_WEEKS_INTERVAL, CONF_REPEAT_MONTH_DAY, CONF_REPEAT_NTH_OCCURRENCE,
-    CONF_REPEAT_DAYS_BEFORE_END, CONF_REPEAT_YEAR_MONTH,
+    CONF_REPEAT_DAYS_BEFORE_END, CONF_REPEAT_MONTH,
     CONF_MONDAY, CONF_TUESDAY, CONF_WEDNESDAY, CONF_THURSDAY, CONF_FRIDAY, CONF_SATURDAY, CONF_SUNDAY,
 )
-from .options_flow import TaskTrackerOptionsFlow, validate_options, _validate_month_day, _validate_days_before_end, _validate_year_month
+from .options_flow import TaskTrackerOptionsFlow, validate_options, _validate_month_day, _validate_days_before_end, _validate_month
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -112,7 +112,7 @@ _STEP_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH_SCHEMA = vol.Schema(
 # Step 3b-5 – specific month and day every year
 _STEP_REPEAT_EVERY_SPECIFIC_DATE_SCHEMA = vol.Schema(
     {
-        vol.Required(CONF_REPEAT_YEAR_MONTH, default=1): int,
+        vol.Required(CONF_REPEAT_MONTH, default=1): int,
         vol.Required(CONF_REPEAT_MONTH_DAY, default=1): int,
     }
 )
@@ -274,7 +274,7 @@ class TaskTrackerConfigFlow(ConfigFlow, domain=DOMAIN):
                 errors={},
             )
 
-        errors = _validate_year_month(user_input.get(CONF_REPEAT_YEAR_MONTH))
+        errors = _validate_month(user_input.get(CONF_REPEAT_MONTH))
         errors.update(_validate_month_day(user_input.get(CONF_REPEAT_MONTH_DAY)))
         if errors:
             return self.async_show_form(

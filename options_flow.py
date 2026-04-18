@@ -15,7 +15,7 @@ from .const import (
     CONF_REPEAT_EVERY_WEEKDAY_OF_MONTH, CONF_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH,
     CONF_REPEAT_EVERY_SPECIFIC_DATE,
     CONF_REPEAT_WEEKDAY, CONF_REPEAT_WEEKS_INTERVAL, CONF_REPEAT_MONTH_DAY, CONF_REPEAT_NTH_OCCURRENCE,
-    CONF_REPEAT_DAYS_BEFORE_END, CONF_REPEAT_YEAR_MONTH,
+    CONF_REPEAT_DAYS_BEFORE_END, CONF_REPEAT_MONTH,
     CONF_MONDAY, CONF_TUESDAY, CONF_WEDNESDAY, CONF_THURSDAY, CONF_FRIDAY, CONF_SATURDAY, CONF_SUNDAY,
 )
 
@@ -94,7 +94,7 @@ _STEP_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH_SCHEMA = vol.Schema(
 # Step 3b-5 – specific month and day every year
 _STEP_REPEAT_EVERY_SPECIFIC_DATE_SCHEMA = vol.Schema(
     {
-        vol.Required(CONF_REPEAT_YEAR_MONTH, default=1): int,
+        vol.Required(CONF_REPEAT_MONTH, default=1): int,
         vol.Required(CONF_REPEAT_MONTH_DAY, default=1): int,
     }
 )
@@ -199,7 +199,7 @@ _STEP_OPTIONS_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH_SCHEMA = vol.Schema({
 
 _STEP_OPTIONS_REPEAT_EVERY_SPECIFIC_DATE_SCHEMA = vol.Schema({
     **_REPEAT_EVERY_HEAD_OPTIONS,
-    vol.Required(CONF_REPEAT_YEAR_MONTH, default=1): int,
+    vol.Required(CONF_REPEAT_MONTH, default=1): int,
     vol.Required(CONF_REPEAT_MONTH_DAY, default=1): int,
     **_REPEAT_EVERY_TAIL_OPTIONS,
 })
@@ -219,10 +219,10 @@ def _validate_days_before_end(value: int | None) -> dict[str, str]:
     return {}
 
 
-def _validate_year_month(value: int | None) -> dict[str, str]:
+def _validate_month(value: int | None) -> dict[str, str]:
     """Return an errors dict if *value* is not a valid month (1–12)."""
     if value is None or not 1 <= value <= 12:
-        return {CONF_REPEAT_YEAR_MONTH: "invalid_year_month"}
+        return {CONF_REPEAT_MONTH: "invalid_month"}
     return {}
 
 
@@ -494,7 +494,7 @@ class TaskTrackerOptionsFlow(OptionsFlowWithReload):
                 ),
             )
 
-        errors = _validate_year_month(user_input.get(CONF_REPEAT_YEAR_MONTH))
+        errors = _validate_month(user_input.get(CONF_REPEAT_MONTH))
         errors.update(_validate_month_day(user_input.get(CONF_REPEAT_MONTH_DAY)))
         if errors:
             return self.async_show_form(
@@ -521,7 +521,7 @@ class TaskTrackerOptionsFlow(OptionsFlowWithReload):
                 ),
             )
 
-        errors = _validate_year_month(user_input.get(CONF_REPEAT_YEAR_MONTH))
+        errors = _validate_month(user_input.get(CONF_REPEAT_MONTH))
         errors.update(_validate_month_day(user_input.get(CONF_REPEAT_MONTH_DAY)))
         if errors:
             return self.async_show_form(
@@ -591,7 +591,7 @@ async def validate_options(user_input: dict[str, Any]) -> dict[str, Any]:
             CONF_REPEAT_MONTH_DAY: None,
             CONF_REPEAT_NTH_OCCURRENCE: None,
             CONF_REPEAT_DAYS_BEFORE_END: None,
-            CONF_REPEAT_YEAR_MONTH: None,
+            CONF_REPEAT_MONTH: None,
         })
     else:  # repeat_every
         weeks_interval = user_input.get(CONF_REPEAT_WEEKS_INTERVAL, 1)
@@ -616,13 +616,13 @@ async def validate_options(user_input: dict[str, Any]) -> dict[str, Any]:
                 f"Days before month end must be between 0 and 30, got {days_before_end}",
                 path=[CONF_REPEAT_DAYS_BEFORE_END],
             )
-        year_month = user_input.get(CONF_REPEAT_YEAR_MONTH, 1)
-        if year_month is None:
-            year_month = 1
-        if not 1 <= year_month <= 12:
+        month = user_input.get(CONF_REPEAT_MONTH, 1)
+        if month is None:
+            month = 1
+        if not 1 <= month <= 12:
             raise vol.Invalid(
-                f"Month must be between 1 and 12, got {year_month}",
-                path=[CONF_REPEAT_YEAR_MONTH],
+                f"Month must be between 1 and 12, got {month}",
+                path=[CONF_REPEAT_MONTH],
             )
         result.update({
             # Keep interval fields with safe defaults for backward compat
@@ -635,7 +635,7 @@ async def validate_options(user_input: dict[str, Any]) -> dict[str, Any]:
             CONF_REPEAT_MONTH_DAY: month_day,
             CONF_REPEAT_NTH_OCCURRENCE: nth_occurrence,
             CONF_REPEAT_DAYS_BEFORE_END: days_before_end,
-            CONF_REPEAT_YEAR_MONTH: year_month,
+            CONF_REPEAT_MONTH: month,
         })
 
     return result

@@ -1294,7 +1294,7 @@ class TestCoordinatorRepeatEverySpecificDate(unittest.TestCase):
             entry_id="test",
             repeat_mode=CONF_REPEAT_EVERY,
             repeat_every_type=CONF_REPEAT_EVERY_SPECIFIC_DATE,
-            repeat_year_month=month,
+            repeat_month=month,
             repeat_month_day=day,
         )
 

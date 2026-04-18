@@ -7,7 +7,7 @@
       "unknown": "Unexpected error",
       "invalid_month_day": "Day of month must be between 1 and 31",
       "invalid_days_before_end": "Days before month end must be between 0 and 30",
-      "invalid_year_month": "Month must be between 1 and 12"
+      "invalid_month": "Month must be between 1 and 12"
     },
     "step": {
       "user": {
@@ -91,11 +91,11 @@
         "title": "Specific Date Every Year",
         "description": "The task repeats on the same month and day every year.",
         "data": {
-          "repeat_year_month": "Month",
+          "repeat_month": "Month",
           "repeat_month_day": "Day of Month"
         },
         "data_description": {
-          "repeat_year_month": "The month of the year (1–12).",
+          "repeat_month": "The month of the year (1–12).",
           "repeat_month_day": "The day of the month (1–31)."
         }
       }
@@ -109,7 +109,7 @@
       "unknown": "Unexpected error",
       "invalid_month_day": "Day of month must be between 1 and 31",
       "invalid_days_before_end": "Days before month end must be between 0 and 30",
-      "invalid_year_month": "Month must be between 1 and 12"
+      "invalid_month": "Month must be between 1 and 12"
     },
     "step": {
       "repeat_every": {
@@ -170,11 +170,11 @@
         "title": "Specific Date Every Year",
         "description": "The task repeats on the same month and day every year.",
         "data": {
-          "repeat_year_month": "Month",
+          "repeat_month": "Month",
           "repeat_month_day": "Day of Month"
         },
         "data_description": {
-          "repeat_year_month": "The month of the year (1–12).",
+          "repeat_month": "The month of the year (1–12).",
           "repeat_month_day": "The day of the month (1–31)."
         }
       },
@@ -290,7 +290,7 @@
         "title": "Specific Date Every Year – Options",
         "description": "Update the schedule and task settings.",
         "data": {
-          "repeat_year_month": "Month",
+          "repeat_month": "Month",
           "repeat_month_day": "Day of Month",
           "active": "Active",
           "active_override": "Active Override",
@@ -302,7 +302,7 @@
           "notification_interval": "Notification Interval (days)"
         },
         "data_description": {
-          "repeat_year_month": "The month of the year (1–12).",
+          "repeat_month": "The month of the year (1–12).",
           "repeat_month_day": "The day of the month (1–31).",
           "active": "Enable or disable the task.",
           "active_override": "Select an input_boolean to override the Active setting.",

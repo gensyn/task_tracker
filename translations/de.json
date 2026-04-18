@@ -7,7 +7,7 @@
       "unknown": "Unerwarteter Fehler",
       "invalid_month_day": "Der Tag im Monat muss zwischen 1 und 31 liegen",
       "invalid_days_before_end": "Die Anzahl der Tage vor Monatsende muss zwischen 0 und 30 liegen",
-      "invalid_year_month": "Der Monat muss zwischen 1 und 12 liegen"
+      "invalid_month": "Der Monat muss zwischen 1 und 12 liegen"
     },
     "step": {
       "user": {
@@ -91,11 +91,11 @@
         "title": "Bestimmtes Datum jedes Jahr",
         "description": "Die Task wiederholt sich jedes Jahr am selben Monats- und Tageswert.",
         "data": {
-          "repeat_year_month": "Monat",
+          "repeat_month": "Monat",
           "repeat_month_day": "Tag des Monats"
         },
         "data_description": {
-          "repeat_year_month": "Der Monat des Jahres (1–12).",
+          "repeat_month": "Der Monat des Jahres (1–12).",
           "repeat_month_day": "Der Tag des Monats (1–31)."
         }
       }
@@ -106,7 +106,7 @@
       "unknown": "Unerwarteter Fehler",
       "invalid_month_day": "Der Tag im Monat muss zwischen 1 und 31 liegen",
       "invalid_days_before_end": "Die Anzahl der Tage vor Monatsende muss zwischen 0 und 30 liegen",
-      "invalid_year_month": "Der Monat muss zwischen 1 und 12 liegen"
+      "invalid_month": "Der Monat muss zwischen 1 und 12 liegen"
     },
     "step": {
       "repeat_every": {
@@ -167,11 +167,11 @@
         "title": "Bestimmtes Datum jedes Jahr",
         "description": "Die Task wiederholt sich jedes Jahr am selben Monats- und Tageswert.",
         "data": {
-          "repeat_year_month": "Monat",
+          "repeat_month": "Monat",
           "repeat_month_day": "Tag des Monats"
         },
         "data_description": {
-          "repeat_year_month": "Der Monat des Jahres (1–12).",
+          "repeat_month": "Der Monat des Jahres (1–12).",
           "repeat_month_day": "Der Tag des Monats (1–31)."
         }
       },
@@ -287,7 +287,7 @@
         "title": "Bestimmtes Datum jedes Jahr – Optionen",
         "description": "Zeitplan und Taskeinstellungen aktualisieren.",
         "data": {
-          "repeat_year_month": "Monat",
+          "repeat_month": "Monat",
           "repeat_month_day": "Tag des Monats",
           "active": "Aktiv",
           "active_override": "Aktiv-Override",
@@ -299,7 +299,7 @@
           "notification_interval": "Benachrichtigungsintervall (Tage)"
         },
         "data_description": {
-          "repeat_year_month": "Der Monat des Jahres (1–12).",
+          "repeat_month": "Der Monat des Jahres (1–12).",
           "repeat_month_day": "Der Tag des Monats (1–31).",
           "active": "Aktiviert oder deaktiviert die Task.",
           "active_override": "Wähle ein input_boolean, um die Aktiv-Einstellung zu überschreiben.",

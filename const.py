@@ -43,7 +43,7 @@ CONF_REPEAT_WEEKS_INTERVAL = "repeat_weeks_interval"  # how many weeks between o
 CONF_REPEAT_MONTH_DAY = "repeat_month_day"          # day 1-31 of the month
 CONF_REPEAT_NTH_OCCURRENCE = "repeat_nth_occurrence"  # "1","2","3","4","last"
 CONF_REPEAT_DAYS_BEFORE_END = "repeat_days_before_end"  # days before month end (0 = last day)
-CONF_REPEAT_YEAR_MONTH = "repeat_year_month"        # month 1-12 for specific-date-of-year schedule
+CONF_REPEAT_MONTH = "repeat_month"                  # month 1-12 for specific-date-of-year schedule
 
 # Weekday value constants
 CONF_MONDAY = "monday"

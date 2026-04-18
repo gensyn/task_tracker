@@ -17,7 +17,7 @@ from task_tracker.const import (
     CONF_REPEAT_EVERY_WEEKDAY_OF_MONTH, CONF_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH,
     CONF_REPEAT_EVERY_SPECIFIC_DATE,
     CONF_REPEAT_WEEKDAY, CONF_REPEAT_WEEKS_INTERVAL, CONF_REPEAT_MONTH_DAY, CONF_REPEAT_NTH_OCCURRENCE,
-    CONF_REPEAT_DAYS_BEFORE_END, CONF_REPEAT_YEAR_MONTH,
+    CONF_REPEAT_DAYS_BEFORE_END, CONF_REPEAT_MONTH,
     CONF_MONDAY, CONF_WEDNESDAY,
 )
 
@@ -329,7 +329,7 @@ class TestTaskTrackerConfigFlowRepeatEverySpecificDate(unittest.IsolatedAsyncioT
             user_input={CONF_REPEAT_EVERY_TYPE: CONF_REPEAT_EVERY_SPECIFIC_DATE}
         )
         result = await flow.async_step_repeat_every_specific_date(user_input={
-            CONF_REPEAT_YEAR_MONTH: 3,
+            CONF_REPEAT_MONTH: 3,
             CONF_REPEAT_MONTH_DAY: 15,
         })
         self.assertEqual(result["type"], "create_entry")
@@ -337,7 +337,7 @@ class TestTaskTrackerConfigFlowRepeatEverySpecificDate(unittest.IsolatedAsyncioT
         options = result["options"]
         self.assertEqual(options[CONF_REPEAT_MODE], CONF_REPEAT_EVERY)
         self.assertEqual(options[CONF_REPEAT_EVERY_TYPE], CONF_REPEAT_EVERY_SPECIFIC_DATE)
-        self.assertEqual(options[CONF_REPEAT_YEAR_MONTH], 3)
+        self.assertEqual(options[CONF_REPEAT_MONTH], 3)
         self.assertEqual(options[CONF_REPEAT_MONTH_DAY], 15)
 
     async def test_step_rejects_invalid_month_zero(self):
@@ -346,12 +346,12 @@ class TestTaskTrackerConfigFlowRepeatEverySpecificDate(unittest.IsolatedAsyncioT
             user_input={CONF_REPEAT_EVERY_TYPE: CONF_REPEAT_EVERY_SPECIFIC_DATE}
         )
         result = await flow.async_step_repeat_every_specific_date(user_input={
-            CONF_REPEAT_YEAR_MONTH: 0,
+            CONF_REPEAT_MONTH: 0,
             CONF_REPEAT_MONTH_DAY: 15,
         })
         self.assertEqual(result["type"], "form")
-        self.assertIn(CONF_REPEAT_YEAR_MONTH, result.get("errors", {}))
-        self.assertEqual(result["errors"][CONF_REPEAT_YEAR_MONTH], "invalid_year_month")
+        self.assertIn(CONF_REPEAT_MONTH, result.get("errors", {}))
+        self.assertEqual(result["errors"][CONF_REPEAT_MONTH], "invalid_month")
 
     async def test_step_rejects_invalid_month_thirteen(self):
         flow = await self._step1()
@@ -359,12 +359,12 @@ class TestTaskTrackerConfigFlowRepeatEverySpecificDate(unittest.IsolatedAsyncioT
             user_input={CONF_REPEAT_EVERY_TYPE: CONF_REPEAT_EVERY_SPECIFIC_DATE}
         )
         result = await flow.async_step_repeat_every_specific_date(user_input={
-            CONF_REPEAT_YEAR_MONTH: 13,
+            CONF_REPEAT_MONTH: 13,
             CONF_REPEAT_MONTH_DAY: 1,
         })
         self.assertEqual(result["type"], "form")
-        self.assertIn(CONF_REPEAT_YEAR_MONTH, result.get("errors", {}))
-        self.assertEqual(result["errors"][CONF_REPEAT_YEAR_MONTH], "invalid_year_month")
+        self.assertIn(CONF_REPEAT_MONTH, result.get("errors", {}))
+        self.assertEqual(result["errors"][CONF_REPEAT_MONTH], "invalid_month")
 
     async def test_step_rejects_invalid_day_zero(self):
         flow = await self._step1()
@@ -372,7 +372,7 @@ class TestTaskTrackerConfigFlowRepeatEverySpecificDate(unittest.IsolatedAsyncioT
             user_input={CONF_REPEAT_EVERY_TYPE: CONF_REPEAT_EVERY_SPECIFIC_DATE}
         )
         result = await flow.async_step_repeat_every_specific_date(user_input={
-            CONF_REPEAT_YEAR_MONTH: 3,
+            CONF_REPEAT_MONTH: 3,
             CONF_REPEAT_MONTH_DAY: 0,
         })
         self.assertEqual(result["type"], "form")
@@ -385,7 +385,7 @@ class TestTaskTrackerConfigFlowRepeatEverySpecificDate(unittest.IsolatedAsyncioT
             user_input={CONF_REPEAT_EVERY_TYPE: CONF_REPEAT_EVERY_SPECIFIC_DATE}
         )
         result = await flow.async_step_repeat_every_specific_date(user_input={
-            CONF_REPEAT_YEAR_MONTH: 3,
+            CONF_REPEAT_MONTH: 3,
             CONF_REPEAT_MONTH_DAY: 32,
         })
         self.assertEqual(result["type"], "form")

@@ -18,7 +18,7 @@ from .const import DOMAIN, CONF_TASK_INTERVAL_VALUE, CONF_DAY, CONF_TASK_INTERVA
     SERVICE_MARK_AS_DONE_SCHEMA, SERVICE_SET_LAST_DONE_DATE, SERVICE_SET_LAST_DONE_DATE_SCHEMA, CONF_DATE, \
     CONF_SHOW_PANEL, CONF_REPEAT_MODE, CONF_REPEAT_AFTER, \
     CONF_REPEAT_EVERY_TYPE, CONF_REPEAT_WEEKDAY, CONF_REPEAT_WEEKS_INTERVAL, \
-    CONF_REPEAT_MONTH_DAY, CONF_REPEAT_NTH_OCCURRENCE, CONF_REPEAT_DAYS_BEFORE_END, CONF_REPEAT_YEAR_MONTH
+    CONF_REPEAT_MONTH_DAY, CONF_REPEAT_NTH_OCCURRENCE, CONF_REPEAT_DAYS_BEFORE_END, CONF_REPEAT_MONTH
 from .coordinator import TaskTrackerCoordinator
 from .frontend import TaskTrackerCardRegistration
 
@@ -129,7 +129,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         repeat_month_day=entry.options.get(CONF_REPEAT_MONTH_DAY, 1),
         repeat_nth_occurrence=entry.options.get(CONF_REPEAT_NTH_OCCURRENCE, "1"),
         repeat_days_before_end=entry.options.get(CONF_REPEAT_DAYS_BEFORE_END, 0),
-        repeat_year_month=entry.options.get(CONF_REPEAT_YEAR_MONTH, 1),
+        repeat_month=entry.options.get(CONF_REPEAT_MONTH, 1),
         due_soon_days=entry.options.get(CONF_DUE_SOON_DAYS, 0),
     )
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
@@ -228,9 +228,9 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         )
 
     if entry.version == 1 and entry.minor_version == 6:
-        # 1.6 Add repeat_year_month field (None for all existing entries)
+        # 1.6 Add repeat_month field (None for all existing entries)
         new_options = dict(entry.options)
-        new_options.setdefault(CONF_REPEAT_YEAR_MONTH, None)
+        new_options.setdefault(CONF_REPEAT_MONTH, None)
 
         hass.config_entries.async_update_entry(
             entry,

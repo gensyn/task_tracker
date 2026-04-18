@@ -51,7 +51,7 @@ class TaskTrackerCoordinator:
         repeat_month_day: int = 1,
         repeat_nth_occurrence: str = "1",
         repeat_days_before_end: int = 0,
-        repeat_year_month: int = 1,
+        repeat_month: int = 1,
         due_soon_days: int = 0,
     ) -> None:
         """Initialise the coordinator."""
@@ -68,7 +68,7 @@ class TaskTrackerCoordinator:
             else "1"
         )
         self.repeat_days_before_end: int = max(0, repeat_days_before_end or 0)
-        self.repeat_year_month: int = max(1, min(12, repeat_year_month or 1))
+        self.repeat_month: int = max(1, min(12, repeat_month or 1))
         self.due_soon_days: int = max(0, due_soon_days or 0)
         self._listeners: list[Callable[[], None]] = []
 
@@ -176,7 +176,7 @@ class TaskTrackerCoordinator:
         if etype == CONF_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH:
             return self._calc_next_days_before_end_of_month(last, self.repeat_days_before_end)
         if etype == CONF_REPEAT_EVERY_SPECIFIC_DATE:
-            return self._calc_next_specific_date(last, self.repeat_year_month, self.repeat_month_day)
+            return self._calc_next_specific_date(last, self.repeat_month, self.repeat_month_day)
         # Unrecognised sub-type: fall back to a 7-day interval
         return last + relativedelta(days=7)
 
@@ -201,7 +201,7 @@ class TaskTrackerCoordinator:
         if etype == CONF_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH:
             return self._calc_most_recent_days_before_end_of_month(today, self.repeat_days_before_end)
         if etype == CONF_REPEAT_EVERY_SPECIFIC_DATE:
-            return self._calc_most_recent_specific_date(today, self.repeat_year_month, self.repeat_month_day)
+            return self._calc_most_recent_specific_date(today, self.repeat_month, self.repeat_month_day)
         # Unrecognised sub-type: fall back to today
         return today
 

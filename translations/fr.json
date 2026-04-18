@@ -7,7 +7,7 @@
       "unknown": "Erreur inattendue",
       "invalid_month_day": "Le jour du mois doit être compris entre 1 et 31",
       "invalid_days_before_end": "Les jours avant la fin du mois doivent être compris entre 0 et 30",
-      "invalid_year_month": "Le mois doit être compris entre 1 et 12"
+      "invalid_month": "Le mois doit être compris entre 1 et 12"
     },
     "step": {
       "user": {
@@ -91,11 +91,11 @@
         "title": "Date spécifique chaque année",
         "description": "La tâche se répète chaque année au même mois et jour.",
         "data": {
-          "repeat_year_month": "Mois",
+          "repeat_month": "Mois",
           "repeat_month_day": "Jour du mois"
         },
         "data_description": {
-          "repeat_year_month": "Le mois de l'année (1–12).",
+          "repeat_month": "Le mois de l'année (1–12).",
           "repeat_month_day": "Le jour du mois (1–31)."
         }
       }
@@ -109,7 +109,7 @@
       "unknown": "Erreur inattendue",
       "invalid_month_day": "Le jour du mois doit être compris entre 1 et 31",
       "invalid_days_before_end": "Les jours avant la fin du mois doivent être compris entre 0 et 30",
-      "invalid_year_month": "Le mois doit être compris entre 1 et 12"
+      "invalid_month": "Le mois doit être compris entre 1 et 12"
     },
     "step": {
       "repeat_every": {
@@ -170,11 +170,11 @@
         "title": "Date spécifique chaque année",
         "description": "La tâche se répète chaque année au même mois et jour.",
         "data": {
-          "repeat_year_month": "Mois",
+          "repeat_month": "Mois",
           "repeat_month_day": "Jour du mois"
         },
         "data_description": {
-          "repeat_year_month": "Le mois de l'année (1–12).",
+          "repeat_month": "Le mois de l'année (1–12).",
           "repeat_month_day": "Le jour du mois (1–31)."
         }
       },
@@ -290,7 +290,7 @@
         "title": "Date spécifique chaque année – Options",
         "description": "Mettez à jour la planification et les paramètres de la tâche.",
         "data": {
-          "repeat_year_month": "Mois",
+          "repeat_month": "Mois",
           "repeat_month_day": "Jour du mois",
           "active": "Actif",
           "active_override": "Surcharge d'activation",
@@ -302,7 +302,7 @@
           "notification_interval": "Intervalle de notification (jours)"
         },
         "data_description": {
-          "repeat_year_month": "Le mois de l'année (1–12).",
+          "repeat_month": "Le mois de l'année (1–12).",
           "repeat_month_day": "Le jour du mois (1–31).",
           "active": "Activer ou désactiver la tâche.",
           "active_override": "Sélectionnez un input_boolean pour surcharger le paramètre Actif.",
