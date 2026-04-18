@@ -244,7 +244,8 @@ class TestAsyncMigrateEntry(unittest.IsolatedAsyncioTestCase):
         result = await async_migrate_entry(mock_hass, entry)
 
         self.assertTrue(result)
-        # The mock doesn't mutate entry.minor_version, so only 1.5→1.6 migration fires.
+        # Test verifies 1.5→1.6 migration adds repeat_days_before_end field.
+        # The mock does not mutate entry.minor_version, so only the 1.5→1.6 step fires.
         mock_hass.config_entries.async_update_entry.assert_called_once()
         first_call_kwargs = mock_hass.config_entries.async_update_entry.call_args_list[0][1]
         self.assertEqual(first_call_kwargs["version"], 1)
