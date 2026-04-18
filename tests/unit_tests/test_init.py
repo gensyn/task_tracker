@@ -244,11 +244,12 @@ class TestAsyncMigrateEntry(unittest.IsolatedAsyncioTestCase):
         result = await async_migrate_entry(mock_hass, entry)
 
         self.assertTrue(result)
+        # The mock doesn't mutate entry.minor_version, so only 1.5→1.6 migration fires.
         mock_hass.config_entries.async_update_entry.assert_called_once()
-        call_kwargs = mock_hass.config_entries.async_update_entry.call_args[1]
-        self.assertEqual(call_kwargs["version"], 1)
-        self.assertEqual(call_kwargs["minor_version"], 6)
-        new_options = call_kwargs["options"]
+        first_call_kwargs = mock_hass.config_entries.async_update_entry.call_args_list[0][1]
+        self.assertEqual(first_call_kwargs["version"], 1)
+        self.assertEqual(first_call_kwargs["minor_version"], 6)
+        new_options = first_call_kwargs["options"]
         self.assertIsNone(new_options[CONF_REPEAT_DAYS_BEFORE_END])
 
     async def test_returns_false_for_future_major_version(self):
@@ -258,10 +259,50 @@ class TestAsyncMigrateEntry(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(result)
 
     async def test_returns_false_for_future_minor_version(self):
-        entry = ConfigEntry(version=1, minor_version=7)
+        entry = ConfigEntry(version=1, minor_version=8)
         mock_hass = MagicMock()
         result = await async_migrate_entry(mock_hass, entry)
         self.assertFalse(result)
+
+    async def test_migrates_version_1_6_to_1_7_adds_repeat_year_month(self):
+        """1.6→1.7 should backfill repeat_year_month to None."""
+        from task_tracker.const import (
+            CONF_REPEAT_EVERY_TYPE, CONF_REPEAT_WEEKDAY, CONF_REPEAT_WEEKS_INTERVAL,
+            CONF_REPEAT_MONTH_DAY, CONF_REPEAT_NTH_OCCURRENCE, CONF_REPEAT_DAYS_BEFORE_END,
+            CONF_REPEAT_YEAR_MONTH,
+        )
+        entry = ConfigEntry(
+            entry_id="test",
+            version=1,
+            minor_version=6,
+            options={
+                CONF_ACTIVE: True,
+                CONF_TASK_INTERVAL_VALUE: 7,
+                CONF_TASK_INTERVAL_TYPE: CONF_DAY,
+                CONF_DUE_SOON_DAYS: 0,
+                CONF_TODO_LISTS: [],
+                CONF_NOTIFICATION_INTERVAL: 1,
+                CONF_REPEAT_MODE: CONF_REPEAT_AFTER,
+                CONF_REPEAT_EVERY_TYPE: None,
+                CONF_REPEAT_WEEKDAY: None,
+                CONF_REPEAT_WEEKS_INTERVAL: None,
+                CONF_REPEAT_MONTH_DAY: None,
+                CONF_REPEAT_NTH_OCCURRENCE: None,
+                CONF_REPEAT_DAYS_BEFORE_END: None,
+            },
+        )
+
+        mock_hass = MagicMock()
+
+        result = await async_migrate_entry(mock_hass, entry)
+
+        self.assertTrue(result)
+        mock_hass.config_entries.async_update_entry.assert_called_once()
+        call_kwargs = mock_hass.config_entries.async_update_entry.call_args[1]
+        self.assertEqual(call_kwargs["version"], 1)
+        self.assertEqual(call_kwargs["minor_version"], 7)
+        new_options = call_kwargs["options"]
+        self.assertIsNone(new_options[CONF_REPEAT_YEAR_MONTH])
 
 
 class TestGetCoordinator(unittest.IsolatedAsyncioTestCase):

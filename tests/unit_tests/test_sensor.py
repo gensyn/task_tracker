@@ -1201,3 +1201,135 @@ class TestCalcMostRecentWeekdayOfMonth(unittest.TestCase):
         result = self._coord()._calc_most_recent_weekday_of_month(date(2024, 1, 30), CONF_MONDAY, "last")
         self.assertEqual(result, date(2024, 1, 29))
 
+
+
+class TestCoordinatorCalcNextSpecificDate(unittest.TestCase):
+    """Unit tests for TaskTrackerCoordinator._calc_next_specific_date."""
+
+    def _next(self, last, month, day):
+        from task_tracker.coordinator import TaskTrackerCoordinator
+        return TaskTrackerCoordinator._calc_next_specific_date(last, month, day)
+
+    def test_next_is_later_same_year(self):
+        # last = Jan 1, target = Mar 15 → Mar 15 same year
+        result = self._next(date(2024, 1, 1), month=3, day=15)
+        self.assertEqual(result, date(2024, 3, 15))
+
+    def test_next_wraps_to_next_year_when_target_already_passed(self):
+        # last = Apr 1, target = Mar 15 → Mar 15 next year
+        result = self._next(date(2024, 4, 1), month=3, day=15)
+        self.assertEqual(result, date(2025, 3, 15))
+
+    def test_next_exactly_on_target_date_wraps_to_next_year(self):
+        # last = Mar 15, target = Mar 15 → must be strictly after last → Mar 15 next year
+        result = self._next(date(2024, 3, 15), month=3, day=15)
+        self.assertEqual(result, date(2025, 3, 15))
+
+    def test_next_with_feb_29_in_leap_year(self):
+        # last = Jan 1 2024 (leap year), target = Feb 29 → Feb 29 2024
+        result = self._next(date(2024, 1, 1), month=2, day=29)
+        self.assertEqual(result, date(2024, 2, 29))
+
+    def test_next_with_feb_29_clamps_in_non_leap_year(self):
+        # last = Jan 1 2025 (non-leap), target = Feb 29 → clamped to Feb 28 2025
+        result = self._next(date(2025, 1, 1), month=2, day=29)
+        self.assertEqual(result, date(2025, 2, 28))
+
+    def test_next_with_day_31_in_month_with_30_days(self):
+        # last = Sep 1, target = Nov 31 → clamped to Nov 30
+        result = self._next(date(2024, 9, 1), month=11, day=31)
+        self.assertEqual(result, date(2024, 11, 30))
+
+    def test_next_jan_1(self):
+        # last = Dec 31 2023, target = Jan 1 → Jan 1 2024
+        result = self._next(date(2023, 12, 31), month=1, day=1)
+        self.assertEqual(result, date(2024, 1, 1))
+
+    def test_next_dec_31(self):
+        # last = Dec 30, target = Dec 31 → Dec 31 same year
+        result = self._next(date(2024, 12, 30), month=12, day=31)
+        self.assertEqual(result, date(2024, 12, 31))
+
+
+class TestCoordinatorCalcMostRecentSpecificDate(unittest.TestCase):
+    """Unit tests for TaskTrackerCoordinator._calc_most_recent_specific_date."""
+
+    def _recent(self, today, month, day):
+        from task_tracker.coordinator import TaskTrackerCoordinator
+        return TaskTrackerCoordinator._calc_most_recent_specific_date(today, month, day)
+
+    def test_target_already_passed_this_year(self):
+        # today = Apr 1, target = Mar 15 → Mar 15 same year
+        result = self._recent(date(2024, 4, 1), month=3, day=15)
+        self.assertEqual(result, date(2024, 3, 15))
+
+    def test_target_is_today(self):
+        # today = Mar 15, target = Mar 15 → Mar 15 same year
+        result = self._recent(date(2024, 3, 15), month=3, day=15)
+        self.assertEqual(result, date(2024, 3, 15))
+
+    def test_target_not_yet_this_year_returns_previous_year(self):
+        # today = Jan 1, target = Mar 15 → Mar 15 previous year
+        result = self._recent(date(2024, 1, 1), month=3, day=15)
+        self.assertEqual(result, date(2023, 3, 15))
+
+    def test_most_recent_with_feb_29_in_leap_year(self):
+        # today = Mar 1 2024 (leap year), target = Feb 29 → Feb 29 2024
+        result = self._recent(date(2024, 3, 1), month=2, day=29)
+        self.assertEqual(result, date(2024, 2, 29))
+
+    def test_most_recent_with_feb_29_clamps_in_non_leap_year(self):
+        # today = Mar 1 2025 (non-leap), target = Feb 29 → clamped to Feb 28 2025
+        result = self._recent(date(2025, 3, 1), month=2, day=29)
+        self.assertEqual(result, date(2025, 2, 28))
+
+
+class TestCoordinatorRepeatEverySpecificDate(unittest.TestCase):
+    """Tests for the repeat_every_specific_date scheduling logic via the coordinator."""
+
+    def _coord(self, month=3, day=15):
+        from task_tracker.coordinator import TaskTrackerCoordinator
+        from task_tracker.const import CONF_REPEAT_EVERY, CONF_REPEAT_EVERY_SPECIFIC_DATE
+        return TaskTrackerCoordinator(
+            entry_id="test",
+            repeat_mode=CONF_REPEAT_EVERY,
+            repeat_every_type=CONF_REPEAT_EVERY_SPECIFIC_DATE,
+            repeat_year_month=month,
+            repeat_month_day=day,
+        )
+
+    def test_due_date_next_occurrence_this_year(self):
+        # last_done = Jan 1 2024, target = Mar 15 → next due = Mar 15 2024
+        coord = self._coord(month=3, day=15)
+        coord.last_done = date(2024, 1, 1)
+        result = coord._calculate_repeat_every_due_date()
+        self.assertEqual(result, date(2024, 3, 15))
+
+    def test_due_date_next_occurrence_next_year(self):
+        # last_done = Apr 1 2024, target = Mar 15 → next due = Mar 15 2025
+        coord = self._coord(month=3, day=15)
+        coord.last_done = date(2024, 4, 1)
+        result = coord._calculate_repeat_every_due_date()
+        self.assertEqual(result, date(2025, 3, 15))
+
+    def test_mark_as_done_sets_most_recent_occurrence(self):
+        # today = Apr 1 2024, target = Mar 15 → most recent = Mar 15 2024
+        coord = self._coord(month=3, day=15)
+        coord.last_done = date(1970, 1, 1)
+        with patch("task_tracker.coordinator.date") as mock_date:
+            mock_date.today.return_value = date(2024, 4, 1)
+            mock_date.side_effect = lambda *args, **kwargs: date(*args, **kwargs)
+            import asyncio
+            asyncio.run(coord.async_mark_as_done())
+        self.assertEqual(coord.last_done, date(2024, 3, 15))
+
+    def test_mark_as_done_when_target_not_yet_this_year_uses_prev_year(self):
+        # today = Feb 1 2024, target = Mar 15 → most recent = Mar 15 2023
+        coord = self._coord(month=3, day=15)
+        coord.last_done = date(1970, 1, 1)
+        with patch("task_tracker.coordinator.date") as mock_date:
+            mock_date.today.return_value = date(2024, 2, 1)
+            mock_date.side_effect = lambda *args, **kwargs: date(*args, **kwargs)
+            import asyncio
+            asyncio.run(coord.async_mark_as_done())
+        self.assertEqual(coord.last_done, date(2023, 3, 15))

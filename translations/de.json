@@ -6,7 +6,8 @@
     "error": {
       "unknown": "Unerwarteter Fehler",
       "invalid_month_day": "Der Tag im Monat muss zwischen 1 und 31 liegen",
-      "invalid_days_before_end": "Die Anzahl der Tage vor Monatsende muss zwischen 0 und 30 liegen"
+      "invalid_days_before_end": "Die Anzahl der Tage vor Monatsende muss zwischen 0 und 30 liegen",
+      "invalid_year_month": "Der Monat muss zwischen 1 und 12 liegen"
     },
     "step": {
       "user": {
@@ -85,6 +86,18 @@
         "data_description": {
           "repeat_days_before_end": "Wie viele Tage vor dem letzten Tag des Monats die Task fällig wird (0 = letzter Tag, 1 = vorletzter Tag usw.)."
         }
+      },
+      "repeat_every_specific_date": {
+        "title": "Bestimmtes Datum jedes Jahr",
+        "description": "Die Task wiederholt sich jedes Jahr am selben Monats- und Tageswert.",
+        "data": {
+          "repeat_year_month": "Monat",
+          "repeat_month_day": "Tag des Monats"
+        },
+        "data_description": {
+          "repeat_year_month": "Der Monat des Jahres (1–12).",
+          "repeat_month_day": "Der Tag des Monats (1–31)."
+        }
       }
     }
   },
@@ -92,7 +105,8 @@
     "error": {
       "unknown": "Unerwarteter Fehler",
       "invalid_month_day": "Der Tag im Monat muss zwischen 1 und 31 liegen",
-      "invalid_days_before_end": "Die Anzahl der Tage vor Monatsende muss zwischen 0 und 30 liegen"
+      "invalid_days_before_end": "Die Anzahl der Tage vor Monatsende muss zwischen 0 und 30 liegen",
+      "invalid_year_month": "Der Monat muss zwischen 1 und 12 liegen"
     },
     "step": {
       "repeat_every": {
@@ -147,6 +161,18 @@
         },
         "data_description": {
           "repeat_days_before_end": "Wie viele Tage vor dem letzten Tag des Monats die Task fällig wird (0 = letzter Tag, 1 = vorletzter Tag usw.)."
+        }
+      },
+      "repeat_every_specific_date": {
+        "title": "Bestimmtes Datum jedes Jahr",
+        "description": "Die Task wiederholt sich jedes Jahr am selben Monats- und Tageswert.",
+        "data": {
+          "repeat_year_month": "Monat",
+          "repeat_month_day": "Tag des Monats"
+        },
+        "data_description": {
+          "repeat_year_month": "Der Monat des Jahres (1–12).",
+          "repeat_month_day": "Der Tag des Monats (1–31)."
         }
       },
       "options_repeat_every_weekday": {
@@ -257,6 +283,34 @@
           "notification_interval": "Zeitintervall in Tagen, nach dem Benachrichtigungen erneut gesendet werden."
         }
       },
+      "options_repeat_every_specific_date": {
+        "title": "Bestimmtes Datum jedes Jahr – Optionen",
+        "description": "Zeitplan und Taskeinstellungen aktualisieren.",
+        "data": {
+          "repeat_year_month": "Monat",
+          "repeat_month_day": "Tag des Monats",
+          "active": "Aktiv",
+          "active_override": "Aktiv-Override",
+          "icon": "Symbol",
+          "tags": "Tags",
+          "todo_lists": "Todo-Listen",
+          "due_soon_days": "Bald fällig (Tage)",
+          "due_soon_override": "Bald-fällig-Override (Tage)",
+          "notification_interval": "Benachrichtigungsintervall (Tage)"
+        },
+        "data_description": {
+          "repeat_year_month": "Der Monat des Jahres (1–12).",
+          "repeat_month_day": "Der Tag des Monats (1–31).",
+          "active": "Aktiviert oder deaktiviert die Task.",
+          "active_override": "Wähle ein input_boolean, um die Aktiv-Einstellung zu überschreiben.",
+          "icon": "Symbol für die Task.",
+          "tags": "Tags zur Kategorisierung der Task, durch Komma getrennt.",
+          "todo_lists": "Todo-Listen, zu denen diese Task hinzugefügt wird.",
+          "due_soon_days": "Anzahl der Tage vor Fälligkeit, ab denen die Task als 'bald fällig' gilt.",
+          "due_soon_override": "Wähle ein input_number (Wert in Tagen), um den 'Bald fällig'-Schwellenwert zu überschreiben.",
+          "notification_interval": "Zeitintervall in Tagen, nach dem Benachrichtigungen erneut gesendet werden."
+        }
+      },
       "options_repeat_after": {
         "title": "Nach Abschluss wiederholen – Optionen",
         "description": "Intervall und Taskeinstellungen aktualisieren.",
@@ -309,7 +363,8 @@
         "repeat_every_weekday": "Alle N Wochen an einem Wochentag",
         "repeat_every_day_of_month": "An einem bestimmten Monatstag",
         "repeat_every_weekday_of_month": "An einem bestimmten Wochentag des Monats",
-        "repeat_every_days_before_end_of_month": "N Tage vor Monatsende"
+        "repeat_every_days_before_end_of_month": "N Tage vor Monatsende",
+        "repeat_every_specific_date": "Gleiches Datum jedes Jahr"
       }
     },
     "weekday": {

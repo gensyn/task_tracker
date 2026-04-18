@@ -32,6 +32,7 @@ from .const import (
     CONF_REPEAT_AFTER, CONF_REPEAT_EVERY,
     CONF_REPEAT_EVERY_WEEKDAY, CONF_REPEAT_EVERY_DAY_OF_MONTH,
     CONF_REPEAT_EVERY_WEEKDAY_OF_MONTH, CONF_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH,
+    CONF_REPEAT_EVERY_SPECIFIC_DATE,
 )
 
 LOGGER = getLogger(__name__)
@@ -50,6 +51,7 @@ class TaskTrackerCoordinator:
         repeat_month_day: int = 1,
         repeat_nth_occurrence: str = "1",
         repeat_days_before_end: int = 0,
+        repeat_year_month: int = 1,
         due_soon_days: int = 0,
     ) -> None:
         """Initialise the coordinator."""
@@ -66,6 +68,7 @@ class TaskTrackerCoordinator:
             else "1"
         )
         self.repeat_days_before_end: int = max(0, repeat_days_before_end or 0)
+        self.repeat_year_month: int = max(1, min(12, repeat_year_month or 1))
         self.due_soon_days: int = max(0, due_soon_days or 0)
         self._listeners: list[Callable[[], None]] = []
 
@@ -172,6 +175,8 @@ class TaskTrackerCoordinator:
             )
         if etype == CONF_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH:
             return self._calc_next_days_before_end_of_month(last, self.repeat_days_before_end)
+        if etype == CONF_REPEAT_EVERY_SPECIFIC_DATE:
+            return self._calc_next_specific_date(last, self.repeat_year_month, self.repeat_month_day)
         # Unrecognised sub-type: fall back to a 7-day interval
         return last + relativedelta(days=7)
 
@@ -195,6 +200,8 @@ class TaskTrackerCoordinator:
             )
         if etype == CONF_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH:
             return self._calc_most_recent_days_before_end_of_month(today, self.repeat_days_before_end)
+        if etype == CONF_REPEAT_EVERY_SPECIFIC_DATE:
+            return self._calc_most_recent_specific_date(today, self.repeat_year_month, self.repeat_month_day)
         # Unrecognised sub-type: fall back to today
         return today
 
@@ -375,3 +382,39 @@ class TaskTrackerCoordinator:
             candidate_month -= relativedelta(months=1)
         # Unreachable in practice; last-resort fallback
         return today
+
+    @staticmethod
+    def _calc_next_specific_date(last: date, month: int, day: int) -> date:
+        """Return the next occurrence of *month*/*day* strictly after *last*.
+
+        The target day is clamped to the last day of the given month so that
+        e.g. month=2, day=30 is treated as February 28/29 rather than being
+        an invalid date.
+        """
+        last_day_of_month = calendar.monthrange(last.year, month)[1]
+        clamped_day = min(day, last_day_of_month)
+        candidate = last.replace(month=month, day=clamped_day)
+        if candidate > last:
+            return candidate
+        # Advance to the next year
+        next_year = last.year + 1
+        last_day_next = calendar.monthrange(next_year, month)[1]
+        return date(next_year, month, min(day, last_day_next))
+
+    @staticmethod
+    def _calc_most_recent_specific_date(today: date, month: int, day: int) -> date:
+        """Return the most recent occurrence of *month*/*day* on or before *today*.
+
+        The target day is clamped to the last day of the given month so that
+        e.g. month=2, day=30 is treated as February 28/29 rather than being
+        an invalid date.
+        """
+        last_day_of_month = calendar.monthrange(today.year, month)[1]
+        clamped_day = min(day, last_day_of_month)
+        candidate = today.replace(month=month, day=clamped_day)
+        if candidate <= today:
+            return candidate
+        # The target date hasn't occurred yet this year — go back to the previous year.
+        prev_year = today.year - 1
+        last_day_prev = calendar.monthrange(prev_year, month)[1]
+        return date(prev_year, month, min(day, last_day_prev))

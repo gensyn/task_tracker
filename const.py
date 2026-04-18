@@ -35,6 +35,7 @@ CONF_REPEAT_EVERY_WEEKDAY = "repeat_every_weekday"                              
 CONF_REPEAT_EVERY_DAY_OF_MONTH = "repeat_every_day_of_month"                      # Nth day of the month
 CONF_REPEAT_EVERY_WEEKDAY_OF_MONTH = "repeat_every_weekday_of_month"              # Nth weekday of the month
 CONF_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH = "repeat_every_days_before_end_of_month"  # N days before month end
+CONF_REPEAT_EVERY_SPECIFIC_DATE = "repeat_every_specific_date"                    # specific month+day every year
 
 # Field names for repeat_every schedule details
 CONF_REPEAT_WEEKDAY = "repeat_weekday"              # which weekday (monday … sunday)
@@ -42,6 +43,7 @@ CONF_REPEAT_WEEKS_INTERVAL = "repeat_weeks_interval"  # how many weeks between o
 CONF_REPEAT_MONTH_DAY = "repeat_month_day"          # day 1-31 of the month
 CONF_REPEAT_NTH_OCCURRENCE = "repeat_nth_occurrence"  # "1","2","3","4","last"
 CONF_REPEAT_DAYS_BEFORE_END = "repeat_days_before_end"  # days before month end (0 = last day)
+CONF_REPEAT_YEAR_MONTH = "repeat_year_month"        # month 1-12 for specific-date-of-year schedule
 
 # Weekday value constants
 CONF_MONDAY = "monday"

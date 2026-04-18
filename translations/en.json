@@ -6,7 +6,8 @@
     "error": {
       "unknown": "Unexpected error",
       "invalid_month_day": "Day of month must be between 1 and 31",
-      "invalid_days_before_end": "Days before month end must be between 0 and 30"
+      "invalid_days_before_end": "Days before month end must be between 0 and 30",
+      "invalid_year_month": "Month must be between 1 and 12"
     },
     "step": {
       "user": {
@@ -85,6 +86,18 @@
         "data_description": {
           "repeat_days_before_end": "How many days before the last day of the month the task is due (0 = last day, 1 = second-to-last day, etc.)."
         }
+      },
+      "repeat_every_specific_date": {
+        "title": "Specific Date Every Year",
+        "description": "The task repeats on the same month and day every year.",
+        "data": {
+          "repeat_year_month": "Month",
+          "repeat_month_day": "Day of Month"
+        },
+        "data_description": {
+          "repeat_year_month": "The month of the year (1–12).",
+          "repeat_month_day": "The day of the month (1–31)."
+        }
       }
     }
   },
@@ -95,7 +108,8 @@
     "error": {
       "unknown": "Unexpected error",
       "invalid_month_day": "Day of month must be between 1 and 31",
-      "invalid_days_before_end": "Days before month end must be between 0 and 30"
+      "invalid_days_before_end": "Days before month end must be between 0 and 30",
+      "invalid_year_month": "Month must be between 1 and 12"
     },
     "step": {
       "repeat_every": {
@@ -150,6 +164,18 @@
         },
         "data_description": {
           "repeat_days_before_end": "How many days before the last day of the month the task is due (0 = last day, 1 = second-to-last day, etc.)."
+        }
+      },
+      "repeat_every_specific_date": {
+        "title": "Specific Date Every Year",
+        "description": "The task repeats on the same month and day every year.",
+        "data": {
+          "repeat_year_month": "Month",
+          "repeat_month_day": "Day of Month"
+        },
+        "data_description": {
+          "repeat_year_month": "The month of the year (1–12).",
+          "repeat_month_day": "The day of the month (1–31)."
         }
       },
       "options_repeat_every_weekday": {
@@ -260,6 +286,34 @@
           "notification_interval": "The time in days after which notifications are sent again."
         }
       },
+      "options_repeat_every_specific_date": {
+        "title": "Specific Date Every Year – Options",
+        "description": "Update the schedule and task settings.",
+        "data": {
+          "repeat_year_month": "Month",
+          "repeat_month_day": "Day of Month",
+          "active": "Active",
+          "active_override": "Active Override",
+          "icon": "Icon",
+          "tags": "Tags",
+          "todo_lists": "Todo-Lists",
+          "due_soon_days": "Due soon (days)",
+          "due_soon_override": "Due soon Override (days)",
+          "notification_interval": "Notification Interval (days)"
+        },
+        "data_description": {
+          "repeat_year_month": "The month of the year (1–12).",
+          "repeat_month_day": "The day of the month (1–31).",
+          "active": "Enable or disable the task.",
+          "active_override": "Select an input_boolean to override the Active setting.",
+          "icon": "Icon to represent the task.",
+          "tags": "Tags to categorize the task, separated by commas.",
+          "todo_lists": "Todo-Lists to which this task will be added.",
+          "due_soon_days": "The number of days before the task is due to show it as due soon.",
+          "due_soon_override": "Select an input_number (value in days) to override the Due soon threshold.",
+          "notification_interval": "The time in days after which notifications are sent again."
+        }
+      },
       "options_repeat_after": {
         "title": "Repeat After Completion – Options",
         "description": "Update the interval and task settings.",
@@ -312,7 +366,8 @@
         "repeat_every_weekday": "Every Nth weekday",
         "repeat_every_day_of_month": "Every Nth day of the month",
         "repeat_every_weekday_of_month": "Every Nth weekday of the month",
-        "repeat_every_days_before_end_of_month": "N days before month end"
+        "repeat_every_days_before_end_of_month": "N days before month end",
+        "repeat_every_specific_date": "Same date every year"
       }
     },
     "weekday": {

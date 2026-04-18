@@ -52,6 +52,7 @@ def _make_repeat_after_entry(**extra_options):
 
 def _make_repeat_every_entry(repeat_every_type: str, **extra_options):
     """Return a ConfigEntry that represents a repeat_every task of the given sub-type."""
+    from task_tracker.const import CONF_REPEAT_YEAR_MONTH
     opts = {
         CONF_ACTIVE: True,
         CONF_REPEAT_MODE: CONF_REPEAT_EVERY,
@@ -66,6 +67,7 @@ def _make_repeat_every_entry(repeat_every_type: str, **extra_options):
         CONF_REPEAT_MONTH_DAY: 1,
         CONF_REPEAT_NTH_OCCURRENCE: "1",
         CONF_REPEAT_DAYS_BEFORE_END: 0,
+        CONF_REPEAT_YEAR_MONTH: 1,
         **extra_options,
     }
     return ConfigEntry(options=opts)
@@ -535,3 +537,121 @@ class TestOptionsRepeatEveryDaysBeforeEndOfMonth(unittest.IsolatedAsyncioTestCas
         self.assertEqual(result["type"], "form")
         self.assertIn(CONF_REPEAT_DAYS_BEFORE_END, result.get("errors", {}))
         self.assertEqual(result["errors"][CONF_REPEAT_DAYS_BEFORE_END], "invalid_days_before_end")
+
+
+# ---------------------------------------------------------------------------
+# Tests: repeat_every_specific_date in options flow
+# ---------------------------------------------------------------------------
+
+class TestOptionsFlowRepeatEverySpecificDateInit(unittest.IsolatedAsyncioTestCase):
+    """async_step_init routing for repeat_every_specific_date entries."""
+
+    async def test_specific_date_subtype_routes_to_correct_options_step(self):
+        from task_tracker.const import CONF_REPEAT_EVERY_SPECIFIC_DATE, CONF_REPEAT_YEAR_MONTH
+        entry = _make_repeat_every_entry(
+            CONF_REPEAT_EVERY_SPECIFIC_DATE,
+            **{CONF_REPEAT_YEAR_MONTH: 3, CONF_REPEAT_MONTH_DAY: 15}
+        )
+        flow = _make_flow(entry)
+        result = await flow.async_step_init(user_input=None)
+        self.assertEqual(result["type"], "form")
+        self.assertEqual(result["step_id"], "options_repeat_every_specific_date")
+
+
+class TestOptionsFlowRepeatEverySpecificDateCombined(unittest.IsolatedAsyncioTestCase):
+    """Tests for async_step_options_repeat_every_specific_date."""
+
+    def _make_flow(self):
+        from task_tracker.const import CONF_REPEAT_EVERY_SPECIFIC_DATE, CONF_REPEAT_YEAR_MONTH
+        entry = _make_repeat_every_entry(
+            CONF_REPEAT_EVERY_SPECIFIC_DATE,
+            **{CONF_REPEAT_YEAR_MONTH: 3, CONF_REPEAT_MONTH_DAY: 15}
+        )
+        return _make_flow(entry)
+
+    async def test_shows_form_on_no_input(self):
+        flow = self._make_flow()
+        flow._accumulated_options[CONF_REPEAT_MODE] = CONF_REPEAT_EVERY
+        from task_tracker.const import CONF_REPEAT_EVERY_SPECIFIC_DATE
+        flow._accumulated_options[CONF_REPEAT_EVERY_TYPE] = CONF_REPEAT_EVERY_SPECIFIC_DATE
+        result = await flow.async_step_options_repeat_every_specific_date(user_input=None)
+        self.assertEqual(result["type"], "form")
+        self.assertEqual(result["step_id"], "options_repeat_every_specific_date")
+
+    async def test_creates_entry_with_valid_input(self):
+        from task_tracker.const import CONF_REPEAT_EVERY_SPECIFIC_DATE, CONF_REPEAT_YEAR_MONTH
+        flow = self._make_flow()
+        flow._accumulated_options[CONF_REPEAT_MODE] = CONF_REPEAT_EVERY
+        flow._accumulated_options[CONF_REPEAT_EVERY_TYPE] = CONF_REPEAT_EVERY_SPECIFIC_DATE
+        result = await flow.async_step_options_repeat_every_specific_date(user_input={
+            CONF_REPEAT_YEAR_MONTH: 6,
+            CONF_REPEAT_MONTH_DAY: 20,
+            CONF_ACTIVE: True,
+            CONF_ICON: "mdi:calendar",
+            CONF_TAGS: "",
+            CONF_TODO_LISTS: [],
+            CONF_DUE_SOON_DAYS: 0,
+            CONF_NOTIFICATION_INTERVAL: 1,
+        })
+        self.assertEqual(result["type"], "create_entry")
+        opts = result["data"]
+        self.assertEqual(opts[CONF_REPEAT_EVERY_TYPE], CONF_REPEAT_EVERY_SPECIFIC_DATE)
+        self.assertEqual(opts[CONF_REPEAT_YEAR_MONTH], 6)
+        self.assertEqual(opts[CONF_REPEAT_MONTH_DAY], 20)
+
+    async def test_rejects_invalid_month_zero(self):
+        from task_tracker.const import CONF_REPEAT_EVERY_SPECIFIC_DATE, CONF_REPEAT_YEAR_MONTH
+        flow = self._make_flow()
+        flow._accumulated_options[CONF_REPEAT_MODE] = CONF_REPEAT_EVERY
+        flow._accumulated_options[CONF_REPEAT_EVERY_TYPE] = CONF_REPEAT_EVERY_SPECIFIC_DATE
+        result = await flow.async_step_options_repeat_every_specific_date(user_input={
+            CONF_REPEAT_YEAR_MONTH: 0,
+            CONF_REPEAT_MONTH_DAY: 15,
+            CONF_ACTIVE: True,
+            CONF_ICON: "mdi:calendar",
+            CONF_TAGS: "",
+            CONF_TODO_LISTS: [],
+            CONF_DUE_SOON_DAYS: 0,
+            CONF_NOTIFICATION_INTERVAL: 1,
+        })
+        self.assertEqual(result["type"], "form")
+        self.assertIn(CONF_REPEAT_YEAR_MONTH, result.get("errors", {}))
+        self.assertEqual(result["errors"][CONF_REPEAT_YEAR_MONTH], "invalid_year_month")
+
+    async def test_rejects_invalid_month_above_twelve(self):
+        from task_tracker.const import CONF_REPEAT_EVERY_SPECIFIC_DATE, CONF_REPEAT_YEAR_MONTH
+        flow = self._make_flow()
+        flow._accumulated_options[CONF_REPEAT_MODE] = CONF_REPEAT_EVERY
+        flow._accumulated_options[CONF_REPEAT_EVERY_TYPE] = CONF_REPEAT_EVERY_SPECIFIC_DATE
+        result = await flow.async_step_options_repeat_every_specific_date(user_input={
+            CONF_REPEAT_YEAR_MONTH: 13,
+            CONF_REPEAT_MONTH_DAY: 1,
+            CONF_ACTIVE: True,
+            CONF_ICON: "mdi:calendar",
+            CONF_TAGS: "",
+            CONF_TODO_LISTS: [],
+            CONF_DUE_SOON_DAYS: 0,
+            CONF_NOTIFICATION_INTERVAL: 1,
+        })
+        self.assertEqual(result["type"], "form")
+        self.assertIn(CONF_REPEAT_YEAR_MONTH, result.get("errors", {}))
+        self.assertEqual(result["errors"][CONF_REPEAT_YEAR_MONTH], "invalid_year_month")
+
+    async def test_rejects_invalid_day_above_31(self):
+        from task_tracker.const import CONF_REPEAT_EVERY_SPECIFIC_DATE, CONF_REPEAT_YEAR_MONTH
+        flow = self._make_flow()
+        flow._accumulated_options[CONF_REPEAT_MODE] = CONF_REPEAT_EVERY
+        flow._accumulated_options[CONF_REPEAT_EVERY_TYPE] = CONF_REPEAT_EVERY_SPECIFIC_DATE
+        result = await flow.async_step_options_repeat_every_specific_date(user_input={
+            CONF_REPEAT_YEAR_MONTH: 3,
+            CONF_REPEAT_MONTH_DAY: 32,
+            CONF_ACTIVE: True,
+            CONF_ICON: "mdi:calendar",
+            CONF_TAGS: "",
+            CONF_TODO_LISTS: [],
+            CONF_DUE_SOON_DAYS: 0,
+            CONF_NOTIFICATION_INTERVAL: 1,
+        })
+        self.assertEqual(result["type"], "form")
+        self.assertIn(CONF_REPEAT_MONTH_DAY, result.get("errors", {}))
+        self.assertEqual(result["errors"][CONF_REPEAT_MONTH_DAY], "invalid_month_day")

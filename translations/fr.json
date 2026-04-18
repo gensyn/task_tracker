@@ -6,7 +6,8 @@
     "error": {
       "unknown": "Erreur inattendue",
       "invalid_month_day": "Le jour du mois doit être compris entre 1 et 31",
-      "invalid_days_before_end": "Les jours avant la fin du mois doivent être compris entre 0 et 30"
+      "invalid_days_before_end": "Les jours avant la fin du mois doivent être compris entre 0 et 30",
+      "invalid_year_month": "Le mois doit être compris entre 1 et 12"
     },
     "step": {
       "user": {
@@ -85,6 +86,18 @@
         "data_description": {
           "repeat_days_before_end": "Combien de jours avant le dernier jour du mois la tâche est due (0 = dernier jour, 1 = avant-dernier jour, etc.)."
         }
+      },
+      "repeat_every_specific_date": {
+        "title": "Date spécifique chaque année",
+        "description": "La tâche se répète chaque année au même mois et jour.",
+        "data": {
+          "repeat_year_month": "Mois",
+          "repeat_month_day": "Jour du mois"
+        },
+        "data_description": {
+          "repeat_year_month": "Le mois de l'année (1–12).",
+          "repeat_month_day": "Le jour du mois (1–31)."
+        }
       }
     }
   },
@@ -95,7 +108,8 @@
     "error": {
       "unknown": "Erreur inattendue",
       "invalid_month_day": "Le jour du mois doit être compris entre 1 et 31",
-      "invalid_days_before_end": "Les jours avant la fin du mois doivent être compris entre 0 et 30"
+      "invalid_days_before_end": "Les jours avant la fin du mois doivent être compris entre 0 et 30",
+      "invalid_year_month": "Le mois doit être compris entre 1 et 12"
     },
     "step": {
       "repeat_every": {
@@ -150,6 +164,18 @@
         },
         "data_description": {
           "repeat_days_before_end": "Combien de jours avant le dernier jour du mois la tâche est due (0 = dernier jour, 1 = avant-dernier jour, etc.)."
+        }
+      },
+      "repeat_every_specific_date": {
+        "title": "Date spécifique chaque année",
+        "description": "La tâche se répète chaque année au même mois et jour.",
+        "data": {
+          "repeat_year_month": "Mois",
+          "repeat_month_day": "Jour du mois"
+        },
+        "data_description": {
+          "repeat_year_month": "Le mois de l'année (1–12).",
+          "repeat_month_day": "Le jour du mois (1–31)."
         }
       },
       "options_repeat_every_weekday": {
@@ -260,6 +286,34 @@
           "notification_interval": "Le délai en jours après lequel les notifications sont renvoyées."
         }
       },
+      "options_repeat_every_specific_date": {
+        "title": "Date spécifique chaque année – Options",
+        "description": "Mettez à jour la planification et les paramètres de la tâche.",
+        "data": {
+          "repeat_year_month": "Mois",
+          "repeat_month_day": "Jour du mois",
+          "active": "Actif",
+          "active_override": "Surcharge d'activation",
+          "icon": "Icône",
+          "tags": "Étiquettes",
+          "todo_lists": "Listes de tâches",
+          "due_soon_days": "Bientôt due (jours)",
+          "due_soon_override": "Surcharge Bientôt due (jours)",
+          "notification_interval": "Intervalle de notification (jours)"
+        },
+        "data_description": {
+          "repeat_year_month": "Le mois de l'année (1–12).",
+          "repeat_month_day": "Le jour du mois (1–31).",
+          "active": "Activer ou désactiver la tâche.",
+          "active_override": "Sélectionnez un input_boolean pour surcharger le paramètre Actif.",
+          "icon": "Icône représentant la tâche.",
+          "tags": "Étiquettes pour catégoriser la tâche, séparées par des virgules.",
+          "todo_lists": "Listes de tâches auxquelles cette tâche sera ajoutée.",
+          "due_soon_days": "Le nombre de jours avant l'échéance pour afficher la tâche comme bientôt due.",
+          "due_soon_override": "Sélectionnez un input_number (valeur en jours) pour surcharger le seuil Bientôt due.",
+          "notification_interval": "Le délai en jours après lequel les notifications sont renvoyées."
+        }
+      },
       "options_repeat_after": {
         "title": "Répéter après achèvement - Options",
         "description": "Mettez à jour l'intervalle et les paramètres de la tâche.",
@@ -312,7 +366,8 @@
         "repeat_every_weekday": "Chaque N semaines un jour de la semaine",
         "repeat_every_day_of_month": "Chaque Nème jour du mois",
         "repeat_every_weekday_of_month": "Chaque Nème jour de la semaine du mois",
-        "repeat_every_days_before_end_of_month": "N jours avant la fin du mois"
+        "repeat_every_days_before_end_of_month": "N jours avant la fin du mois",
+        "repeat_every_specific_date": "Même date chaque année"
       }
     },
     "weekday": {
