@@ -71,7 +71,7 @@ Depending on the chosen repeat mode, you will be guided through one or more addi
 
 ## 🔄 Repeat Modes
 
-Task Tracker supports two repeat modes, selected during task creation and changeable at any time via the task options.
+Task Tracker supports two repeat modes, selected during task creation.
 
 ### Repeat after completion
 
