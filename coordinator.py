@@ -224,7 +224,7 @@ class TaskTrackerCoordinator:
         return last + timedelta(days=days_ahead) + timedelta(weeks=weeks_interval - 1)
 
     @staticmethod
-    def _calc_next_day_of_month(last: date, day: int, months_interval: int = 1) -> date:
+    def _calc_next_day_of_month(last: date, day: int, months_interval: int) -> date:
         """Return the next occurrence of *day* of the month strictly after *last*.
 
         Advances by *months_interval* months when the target day in the current
@@ -240,7 +240,7 @@ class TaskTrackerCoordinator:
         return next_month.replace(day=min(day, last_day_of_next))
 
     @staticmethod
-    def _calc_next_days_before_end_of_month(last: date, days_before: int, months_interval: int = 1) -> date:
+    def _calc_next_days_before_end_of_month(last: date, days_before: int, months_interval: int) -> date:
         """Return the next occurrence of (last day of month − *days_before*) strictly after *last*.
 
         ``days_before=0`` targets the last day of the month; ``days_before=1`` targets the
@@ -279,7 +279,7 @@ class TaskTrackerCoordinator:
         result = first_occurrence + timedelta(weeks=nth - 1)
         return result if result.month == month else None
 
-    def _calc_next_weekday_of_month(self, last: date, weekday_name: str, nth_str: str, months_interval: int = 1) -> date:
+    def _calc_next_weekday_of_month(self, last: date, weekday_name: str, nth_str: str, months_interval: int) -> date:
         """Return the next *nth* weekday-of-month occurrence strictly after *last*.
 
         Advances by *months_interval* months at a time when searching for the
@@ -346,7 +346,7 @@ class TaskTrackerCoordinator:
         periods_elapsed = days_elapsed // (weeks_interval * 7)
         return first_cycle + timedelta(weeks=periods_elapsed * weeks_interval)
 
-    def _calc_most_recent_day_of_month(self, today: date, day: int, months_interval: int = 1) -> date:
+    def _calc_most_recent_day_of_month(self, today: date, day: int, months_interval: int) -> date:
         """Return the most recent date on or before *today* that is the *day*-th of its month.
 
         When *months_interval* is 1 every month is a valid cycle month.  For
@@ -373,7 +373,7 @@ class TaskTrackerCoordinator:
                 return current
             current = nxt
 
-    def _calc_most_recent_days_before_end_of_month(self, today: date, days_before: int, months_interval: int = 1) -> date:
+    def _calc_most_recent_days_before_end_of_month(self, today: date, days_before: int, months_interval: int) -> date:
         """Return the most recent date on or before *today* that is *days_before* days before month-end.
 
         When *months_interval* is 1 every month is a valid cycle month.  For
@@ -403,7 +403,7 @@ class TaskTrackerCoordinator:
                 return current
             current = nxt
 
-    def _calc_most_recent_weekday_of_month(self, today: date, weekday_name: str, nth_str: str, months_interval: int = 1) -> date:
+    def _calc_most_recent_weekday_of_month(self, today: date, weekday_name: str, nth_str: str, months_interval: int) -> date:
         """Return the most recent *nth* weekday-of-month occurrence on or before *today*.
 
         When *months_interval* is 1 every month is a valid cycle month.  For
