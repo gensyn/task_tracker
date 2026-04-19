@@ -32,6 +32,7 @@ from .const import (
     CONF_REPEAT_AFTER, CONF_REPEAT_EVERY,
     CONF_REPEAT_EVERY_WEEKDAY, CONF_REPEAT_EVERY_DAY_OF_MONTH,
     CONF_REPEAT_EVERY_WEEKDAY_OF_MONTH, CONF_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH,
+    CONF_REPEAT_MONTHS_INTERVAL,
 )
 
 LOGGER = getLogger(__name__)
@@ -50,6 +51,7 @@ class TaskTrackerCoordinator:
         repeat_month_day: int = 1,
         repeat_nth_occurrence: str = "1",
         repeat_days_before_end: int = 0,
+        repeat_months_interval: int = 1,
         due_soon_days: int = 0,
     ) -> None:
         """Initialise the coordinator."""
@@ -66,6 +68,7 @@ class TaskTrackerCoordinator:
             else "1"
         )
         self.repeat_days_before_end: int = max(0, repeat_days_before_end or 0)
+        self.repeat_months_interval: int = max(1, repeat_months_interval or 1)
         self.due_soon_days: int = max(0, due_soon_days or 0)
         self._listeners: list[Callable[[], None]] = []
 
@@ -165,13 +168,13 @@ class TaskTrackerCoordinator:
                 last, self.repeat_weekday or "monday", self.repeat_weeks_interval
             )
         if etype == CONF_REPEAT_EVERY_DAY_OF_MONTH:
-            return self._calc_next_day_of_month(last, self.repeat_month_day)
+            return self._calc_next_day_of_month(last, self.repeat_month_day, self.repeat_months_interval)
         if etype == CONF_REPEAT_EVERY_WEEKDAY_OF_MONTH:
             return self._calc_next_weekday_of_month(
-                last, self.repeat_weekday or "monday", self.repeat_nth_occurrence
+                last, self.repeat_weekday or "monday", self.repeat_nth_occurrence, self.repeat_months_interval
             )
         if etype == CONF_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH:
-            return self._calc_next_days_before_end_of_month(last, self.repeat_days_before_end)
+            return self._calc_next_days_before_end_of_month(last, self.repeat_days_before_end, self.repeat_months_interval)
         # Unrecognised sub-type: fall back to a 7-day interval
         return last + relativedelta(days=7)
 
@@ -188,13 +191,13 @@ class TaskTrackerCoordinator:
                 today, self.repeat_weekday or "monday", self.repeat_weeks_interval
             )
         if etype == CONF_REPEAT_EVERY_DAY_OF_MONTH:
-            return self._calc_most_recent_day_of_month(today, self.repeat_month_day)
+            return self._calc_most_recent_day_of_month(today, self.repeat_month_day, self.repeat_months_interval)
         if etype == CONF_REPEAT_EVERY_WEEKDAY_OF_MONTH:
             return self._calc_most_recent_weekday_of_month(
-                today, self.repeat_weekday or "monday", self.repeat_nth_occurrence
+                today, self.repeat_weekday or "monday", self.repeat_nth_occurrence, self.repeat_months_interval
             )
         if etype == CONF_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH:
-            return self._calc_most_recent_days_before_end_of_month(today, self.repeat_days_before_end)
+            return self._calc_most_recent_days_before_end_of_month(today, self.repeat_days_before_end, self.repeat_months_interval)
         # Unrecognised sub-type: fall back to today
         return today
 
@@ -221,32 +224,38 @@ class TaskTrackerCoordinator:
         return last + timedelta(days=days_ahead) + timedelta(weeks=weeks_interval - 1)
 
     @staticmethod
-    def _calc_next_day_of_month(last: date, day: int) -> date:
-        """Return the next occurrence of *day* of the month strictly after *last*."""
+    def _calc_next_day_of_month(last: date, day: int, months_interval: int = 1) -> date:
+        """Return the next occurrence of *day* of the month strictly after *last*.
+
+        Advances by *months_interval* months when the target day in the current
+        month has already been reached.
+        """
         last_day_of_month = calendar.monthrange(last.year, last.month)[1]
         candidate = last.replace(day=min(day, last_day_of_month))
         if candidate > last:
             return candidate
-        # Advance to next month
-        next_month = last.replace(day=1) + relativedelta(months=1)
+        # Advance to the month that is months_interval ahead
+        next_month = last.replace(day=1) + relativedelta(months=months_interval)
         last_day_of_next = calendar.monthrange(next_month.year, next_month.month)[1]
         return next_month.replace(day=min(day, last_day_of_next))
 
     @staticmethod
-    def _calc_next_days_before_end_of_month(last: date, days_before: int) -> date:
+    def _calc_next_days_before_end_of_month(last: date, days_before: int, months_interval: int = 1) -> date:
         """Return the next occurrence of (last day of month − *days_before*) strictly after *last*.
 
         ``days_before=0`` targets the last day of the month; ``days_before=1`` targets the
         second-to-last day, and so on.  The target day is clamped to at least the 1st so that
         large values of *days_before* in short months never produce an invalid date.
+
+        Advances by *months_interval* months when the target day has already been reached.
         """
         last_day = calendar.monthrange(last.year, last.month)[1]
         target_day = max(1, last_day - days_before)
         candidate = last.replace(day=target_day)
         if candidate > last:
             return candidate
-        # Advance to next month
-        next_month = last.replace(day=1) + relativedelta(months=1)
+        # Advance to the month that is months_interval ahead
+        next_month = last.replace(day=1) + relativedelta(months=months_interval)
         next_last_day = calendar.monthrange(next_month.year, next_month.month)[1]
         return next_month.replace(day=max(1, next_last_day - days_before))
 
@@ -270,25 +279,29 @@ class TaskTrackerCoordinator:
         result = first_occurrence + timedelta(weeks=nth - 1)
         return result if result.month == month else None
 
-    def _calc_next_weekday_of_month(self, last: date, weekday_name: str, nth_str: str) -> date:
-        """Return the next *nth* weekday-of-month occurrence strictly after *last*."""
+    def _calc_next_weekday_of_month(self, last: date, weekday_name: str, nth_str: str, months_interval: int = 1) -> date:
+        """Return the next *nth* weekday-of-month occurrence strictly after *last*.
+
+        Advances by *months_interval* months at a time when searching for the
+        next valid occurrence.
+        """
         target = self._weekday_number(weekday_name)
         nth = -1 if nth_str == "last" else int(nth_str)
         # Try the current month
         occurrence = self._get_nth_weekday_of_month(last.year, last.month, target, nth)
         if occurrence is not None and occurrence > last:
             return occurrence
-        # Advance month by month until a valid occurrence is found
-        candidate_month = last.replace(day=1) + relativedelta(months=1)
-        for _ in range(24):  # safety cap of 24 months
+        # Advance by months_interval months at a time until a valid occurrence is found
+        candidate_month = last.replace(day=1) + relativedelta(months=months_interval)
+        for _ in range(24):  # safety cap of 24 attempts
             occurrence = self._get_nth_weekday_of_month(
                 candidate_month.year, candidate_month.month, target, nth
             )
             if occurrence is not None:
                 return occurrence
-            candidate_month += relativedelta(months=1)
+            candidate_month += relativedelta(months=months_interval)
         # Unreachable in practice; last-resort fallback
-        return last + relativedelta(months=1)
+        return last + relativedelta(months=months_interval)
 
     # ------------------------------------------------------------------
     # Most-recent-occurrence helpers (used by async_mark_as_done)
@@ -333,45 +346,95 @@ class TaskTrackerCoordinator:
         periods_elapsed = days_elapsed // (weeks_interval * 7)
         return first_cycle + timedelta(weeks=periods_elapsed * weeks_interval)
 
-    @staticmethod
-    def _calc_most_recent_day_of_month(today: date, day: int) -> date:
-        """Return the most recent date on or before *today* that is the *day*-th of its month."""
-        last_day_of_month = calendar.monthrange(today.year, today.month)[1]
-        candidate = today.replace(day=min(day, last_day_of_month))
-        if candidate <= today:
-            return candidate
-        # The target day hasn't occurred yet this month — go back to the previous month.
-        prev_month = today.replace(day=1) - relativedelta(months=1)
-        prev_last_day = calendar.monthrange(prev_month.year, prev_month.month)[1]
-        return prev_month.replace(day=min(day, prev_last_day))
+    def _calc_most_recent_day_of_month(self, today: date, day: int, months_interval: int = 1) -> date:
+        """Return the most recent date on or before *today* that is the *day*-th of its month.
 
-    @staticmethod
-    def _calc_most_recent_days_before_end_of_month(today: date, days_before: int) -> date:
-        """Return the most recent date on or before *today* that is *days_before* days before month-end."""
-        last_day = calendar.monthrange(today.year, today.month)[1]
-        candidate = today.replace(day=max(1, last_day - days_before))
-        if candidate <= today:
-            return candidate
-        prev_month = today.replace(day=1) - relativedelta(months=1)
-        prev_last_day = calendar.monthrange(prev_month.year, prev_month.month)[1]
-        return prev_month.replace(day=max(1, prev_last_day - days_before))
+        When *months_interval* is 1 every month is a valid cycle month.  For
+        larger values the valid cycle months are anchored at ``last_done`` and
+        spaced *months_interval* months apart.
+        """
+        if months_interval == 1:
+            last_day_of_month = calendar.monthrange(today.year, today.month)[1]
+            candidate = today.replace(day=min(day, last_day_of_month))
+            if candidate <= today:
+                return candidate
+            # The target day hasn't occurred yet this month — go back to the previous month.
+            prev_month = today.replace(day=1) - relativedelta(months=1)
+            prev_last_day = calendar.monthrange(prev_month.year, prev_month.month)[1]
+            return prev_month.replace(day=min(day, prev_last_day))
+        # For months_interval > 1: walk forward from the first cycle occurrence
+        # after last_done until we exceed today.
+        current = TaskTrackerCoordinator._calc_next_day_of_month(self.last_done, day, months_interval)
+        if current > today:
+            return self.last_done
+        while True:
+            nxt = TaskTrackerCoordinator._calc_next_day_of_month(current, day, months_interval)
+            if nxt > today:
+                return current
+            current = nxt
 
-    def _calc_most_recent_weekday_of_month(self, today: date, weekday_name: str, nth_str: str) -> date:
-        """Return the most recent *nth* weekday-of-month occurrence on or before *today*."""
+    def _calc_most_recent_days_before_end_of_month(self, today: date, days_before: int, months_interval: int = 1) -> date:
+        """Return the most recent date on or before *today* that is *days_before* days before month-end.
+
+        When *months_interval* is 1 every month is a valid cycle month.  For
+        larger values the valid cycle months are anchored at ``last_done`` and
+        spaced *months_interval* months apart.
+        """
+        if months_interval == 1:
+            last_day = calendar.monthrange(today.year, today.month)[1]
+            candidate = today.replace(day=max(1, last_day - days_before))
+            if candidate <= today:
+                return candidate
+            prev_month = today.replace(day=1) - relativedelta(months=1)
+            prev_last_day = calendar.monthrange(prev_month.year, prev_month.month)[1]
+            return prev_month.replace(day=max(1, prev_last_day - days_before))
+        # For months_interval > 1: walk forward from the first cycle occurrence
+        # after last_done until we exceed today.
+        current = TaskTrackerCoordinator._calc_next_days_before_end_of_month(
+            self.last_done, days_before, months_interval
+        )
+        if current > today:
+            return self.last_done
+        while True:
+            nxt = TaskTrackerCoordinator._calc_next_days_before_end_of_month(
+                current, days_before, months_interval
+            )
+            if nxt > today:
+                return current
+            current = nxt
+
+    def _calc_most_recent_weekday_of_month(self, today: date, weekday_name: str, nth_str: str, months_interval: int = 1) -> date:
+        """Return the most recent *nth* weekday-of-month occurrence on or before *today*.
+
+        When *months_interval* is 1 every month is a valid cycle month.  For
+        larger values the valid cycle months are anchored at ``last_done`` and
+        spaced *months_interval* months apart.
+        """
         target = self._weekday_number(weekday_name)
         nth = -1 if nth_str == "last" else int(nth_str)
-        # Try the current month first
-        occurrence = self._get_nth_weekday_of_month(today.year, today.month, target, nth)
-        if occurrence is not None and occurrence <= today:
-            return occurrence
-        # Walk backwards month by month
-        candidate_month = today.replace(day=1) - relativedelta(months=1)
-        for _ in range(24):  # safety cap
-            occurrence = self._get_nth_weekday_of_month(
-                candidate_month.year, candidate_month.month, target, nth
-            )
-            if occurrence is not None:
+        if months_interval == 1:
+            # Try the current month first
+            occurrence = self._get_nth_weekday_of_month(today.year, today.month, target, nth)
+            if occurrence is not None and occurrence <= today:
                 return occurrence
-            candidate_month -= relativedelta(months=1)
-        # Unreachable in practice; last-resort fallback
-        return today
+            # Walk backwards month by month
+            candidate_month = today.replace(day=1) - relativedelta(months=1)
+            for _ in range(24):  # safety cap
+                occurrence = self._get_nth_weekday_of_month(
+                    candidate_month.year, candidate_month.month, target, nth
+                )
+                if occurrence is not None:
+                    return occurrence
+                candidate_month -= relativedelta(months=1)
+            # Unreachable in practice; last-resort fallback
+            return today
+        # For months_interval > 1: walk forward from the first cycle occurrence
+        # after last_done until we exceed today.
+        current = self._calc_next_weekday_of_month(self.last_done, weekday_name, nth_str, months_interval)
+        if current > today:
+            return self.last_done
+        while True:
+            nxt = self._calc_next_weekday_of_month(current, weekday_name, nth_str, months_interval)
+            if nxt > today:
+                return current
+            current = nxt
