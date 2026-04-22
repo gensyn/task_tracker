@@ -227,13 +227,16 @@ class TaskTrackerCoordinator:
     def _calc_next_day_of_month(last: date, day: int, months_interval: int) -> date:
         """Return the next occurrence of *day* of the month strictly after *last*.
 
-        Advances by *months_interval* months when the target day in the current
-        month has already been reached.
+        For *months_interval* == 1 (monthly), the target day in the current month
+        is returned if it is still ahead.  For larger intervals the same-month
+        occurrence is considered part of the *current* cycle, so the function
+        always advances by *months_interval* months to reach the *next* cycle.
         """
-        last_day_of_month = calendar.monthrange(last.year, last.month)[1]
-        candidate = last.replace(day=min(day, last_day_of_month))
-        if candidate > last:
-            return candidate
+        if months_interval == 1:
+            last_day_of_month = calendar.monthrange(last.year, last.month)[1]
+            candidate = last.replace(day=min(day, last_day_of_month))
+            if candidate > last:
+                return candidate
         # Advance to the month that is months_interval ahead
         next_month = last.replace(day=1) + relativedelta(months=months_interval)
         last_day_of_next = calendar.monthrange(next_month.year, next_month.month)[1]
@@ -247,13 +250,16 @@ class TaskTrackerCoordinator:
         second-to-last day, and so on.  The target day is clamped to at least the 1st so that
         large values of *days_before* in short months never produce an invalid date.
 
-        Advances by *months_interval* months when the target day has already been reached.
+        For *months_interval* == 1 (monthly), the target day in the current month is returned
+        if it is still ahead.  For larger intervals the same-month occurrence belongs to the
+        current cycle, so the function always advances by *months_interval* months.
         """
-        last_day = calendar.monthrange(last.year, last.month)[1]
-        target_day = max(1, last_day - days_before)
-        candidate = last.replace(day=target_day)
-        if candidate > last:
-            return candidate
+        if months_interval == 1:
+            last_day = calendar.monthrange(last.year, last.month)[1]
+            target_day = max(1, last_day - days_before)
+            candidate = last.replace(day=target_day)
+            if candidate > last:
+                return candidate
         # Advance to the month that is months_interval ahead
         next_month = last.replace(day=1) + relativedelta(months=months_interval)
         next_last_day = calendar.monthrange(next_month.year, next_month.month)[1]
@@ -282,15 +288,17 @@ class TaskTrackerCoordinator:
     def _calc_next_weekday_of_month(self, last: date, weekday_name: str, nth_str: str, months_interval: int) -> date:
         """Return the next *nth* weekday-of-month occurrence strictly after *last*.
 
-        Advances by *months_interval* months at a time when searching for the
-        next valid occurrence.
+        For *months_interval* == 1 (monthly), the target occurrence in the current month is
+        returned if it is still ahead.  For larger intervals the same-month occurrence belongs
+        to the current cycle, so the function always advances by *months_interval* months.
         """
         target = self._weekday_number(weekday_name)
         nth = -1 if nth_str == "last" else int(nth_str)
-        # Try the current month
-        occurrence = self._get_nth_weekday_of_month(last.year, last.month, target, nth)
-        if occurrence is not None and occurrence > last:
-            return occurrence
+        # For monthly (interval=1): check if this month's occurrence is still ahead.
+        if months_interval == 1:
+            occurrence = self._get_nth_weekday_of_month(last.year, last.month, target, nth)
+            if occurrence is not None and occurrence > last:
+                return occurrence
         # Advance by months_interval months at a time until a valid occurrence is found
         candidate_month = last.replace(day=1) + relativedelta(months=months_interval)
         for _ in range(24):  # safety cap of 24 attempts
