@@ -508,6 +508,9 @@
       },
       "occurrence_last": {
         "name": "Last"
+      },
+      "name_filter_placeholder": {
+        "name": "Filter tasks…"
       }
     }
   },

@@ -507,6 +507,9 @@
       },
       "occurrence_last": {
         "name": "Dernier"
+      },
+      "name_filter_placeholder": {
+        "name": "Filtrer les tâches…"
       }
     }
   },

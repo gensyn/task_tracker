@@ -4,6 +4,7 @@ class TaskTrackerPanel extends HTMLElement {
     super();
     this.attachShadow({ mode: "open" });
     this._filter = "all";
+    this._nameFilter = "";
     this._sortBy = "name";
     this._sortDir = "asc";
     this._narrow = false;
@@ -19,6 +20,10 @@ class TaskTrackerPanel extends HTMLElement {
       if (sortBtn) { this._setSort(sortBtn.dataset.sort); return; }
       const doneBtn = e.target.closest(".mark-done-btn");
       if (doneBtn) { this._markAsDone(doneBtn.dataset.entityId); return; }
+    });
+    this.shadowRoot.addEventListener("input", (e) => {
+      const nameInput = e.target.closest(".name-filter-input");
+      if (nameInput) { this._nameFilter = nameInput.value; this._render(); return; }
     });
   }
 
@@ -95,9 +100,18 @@ class TaskTrackerPanel extends HTMLElement {
   }
 
   _getFilteredTasks() {
-    const tasks = this._getAllTasks();
-    if (this._filter === "all") return tasks;
-    return tasks.filter((t) => t.state === this._filter);
+    let tasks = this._getAllTasks();
+    if (this._filter !== "all") {
+      tasks = tasks.filter((t) => t.state === this._filter);
+    }
+    if (this._nameFilter) {
+      const needle = this._nameFilter.toLowerCase();
+      tasks = tasks.filter((t) => {
+        const name = (t.attributes.friendly_name || t.entity_id).toLowerCase();
+        return name.includes(needle);
+      });
+    }
+    return tasks;
   }
 
   _setFilter(filter) {
@@ -132,6 +146,12 @@ class TaskTrackerPanel extends HTMLElement {
     });
   }
 
+  _monthIntervalSuffix(n) {
+    if (!n || n <= 1) return "";
+    const sp = n === 1 ? "singular" : "plural";
+    return `,\u00a0${this._t("every")}\u00a0${n}\u00a0${this._t(`month_${sp}`)}`;
+  }
+
   _scheduleStr(attrs) {
     const repeatMode = attrs.repeat_mode;
     if (repeatMode !== "repeat_every") {
@@ -151,19 +171,21 @@ class TaskTrackerPanel extends HTMLElement {
     }
     if (t === "repeat_every_day_of_month") {
       return [this._t("schedule"),
-        `${this._t("day_of_month_prefix")}\u00a0${attrs.repeat_month_day}\u00a0${this._t("of_month")}`];
+        `${this._t("day_of_month_prefix")}\u00a0${attrs.repeat_month_day}\u00a0${this._t("of_month")}${this._monthIntervalSuffix(attrs.repeat_months_interval)}`];
     }
     if (t === "repeat_every_weekday_of_month") {
       const nth = this._t(`occurrence_${attrs.repeat_nth_occurrence}`);
       const weekday = this._t(attrs.repeat_weekday);
       return [this._t("schedule"),
-        `${nth}\u00a0${weekday}\u00a0${this._t("of_month")}`];
+        `${nth}\u00a0${weekday}\u00a0${this._t("of_month")}${this._monthIntervalSuffix(attrs.repeat_months_interval)}`];
     }
     if (t === "repeat_every_days_before_end_of_month") {
       const n = attrs.repeat_days_before_end ?? 0;
-      if (n === 0) return [this._t("schedule"), this._t("last_day_of_month")];
-      const sp = n === 1 ? "singular" : "plural";
-      return [this._t("schedule"), `${n}\u00a0${this._t(`days_before_end_of_month_${sp}`)}`];
+      const base = n === 0 ? this._t("last_day_of_month") : (() => {
+        const sp = n === 1 ? "singular" : "plural";
+        return `${n}\u00a0${this._t(`days_before_end_of_month_${sp}`)}`;
+      })();
+      return [this._t("schedule"), `${base}${this._monthIntervalSuffix(attrs.repeat_months_interval)}`];
     }
     return [this._t("schedule"), "—"];
   }
@@ -189,6 +211,9 @@ class TaskTrackerPanel extends HTMLElement {
       dueValue = `${attrs.overdue_by}\u00a0${this._t(`day_${sp}`)}`;
     }
 
+    // "Mark as done" is a no-op for repeat_every tasks that are already done.
+    const showMarkDone = !(attrs.repeat_mode === "repeat_every" && state === "done");
+
     return `
       <div class="task-card">
         <div class="task-card-header" style="background:${this._stateColor(state)}">
@@ -202,13 +227,14 @@ class TaskTrackerPanel extends HTMLElement {
             <tr><td>${this._t("due_date")}</td><td>${dueDateStr}</td></tr>
             <tr><td>${dueLabel}</td><td>${dueValue}</td></tr>
           </table>
+          ${showMarkDone ? `
           <div class="action-buttons">
             <button class="action-btn mark-done-btn"
                     data-entity-id="${entity.entity_id}"
                     title="${this._t("mark_as_done")}">
               &#10003; ${this._t("mark_as_done")}
             </button>
-          </div>
+          </div>` : ""}
         </div>
       </div>
     `;
@@ -367,6 +393,25 @@ class TaskTrackerPanel extends HTMLElement {
         }
         .action-btn:hover { opacity: 0.85; }
         .mark-done-btn { background: #27ae60; }
+        .name-filter-wrap {
+          margin-bottom: 12px;
+        }
+        .name-filter-input {
+          width: 100%;
+          box-sizing: border-box;
+          padding: 8px 12px;
+          border: 1px solid var(--divider-color, #e0e0e0);
+          border-radius: 20px;
+          font-size: 0.9rem;
+          font-family: inherit;
+          background: var(--card-background-color, white);
+          color: var(--primary-text-color, #212121);
+          outline: none;
+          transition: border-color 0.2s;
+        }
+        .name-filter-input:focus {
+          border-color: var(--primary-color, #03a9f4);
+        }
         .no-tasks {
           color: var(--secondary-text-color, #727272);
           font-style: italic;
@@ -399,6 +444,12 @@ class TaskTrackerPanel extends HTMLElement {
       `;
       return;
     }
+
+    // Preserve name-filter input focus and cursor position across re-renders.
+    const prevInput = this.shadowRoot.querySelector(".name-filter-input");
+    const nameInputFocused = prevInput && this.shadowRoot.activeElement === prevInput;
+    const nameInputSelStart = nameInputFocused ? prevInput.selectionStart : null;
+    const nameInputSelEnd   = nameInputFocused ? prevInput.selectionEnd   : null;
 
     const allTasks = this._getAllTasks();
 
@@ -438,6 +489,8 @@ class TaskTrackerPanel extends HTMLElement {
       ? filteredTasks.map((t) => this._renderTaskCard(t)).join("")
       : `<p class="no-tasks">${this._t("no_tasks_found")}</p>`;
 
+    const placeholder = this._t("name_filter_placeholder") || "Filter tasks…";
+
     this.shadowRoot.innerHTML = `
       <style>${this._css()}</style>
       <div class="toolbar">
@@ -455,6 +508,12 @@ class TaskTrackerPanel extends HTMLElement {
             ${this._t("sort_due_date") || "Due date"}${this._sortIndicator("due_date")}
           </button>
         </div>
+        <div class="name-filter-wrap">
+          <input class="name-filter-input"
+                 type="text"
+                 placeholder="${placeholder}"
+                 value="${this._nameFilter.replace(/"/g, "&quot;")}">
+        </div>
         <div class="task-grid">${taskGrid}</div>
       </div>
     `;
@@ -464,6 +523,17 @@ class TaskTrackerPanel extends HTMLElement {
       if (menuButton) {
         menuButton.hass = this._hass;
         menuButton.narrow = this._narrow;
+      }
+    }
+
+    // Restore focus and cursor to the name filter input if it was focused before re-render.
+    if (nameInputFocused) {
+      const newInput = this.shadowRoot.querySelector(".name-filter-input");
+      if (newInput) {
+        newInput.focus();
+        if (nameInputSelStart !== null) {
+          newInput.setSelectionRange(nameInputSelStart, nameInputSelEnd);
+        }
       }
     }
   }

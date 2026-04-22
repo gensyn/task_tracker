@@ -504,6 +504,9 @@
       },
       "occurrence_last": {
         "name": "Letzter"
+      },
+      "name_filter_placeholder": {
+        "name": "Aufgaben filtern…"
       }
     }
   },
