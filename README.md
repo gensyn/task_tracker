@@ -193,6 +193,8 @@ The card shows the schedule in a human-readable form that reflects the repeat mo
 </tr>
 </table>
 
+> **Note:** For tasks of mode "repeat every" in state "done", the button "Mark is done" is not shown, as clicking it would not change the state of the task.
+
 ---
 
 ### 📊 Sidebar Panel
