@@ -17,10 +17,10 @@ from .const import (
     CONF_REPEAT_EVERY_TYPE, CONF_REPEAT_EVERY_WEEKDAY, CONF_REPEAT_EVERY_DAY_OF_MONTH,
     CONF_REPEAT_EVERY_WEEKDAY_OF_MONTH, CONF_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH,
     CONF_REPEAT_WEEKDAY, CONF_REPEAT_WEEKS_INTERVAL, CONF_REPEAT_MONTH_DAY, CONF_REPEAT_NTH_OCCURRENCE,
-    CONF_REPEAT_DAYS_BEFORE_END,
+    CONF_REPEAT_DAYS_BEFORE_END, CONF_REPEAT_MONTHS_INTERVAL,
     CONF_MONDAY, CONF_TUESDAY, CONF_WEDNESDAY, CONF_THURSDAY, CONF_FRIDAY, CONF_SATURDAY, CONF_SUNDAY,
 )
-from .options_flow import TaskTrackerOptionsFlow, validate_options, _validate_month_day, _validate_days_before_end
+from .options_flow import TaskTrackerOptionsFlow, validate_options, _validate_month_day, _validate_days_before_end, _validate_months_interval
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -77,6 +77,7 @@ _STEP_REPEAT_EVERY_WEEKDAY_SCHEMA = vol.Schema(
 _STEP_REPEAT_EVERY_DAY_OF_MONTH_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_REPEAT_MONTH_DAY, default=1): int,
+        vol.Required(CONF_REPEAT_MONTHS_INTERVAL, default=1): int,
     }
 )
 
@@ -97,6 +98,7 @@ _STEP_REPEAT_EVERY_WEEKDAY_OF_MONTH_SCHEMA = vol.Schema(
                 "translation_key": "nth_occurrence",
             }
         }),
+        vol.Required(CONF_REPEAT_MONTHS_INTERVAL, default=1): int,
     }
 )
 
@@ -104,6 +106,7 @@ _STEP_REPEAT_EVERY_WEEKDAY_OF_MONTH_SCHEMA = vol.Schema(
 _STEP_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_REPEAT_DAYS_BEFORE_END, default=0): int,
+        vol.Required(CONF_REPEAT_MONTHS_INTERVAL, default=1): int,
     }
 )
 
@@ -112,7 +115,7 @@ class TaskTrackerConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Task Tracker."""
 
     VERSION = 1
-    MINOR_VERSION = 6
+    MINOR_VERSION = 7
 
     def __init__(self) -> None:
         """Initialise; accumulate user input across steps."""
@@ -199,6 +202,7 @@ class TaskTrackerConfigFlow(ConfigFlow, domain=DOMAIN):
             )
 
         errors = _validate_month_day(user_input.get(CONF_REPEAT_MONTH_DAY))
+        errors.update(_validate_months_interval(user_input.get(CONF_REPEAT_MONTHS_INTERVAL)))
         if errors:
             return self.async_show_form(
                 step_id="repeat_every_day_of_month",
@@ -222,6 +226,14 @@ class TaskTrackerConfigFlow(ConfigFlow, domain=DOMAIN):
                 errors={},
             )
 
+        errors = _validate_months_interval(user_input.get(CONF_REPEAT_MONTHS_INTERVAL))
+        if errors:
+            return self.async_show_form(
+                step_id="repeat_every_weekday_of_month",
+                data_schema=_STEP_REPEAT_EVERY_WEEKDAY_OF_MONTH_SCHEMA,
+                errors=errors,
+            )
+
         self._user_input.update(user_input)
         name = self._user_input[CONF_NAME]
         options = await validate_options(self._user_input)
@@ -239,6 +251,7 @@ class TaskTrackerConfigFlow(ConfigFlow, domain=DOMAIN):
             )
 
         errors = _validate_days_before_end(user_input.get(CONF_REPEAT_DAYS_BEFORE_END))
+        errors.update(_validate_months_interval(user_input.get(CONF_REPEAT_MONTHS_INTERVAL)))
         if errors:
             return self.async_show_form(
                 step_id="repeat_every_days_before_end_of_month",

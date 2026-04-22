@@ -18,7 +18,7 @@ from .const import DOMAIN, CONF_TASK_INTERVAL_VALUE, CONF_DAY, CONF_TASK_INTERVA
     SERVICE_MARK_AS_DONE_SCHEMA, SERVICE_SET_LAST_DONE_DATE, SERVICE_SET_LAST_DONE_DATE_SCHEMA, CONF_DATE, \
     CONF_SHOW_PANEL, CONF_REPEAT_MODE, CONF_REPEAT_AFTER, \
     CONF_REPEAT_EVERY_TYPE, CONF_REPEAT_WEEKDAY, CONF_REPEAT_WEEKS_INTERVAL, \
-    CONF_REPEAT_MONTH_DAY, CONF_REPEAT_NTH_OCCURRENCE, CONF_REPEAT_DAYS_BEFORE_END
+    CONF_REPEAT_MONTH_DAY, CONF_REPEAT_NTH_OCCURRENCE, CONF_REPEAT_DAYS_BEFORE_END, CONF_REPEAT_MONTHS_INTERVAL
 from .coordinator import TaskTrackerCoordinator
 from .frontend import TaskTrackerCardRegistration
 
@@ -129,6 +129,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         repeat_month_day=entry.options.get(CONF_REPEAT_MONTH_DAY, 1),
         repeat_nth_occurrence=entry.options.get(CONF_REPEAT_NTH_OCCURRENCE, "1"),
         repeat_days_before_end=entry.options.get(CONF_REPEAT_DAYS_BEFORE_END, 0),
+        repeat_months_interval=entry.options.get(CONF_REPEAT_MONTHS_INTERVAL, 1),
         due_soon_days=entry.options.get(CONF_DUE_SOON_DAYS, 0),
     )
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
@@ -148,7 +149,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Migrate old config entry."""
 
-    if entry.version > 1 or entry.minor_version > 6:
+    if entry.version > 1 or entry.minor_version > 7:
         # This means the user has downgraded from a later version
         return False
 
@@ -224,6 +225,23 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             options=new_options,
             version=1,
             minor_version=6,
+        )
+
+    if entry.version == 1 and entry.minor_version == 6:
+        # 1.6 → 1.7: Add repeat_months_interval field.
+        # Existing repeat_every entries implicitly used interval=1; make that explicit.
+        # repeat_after entries get None (not applicable).
+        new_options = dict(entry.options)
+        if new_options.get(CONF_REPEAT_MODE) == CONF_REPEAT_AFTER:
+            new_options.setdefault(CONF_REPEAT_MONTHS_INTERVAL, None)
+        else:
+            new_options.setdefault(CONF_REPEAT_MONTHS_INTERVAL, 1)
+
+        hass.config_entries.async_update_entry(
+            entry,
+            options=new_options,
+            version=1,
+            minor_version=7,
         )
 
     return True

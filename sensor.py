@@ -227,11 +227,14 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
                 self._attr_extra_state_attributes["repeat_weeks_interval"] = self.coordinator.repeat_weeks_interval
             elif repeat_every_type == CONF_REPEAT_EVERY_DAY_OF_MONTH:
                 self._attr_extra_state_attributes["repeat_month_day"] = self.coordinator.repeat_month_day
+                self._attr_extra_state_attributes["repeat_months_interval"] = self.coordinator.repeat_months_interval
             elif repeat_every_type == CONF_REPEAT_EVERY_WEEKDAY_OF_MONTH:
                 self._attr_extra_state_attributes["repeat_weekday"] = self.coordinator.repeat_weekday
                 self._attr_extra_state_attributes["repeat_nth_occurrence"] = self.coordinator.repeat_nth_occurrence
+                self._attr_extra_state_attributes["repeat_months_interval"] = self.coordinator.repeat_months_interval
             elif repeat_every_type == CONF_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH:
                 self._attr_extra_state_attributes["repeat_days_before_end"] = self.coordinator.repeat_days_before_end
+                self._attr_extra_state_attributes["repeat_months_interval"] = self.coordinator.repeat_months_interval
         else:
             self._attr_extra_state_attributes["task_interval_value"] = effective_task_interval_value
             self._attr_extra_state_attributes["task_interval_type"] = effective_task_interval_type

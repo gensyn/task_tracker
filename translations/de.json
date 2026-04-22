@@ -6,7 +6,7 @@
     "error": {
       "unknown": "Unerwarteter Fehler",
       "invalid_month_day": "Der Tag im Monat muss zwischen 1 und 31 liegen",
-      "invalid_days_before_end": "Die Anzahl der Tage vor Monatsende muss zwischen 0 und 30 liegen"
+      "invalid_months_interval": "Das Monatsintervall muss mindestens 1 betragen"
     },
     "step": {
       "user": {
@@ -58,10 +58,12 @@
         "title": "An einem bestimmten Monatstag",
         "description": "Die Task wiederholt sich an einem festen Monatstag.",
         "data": {
-          "repeat_month_day": "Monatstag"
+          "repeat_month_day": "Monatstag",
+          "repeat_months_interval": "Alle (Monate)"
         },
         "data_description": {
-          "repeat_month_day": "Der Monatstag, an dem die Task wiederholt wird (1–31)."
+          "repeat_month_day": "Der Monatstag, an dem die Task wiederholt wird (1–31).",
+          "repeat_months_interval": "Wie viele Monate zwischen Wiederholungen (1 = jeden Monat, 3 = vierteljährlich, 12 = jährlich usw.)."
         }
       },
       "repeat_every_weekday_of_month": {
@@ -69,21 +71,25 @@
         "description": "Die Task wiederholt sich am gewählten Vorkommen eines Wochentags im Monat (z. B. dem 2. Montag).",
         "data": {
           "repeat_weekday": "Wochentag",
-          "repeat_nth_occurrence": "Vorkommen"
+          "repeat_nth_occurrence": "Vorkommen",
+          "repeat_months_interval": "Alle (Monate)"
         },
         "data_description": {
           "repeat_weekday": "Der Wochentag, an dem die Task wiederholt wird.",
-          "repeat_nth_occurrence": "Welches Auftreten des Wochentags im Monat."
+          "repeat_nth_occurrence": "Welches Auftreten des Wochentags im Monat.",
+          "repeat_months_interval": "Wie viele Monate zwischen Wiederholungen (1 = jeden Monat, 3 = vierteljährlich, 12 = jährlich usw.)."
         }
       },
       "repeat_every_days_before_end_of_month": {
         "title": "N Tage vor Monatsende",
         "description": "Die Task wiederholt sich eine bestimmte Anzahl von Tagen vor dem letzten Tag des Monats.",
         "data": {
-          "repeat_days_before_end": "Tage vor Monatsende"
+          "repeat_days_before_end": "Tage vor Monatsende",
+          "repeat_months_interval": "Alle (Monate)"
         },
         "data_description": {
-          "repeat_days_before_end": "Wie viele Tage vor dem letzten Tag des Monats die Task fällig wird (0 = letzter Tag, 1 = vorletzter Tag usw.)."
+          "repeat_days_before_end": "Wie viele Tage vor dem letzten Tag des Monats die Task fällig wird (0 = letzter Tag, 1 = vorletzter Tag usw.).",
+          "repeat_months_interval": "Wie viele Monate zwischen Wiederholungen (1 = jeden Monat, 3 = vierteljährlich, 12 = jährlich usw.)."
         }
       }
     }
@@ -92,7 +98,8 @@
     "error": {
       "unknown": "Unerwarteter Fehler",
       "invalid_month_day": "Der Tag im Monat muss zwischen 1 und 31 liegen",
-      "invalid_days_before_end": "Die Anzahl der Tage vor Monatsende muss zwischen 0 und 30 liegen"
+      "invalid_days_before_end": "Die Anzahl der Tage vor Monatsende muss zwischen 0 und 30 liegen",
+      "invalid_months_interval": "Das Monatsintervall muss mindestens 1 betragen"
     },
     "step": {
       "repeat_every": {
@@ -121,10 +128,12 @@
         "title": "An einem bestimmten Monatstag",
         "description": "Die Task wiederholt sich an einem festen Monatstag.",
         "data": {
-          "repeat_month_day": "Monatstag"
+          "repeat_month_day": "Monatstag",
+          "repeat_months_interval": "Alle (Monate)"
         },
         "data_description": {
-          "repeat_month_day": "Der Monatstag, an dem die Task wiederholt wird (1–31)."
+          "repeat_month_day": "Der Monatstag, an dem die Task wiederholt wird (1–31).",
+          "repeat_months_interval": "Wie viele Monate zwischen Wiederholungen (1 = jeden Monat, 3 = vierteljährlich, 12 = jährlich usw.)."
         }
       },
       "repeat_every_weekday_of_month": {
@@ -132,21 +141,25 @@
         "description": "Die Task wiederholt sich am gewählten Vorkommen eines Wochentags im Monat (z. B. dem 2. Montag).",
         "data": {
           "repeat_weekday": "Wochentag",
-          "repeat_nth_occurrence": "Vorkommen"
+          "repeat_nth_occurrence": "Vorkommen",
+          "repeat_months_interval": "Alle (Monate)"
         },
         "data_description": {
           "repeat_weekday": "Der Wochentag, an dem die Task wiederholt wird.",
-          "repeat_nth_occurrence": "Welches Auftreten des Wochentags im Monat."
+          "repeat_nth_occurrence": "Welches Auftreten des Wochentags im Monat.",
+          "repeat_months_interval": "Wie viele Monate zwischen Wiederholungen (1 = jeden Monat, 3 = vierteljährlich, 12 = jährlich usw.)."
         }
       },
       "repeat_every_days_before_end_of_month": {
         "title": "N Tage vor Monatsende",
         "description": "Die Task wiederholt sich eine bestimmte Anzahl von Tagen vor dem letzten Tag des Monats.",
         "data": {
-          "repeat_days_before_end": "Tage vor Monatsende"
+          "repeat_days_before_end": "Tage vor Monatsende",
+          "repeat_months_interval": "Alle (Monate)"
         },
         "data_description": {
-          "repeat_days_before_end": "Wie viele Tage vor dem letzten Tag des Monats die Task fällig wird (0 = letzter Tag, 1 = vorletzter Tag usw.)."
+          "repeat_days_before_end": "Wie viele Tage vor dem letzten Tag des Monats die Task fällig wird (0 = letzter Tag, 1 = vorletzter Tag usw.).",
+          "repeat_months_interval": "Wie viele Monate zwischen Wiederholungen (1 = jeden Monat, 3 = vierteljährlich, 12 = jährlich usw.)."
         }
       },
       "options_repeat_every_weekday": {
@@ -182,6 +195,7 @@
         "description": "Zeitplan und Taskeinstellungen aktualisieren.",
         "data": {
           "repeat_month_day": "Tag des Monats",
+          "repeat_months_interval": "Alle (Monate)",
           "active": "Aktiv",
           "active_override": "Aktiv-Override",
           "icon": "Symbol",
@@ -193,6 +207,7 @@
         },
         "data_description": {
           "repeat_month_day": "Der Tag des Monats, an dem die Task wiederholt wird (1–31).",
+          "repeat_months_interval": "Wie viele Monate zwischen Wiederholungen (1 = jeden Monat, 3 = vierteljährlich, 12 = jährlich usw.).",
           "active": "Aktiviert oder deaktiviert die Task.",
           "active_override": "Wähle ein input_boolean, um die Aktiv-Einstellung zu überschreiben.",
           "icon": "Symbol für die Task.",
@@ -209,6 +224,7 @@
         "data": {
           "repeat_weekday": "Wochentag",
           "repeat_nth_occurrence": "Vorkommen",
+          "repeat_months_interval": "Alle (Monate)",
           "active": "Aktiv",
           "active_override": "Aktiv-Override",
           "icon": "Symbol",
@@ -221,6 +237,7 @@
         "data_description": {
           "repeat_weekday": "Der Wochentag, an dem die Task wiederholt wird.",
           "repeat_nth_occurrence": "Welches Vorkommen dieses Wochentags im Monat.",
+          "repeat_months_interval": "Wie viele Monate zwischen Wiederholungen (1 = jeden Monat, 3 = vierteljährlich, 12 = jährlich usw.).",
           "active": "Aktiviert oder deaktiviert die Task.",
           "active_override": "Wähle ein input_boolean, um die Aktiv-Einstellung zu überschreiben.",
           "icon": "Symbol für die Task.",
@@ -236,6 +253,7 @@
         "description": "Zeitplan und Taskeinstellungen aktualisieren.",
         "data": {
           "repeat_days_before_end": "Tage vor Monatsende",
+          "repeat_months_interval": "Alle (Monate)",
           "active": "Aktiv",
           "active_override": "Aktiv-Override",
           "icon": "Symbol",
@@ -247,6 +265,7 @@
         },
         "data_description": {
           "repeat_days_before_end": "Wie viele Tage vor dem letzten Tag des Monats die Task fällig wird (0 = letzter Tag, 1 = vorletzter Tag usw.).",
+          "repeat_months_interval": "Wie viele Monate zwischen Wiederholungen (1 = jeden Monat, 3 = vierteljährlich, 12 = jährlich usw.).",
           "active": "Aktiviert oder deaktiviert die Task.",
           "active_override": "Wähle ein input_boolean, um die Aktiv-Einstellung zu überschreiben.",
           "icon": "Symbol für die Task.",
@@ -485,6 +504,9 @@
       },
       "occurrence_last": {
         "name": "Letzter"
+      },
+      "name_filter_placeholder": {
+        "name": "Aufgaben filtern…"
       }
     }
   },

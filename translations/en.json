@@ -6,7 +6,8 @@
     "error": {
       "unknown": "Unexpected error",
       "invalid_month_day": "Day of month must be between 1 and 31",
-      "invalid_days_before_end": "Days before month end must be between 0 and 30"
+      "invalid_days_before_end": "Days before month end must be between 0 and 30",
+      "invalid_months_interval": "Month interval must be 1 or greater"
     },
     "step": {
       "user": {
@@ -58,10 +59,12 @@
         "title": "Every Nth Day of the Month",
         "description": "The task repeats on a fixed day each month.",
         "data": {
-          "repeat_month_day": "Day of Month"
+          "repeat_month_day": "Day of Month",
+          "repeat_months_interval": "Every (months)"
         },
         "data_description": {
-          "repeat_month_day": "The day of the month on which the task repeats (1–31)."
+          "repeat_month_day": "The day of the month on which the task repeats (1–31).",
+          "repeat_months_interval": "How many months between occurrences (1 = every month, 3 = quarterly, 12 = annually, etc.)."
         }
       },
       "repeat_every_weekday_of_month": {
@@ -69,21 +72,25 @@
         "description": "The task repeats on a specific occurrence of a weekday each month (e.g. the 2nd Monday).",
         "data": {
           "repeat_weekday": "Weekday",
-          "repeat_nth_occurrence": "Occurrence"
+          "repeat_nth_occurrence": "Occurrence",
+          "repeat_months_interval": "Every (months)"
         },
         "data_description": {
           "repeat_weekday": "The day of the week on which the task repeats.",
-          "repeat_nth_occurrence": "Which occurrence of that weekday in the month."
+          "repeat_nth_occurrence": "Which occurrence of that weekday in the month.",
+          "repeat_months_interval": "How many months between occurrences (1 = every month, 3 = quarterly, 12 = annually, etc.)."
         }
       },
       "repeat_every_days_before_end_of_month": {
         "title": "N Days Before the End of the Month",
         "description": "The task repeats a set number of days before the last day of each month.",
         "data": {
-          "repeat_days_before_end": "Days Before Month End"
+          "repeat_days_before_end": "Days Before Month End",
+          "repeat_months_interval": "Every (months)"
         },
         "data_description": {
-          "repeat_days_before_end": "How many days before the last day of the month the task is due (0 = last day, 1 = second-to-last day, etc.)."
+          "repeat_days_before_end": "How many days before the last day of the month the task is due (0 = last day, 1 = second-to-last day, etc.).",
+          "repeat_months_interval": "How many months between occurrences (1 = every month, 3 = quarterly, 12 = annually, etc.)."
         }
       }
     }
@@ -95,7 +102,8 @@
     "error": {
       "unknown": "Unexpected error",
       "invalid_month_day": "Day of month must be between 1 and 31",
-      "invalid_days_before_end": "Days before month end must be between 0 and 30"
+      "invalid_days_before_end": "Days before month end must be between 0 and 30",
+      "invalid_months_interval": "Month interval must be 1 or greater"
     },
     "step": {
       "repeat_every": {
@@ -124,10 +132,12 @@
         "title": "Every Nth Day of the Month",
         "description": "The task repeats on a fixed day each month.",
         "data": {
-          "repeat_month_day": "Day of Month"
+          "repeat_month_day": "Day of Month",
+          "repeat_months_interval": "Every (months)"
         },
         "data_description": {
-          "repeat_month_day": "The day of the month on which the task repeats (1–31)."
+          "repeat_month_day": "The day of the month on which the task repeats (1–31).",
+          "repeat_months_interval": "How many months between occurrences (1 = every month, 3 = quarterly, 12 = annually, etc.)."
         }
       },
       "repeat_every_weekday_of_month": {
@@ -135,21 +145,25 @@
         "description": "The task repeats on a specific occurrence of a weekday each month (e.g. the 2nd Monday).",
         "data": {
           "repeat_weekday": "Weekday",
-          "repeat_nth_occurrence": "Occurrence"
+          "repeat_nth_occurrence": "Occurrence",
+          "repeat_months_interval": "Every (months)"
         },
         "data_description": {
           "repeat_weekday": "The day of the week on which the task repeats.",
-          "repeat_nth_occurrence": "Which occurrence of that weekday in the month."
+          "repeat_nth_occurrence": "Which occurrence of that weekday in the month.",
+          "repeat_months_interval": "How many months between occurrences (1 = every month, 3 = quarterly, 12 = annually, etc.)."
         }
       },
       "repeat_every_days_before_end_of_month": {
         "title": "N Days Before the End of the Month",
         "description": "The task repeats a set number of days before the last day of each month.",
         "data": {
-          "repeat_days_before_end": "Days Before Month End"
+          "repeat_days_before_end": "Days Before Month End",
+          "repeat_months_interval": "Every (months)"
         },
         "data_description": {
-          "repeat_days_before_end": "How many days before the last day of the month the task is due (0 = last day, 1 = second-to-last day, etc.)."
+          "repeat_days_before_end": "How many days before the last day of the month the task is due (0 = last day, 1 = second-to-last day, etc.).",
+          "repeat_months_interval": "How many months between occurrences (1 = every month, 3 = quarterly, 12 = annually, etc.)."
         }
       },
       "options_repeat_every_weekday": {
@@ -192,7 +206,8 @@
           "todo_lists": "Todo-Lists",
           "due_soon_days": "Due soon (days)",
           "due_soon_override": "Due soon Override (days)",
-          "notification_interval": "Notification Interval (days)"
+          "notification_interval": "Notification Interval (days)",
+          "repeat_months_interval": "Every (months)"
         },
         "data_description": {
           "repeat_month_day": "The day of the month on which the task repeats (1–31).",
@@ -203,7 +218,8 @@
           "todo_lists": "Todo-Lists to which this task will be added.",
           "due_soon_days": "The number of days before the task is due to show it as due soon.",
           "due_soon_override": "Select an input_number (value in days) to override the Due soon threshold.",
-          "notification_interval": "The time in days after which notifications are sent again."
+          "notification_interval": "The time in days after which notifications are sent again.",
+          "repeat_months_interval": "How many months between occurrences (1 = every month, 3 = quarterly, 12 = annually, etc.)."
         }
       },
       "options_repeat_every_weekday_of_month": {
@@ -219,7 +235,8 @@
           "todo_lists": "Todo-Lists",
           "due_soon_days": "Due soon (days)",
           "due_soon_override": "Due soon Override (days)",
-          "notification_interval": "Notification Interval (days)"
+          "notification_interval": "Notification Interval (days)",
+          "repeat_months_interval": "Every (months)"
         },
         "data_description": {
           "repeat_weekday": "The day of the week on which the task repeats.",
@@ -231,7 +248,8 @@
           "todo_lists": "Todo-Lists to which this task will be added.",
           "due_soon_days": "The number of days before the task is due to show it as due soon.",
           "due_soon_override": "Select an input_number (value in days) to override the Due soon threshold.",
-          "notification_interval": "The time in days after which notifications are sent again."
+          "notification_interval": "The time in days after which notifications are sent again.",
+          "repeat_months_interval": "How many months between occurrences (1 = every month, 3 = quarterly, 12 = annually, etc.)."
         }
       },
       "options_repeat_every_days_before_end_of_month": {
@@ -246,7 +264,8 @@
           "todo_lists": "Todo-Lists",
           "due_soon_days": "Due soon (days)",
           "due_soon_override": "Due soon Override (days)",
-          "notification_interval": "Notification Interval (days)"
+          "notification_interval": "Notification Interval (days)",
+          "repeat_months_interval": "Every (months)"
         },
         "data_description": {
           "repeat_days_before_end": "How many days before the last day of the month the task is due (0 = last day, 1 = second-to-last day, etc.).",
@@ -257,7 +276,8 @@
           "todo_lists": "Todo-Lists to which this task will be added.",
           "due_soon_days": "The number of days before the task is due to show it as due soon.",
           "due_soon_override": "Select an input_number (value in days) to override the Due soon threshold.",
-          "notification_interval": "The time in days after which notifications are sent again."
+          "notification_interval": "The time in days after which notifications are sent again.",
+          "repeat_months_interval": "How many months between occurrences (1 = every month, 3 = quarterly, 12 = annually, etc.)."
         }
       },
       "options_repeat_after": {
@@ -488,6 +508,9 @@
       },
       "occurrence_last": {
         "name": "Last"
+      },
+      "name_filter_placeholder": {
+        "name": "Filter tasks…"
       }
     }
   },

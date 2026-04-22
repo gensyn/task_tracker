@@ -37,6 +37,12 @@ class TaskTracker extends HTMLElement {
     }
   }
 
+  _monthIntervalSuffix(n) {
+    if (!n || n <= 1) return "";
+    const sp = n === 1 ? "singular" : "plural";
+    return `,\u00a0${this._t("every")}\u00a0${n}\u00a0${this._t(`month_${sp}`)}`;
+  }
+
   _scheduleStr(attrs) {
     const repeatMode = attrs.repeat_mode;
     if (repeatMode !== "repeat_every") {
@@ -56,19 +62,21 @@ class TaskTracker extends HTMLElement {
     }
     if (t === "repeat_every_day_of_month") {
       return [this._t("schedule"),
-        `${this._t("day_of_month_prefix")}\u00a0${attrs.repeat_month_day}\u00a0${this._t("of_month")}`];
+        `${this._t("day_of_month_prefix")}\u00a0${attrs.repeat_month_day}\u00a0${this._t("of_month")}${this._monthIntervalSuffix(attrs.repeat_months_interval)}`];
     }
     if (t === "repeat_every_weekday_of_month") {
       const nth = this._t(`occurrence_${attrs.repeat_nth_occurrence}`);
       const weekday = this._t(attrs.repeat_weekday);
       return [this._t("schedule"),
-        `${nth}\u00a0${weekday}\u00a0${this._t("of_month")}`];
+        `${nth}\u00a0${weekday}\u00a0${this._t("of_month")}${this._monthIntervalSuffix(attrs.repeat_months_interval)}`];
     }
     if (t === "repeat_every_days_before_end_of_month") {
       const n = attrs.repeat_days_before_end ?? 0;
-      if (n === 0) return [this._t("schedule"), this._t("last_day_of_month")];
-      const sp = n === 1 ? "singular" : "plural";
-      return [this._t("schedule"), `${n}\u00a0${this._t(`days_before_end_of_month_${sp}`)}`];
+      const base = n === 0 ? this._t("last_day_of_month") : (() => {
+        const sp = n === 1 ? "singular" : "plural";
+        return `${n}\u00a0${this._t(`days_before_end_of_month_${sp}`)}`;
+      })();
+      return [this._t("schedule"), `${base}${this._monthIntervalSuffix(attrs.repeat_months_interval)}`];
     }
     return [this._t("schedule"), "—"];
   }
@@ -108,6 +116,9 @@ class TaskTracker extends HTMLElement {
       const sp = attrs.overdue_by === 1 ? "singular" : "plural";
       dueValue = `${attrs.overdue_by}\u00a0${this._t(`day_${sp}`)}`;
     }
+
+    // "Mark as done" is a no-op for repeat_every tasks that are already done.
+    const showMarkDone = !(attrs.repeat_mode === "repeat_every" && stateStr === "done");
 
     this.shadowRoot.innerHTML = `
       <style>
@@ -193,13 +204,14 @@ class TaskTracker extends HTMLElement {
               <td>${dueValue}</td>
             </tr>
           </table>
+          ${showMarkDone ? `
           <div class="action-buttons">
             <button class="action-btn mark-done-btn"
                     title="${this._t("mark_as_done")}"
                     aria-label="${this._t("mark_as_done")}">
               &#10003; ${this._t("mark_as_done")}
             </button>
-          </div>
+          </div>` : ""}
         </div>
       </ha-card>
     `;

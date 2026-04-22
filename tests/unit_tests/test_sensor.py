@@ -17,6 +17,7 @@ from task_tracker.const import (
     CONST_DUE, CONST_DUE_SOON, CONST_DONE, CONST_INACTIVE,
     CONF_REPEAT_AFTER, CONF_REPEAT_EVERY,
     CONF_REPEAT_EVERY_WEEKDAY, CONF_REPEAT_EVERY_DAY_OF_MONTH, CONF_REPEAT_EVERY_WEEKDAY_OF_MONTH,
+    CONF_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH,
     CONF_MONDAY, CONF_TUESDAY, CONF_WEDNESDAY, CONF_THURSDAY, CONF_FRIDAY, CONF_SATURDAY, CONF_SUNDAY,
 )
 
@@ -42,6 +43,8 @@ def make_sensor(
     repeat_weeks_interval=1,
     repeat_month_day=1,
     repeat_nth_occurrence="1",
+    repeat_days_before_end=0,
+    repeat_months_interval=1,
     coordinator=None,
 ):
     if hass is None:
@@ -55,6 +58,8 @@ def make_sensor(
             repeat_weeks_interval=repeat_weeks_interval,
             repeat_month_day=repeat_month_day,
             repeat_nth_occurrence=repeat_nth_occurrence,
+            repeat_days_before_end=repeat_days_before_end,
+            repeat_months_interval=repeat_months_interval,
             due_soon_days=due_soon_days,
         )
     return TaskTrackerSensor(
@@ -957,28 +962,28 @@ class TestCalcNextDayOfMonth(unittest.TestCase):
 
     def test_same_month_when_day_is_ahead(self):
         sensor = self._sensor()
-        result = sensor.coordinator._calc_next_day_of_month(date(2024, 1, 15), 20)
+        result = sensor.coordinator._calc_next_day_of_month(date(2024, 1, 15), 20, 1)
         self.assertEqual(result, date(2024, 1, 20))
 
     def test_next_month_when_day_already_passed(self):
         sensor = self._sensor()
-        result = sensor.coordinator._calc_next_day_of_month(date(2024, 1, 20), 20)
+        result = sensor.coordinator._calc_next_day_of_month(date(2024, 1, 20), 20, 1)
         self.assertEqual(result, date(2024, 2, 20))
 
     def test_next_month_when_day_is_before(self):
         sensor = self._sensor()
-        result = sensor.coordinator._calc_next_day_of_month(date(2024, 1, 31), 5)
+        result = sensor.coordinator._calc_next_day_of_month(date(2024, 1, 31), 5, 1)
         self.assertEqual(result, date(2024, 2, 5))
 
     def test_clamped_to_short_month(self):
         sensor = self._sensor()
         # Day 31 in February: clamp to Feb 29 (2024 is a leap year)
-        result = sensor.coordinator._calc_next_day_of_month(date(2024, 1, 31), 31)
+        result = sensor.coordinator._calc_next_day_of_month(date(2024, 1, 31), 31, 1)
         self.assertEqual(result, date(2024, 2, 29))
 
     def test_day_1_from_jan_31(self):
         sensor = self._sensor()
-        result = sensor.coordinator._calc_next_day_of_month(date(2024, 1, 30), 31)
+        result = sensor.coordinator._calc_next_day_of_month(date(2024, 1, 30), 31, 1)
         self.assertEqual(result, date(2024, 1, 31))
 
 
@@ -1022,25 +1027,25 @@ class TestCalcNextWeekdayOfMonth(unittest.TestCase):
     def test_2nd_monday_of_next_month(self):
         sensor = self._sensor()
         # last=2024-01-15; 2nd Monday of Jan = Jan 8 (already past) → Feb 12
-        result = sensor.coordinator._calc_next_weekday_of_month(date(2024, 1, 15), CONF_MONDAY, "2")
+        result = sensor.coordinator._calc_next_weekday_of_month(date(2024, 1, 15), CONF_MONDAY, "2", 1)
         self.assertEqual(result, date(2024, 2, 12))
 
     def test_1st_wednesday_of_same_month(self):
         sensor = self._sensor()
         # last=2024-01-01; 1st Wednesday of Jan = Jan 3 (ahead)
-        result = sensor.coordinator._calc_next_weekday_of_month(date(2024, 1, 1), CONF_WEDNESDAY, "1")
+        result = sensor.coordinator._calc_next_weekday_of_month(date(2024, 1, 1), CONF_WEDNESDAY, "1", 1)
         self.assertEqual(result, date(2024, 1, 3))
 
     def test_last_monday_of_next_month_when_current_passed(self):
         sensor = self._sensor()
         # last=2024-01-29; last Monday of Jan = Jan 29 (same day, not strictly greater) → Feb last Monday = Feb 26
-        result = sensor.coordinator._calc_next_weekday_of_month(date(2024, 1, 29), CONF_MONDAY, "last")
+        result = sensor.coordinator._calc_next_weekday_of_month(date(2024, 1, 29), CONF_MONDAY, "last", 1)
         self.assertEqual(result, date(2024, 2, 26))
 
     def test_last_monday_of_same_month_still_ahead(self):
         sensor = self._sensor()
         # last=2024-01-15; last Monday of Jan = Jan 29 (ahead of Jan 15)
-        result = sensor.coordinator._calc_next_weekday_of_month(date(2024, 1, 15), CONF_MONDAY, "last")
+        result = sensor.coordinator._calc_next_weekday_of_month(date(2024, 1, 15), CONF_MONDAY, "last", 1)
         self.assertEqual(result, date(2024, 1, 29))
 
 
@@ -1052,46 +1057,46 @@ class TestCalcNextDaysBeforeEndOfMonth(unittest.TestCase):
 
     def test_last_day_of_month_when_days_before_is_zero(self):
         # 0 days before end = last day; Jan has 31 days → Jan 31
-        result = self._coordinator()._calc_next_days_before_end_of_month(date(2024, 1, 15), 0)
+        result = self._coordinator()._calc_next_days_before_end_of_month(date(2024, 1, 15), 0, 1)
         self.assertEqual(result, date(2024, 1, 31))
 
     def test_second_to_last_day_of_month(self):
         # 1 day before end of Jan = Jan 30
-        result = self._coordinator()._calc_next_days_before_end_of_month(date(2024, 1, 15), 1)
+        result = self._coordinator()._calc_next_days_before_end_of_month(date(2024, 1, 15), 1, 1)
         self.assertEqual(result, date(2024, 1, 30))
 
     def test_three_days_before_end_of_month(self):
         # 3 days before end of Jan = Jan 28
-        result = self._coordinator()._calc_next_days_before_end_of_month(date(2024, 1, 1), 3)
+        result = self._coordinator()._calc_next_days_before_end_of_month(date(2024, 1, 1), 3, 1)
         self.assertEqual(result, date(2024, 1, 28))
 
     def test_advances_to_next_month_when_target_already_passed(self):
         # 0 days before end; last = Jan 31 (the target itself) → must advance to Feb
         # Feb 2024 is a leap year: last day = Feb 29
-        result = self._coordinator()._calc_next_days_before_end_of_month(date(2024, 1, 31), 0)
+        result = self._coordinator()._calc_next_days_before_end_of_month(date(2024, 1, 31), 0, 1)
         self.assertEqual(result, date(2024, 2, 29))
 
     def test_advances_to_next_month_when_target_same_as_last(self):
         # 1 day before end of Jan = Jan 30; last = Jan 30 → advance; 2023 non-leap:
         # Feb has 28 days → target = Feb 27
-        result = self._coordinator()._calc_next_days_before_end_of_month(date(2023, 1, 30), 1)
+        result = self._coordinator()._calc_next_days_before_end_of_month(date(2023, 1, 30), 1, 1)
         self.assertEqual(result, date(2023, 2, 27))
 
     def test_last_day_varies_by_month_length(self):
         # 0 days before end of Feb 2024 (leap year: 29 days) = Feb 29
-        result = self._coordinator()._calc_next_days_before_end_of_month(date(2024, 2, 1), 0)
+        result = self._coordinator()._calc_next_days_before_end_of_month(date(2024, 2, 1), 0, 1)
         self.assertEqual(result, date(2024, 2, 29))
 
     def test_large_days_before_end_clamped_to_first(self):
         # 40 days before end of January (31 days): 31 - 40 = -9 → clamped to day 1
         # candidate = Jan 1, NOT > last (Jan 1 == Jan 1) → next month Feb
         # Feb 2024: 29 - 40 = -11 → clamped to 1 → Feb 1
-        result = self._coordinator()._calc_next_days_before_end_of_month(date(2024, 1, 1), 40)
+        result = self._coordinator()._calc_next_days_before_end_of_month(date(2024, 1, 1), 40, 1)
         self.assertEqual(result, date(2024, 2, 1))
 
     def test_last_day_of_december(self):
         # 0 days before end of Dec = Dec 31
-        result = self._coordinator()._calc_next_days_before_end_of_month(date(2024, 12, 1), 0)
+        result = self._coordinator()._calc_next_days_before_end_of_month(date(2024, 12, 1), 0, 1)
         self.assertEqual(result, date(2024, 12, 31))
 
 
@@ -1127,43 +1132,53 @@ class TestCalcMostRecentWeekday(unittest.TestCase):
 class TestCalcMostRecentDayOfMonth(unittest.TestCase):
     """Tests for TaskTrackerCoordinator._calc_most_recent_day_of_month."""
 
+    def _coord(self):
+        coord = make_sensor().coordinator
+        coord.last_done = date(1970, 1, 1)
+        return coord
+
     def test_today_is_target_day(self):
         # Jan 15 → most recent 15th = Jan 15
-        result = TaskTrackerCoordinator._calc_most_recent_day_of_month(date(2024, 1, 15), 15)
+        result = self._coord()._calc_most_recent_day_of_month(date(2024, 1, 15), 15, 1)
         self.assertEqual(result, date(2024, 1, 15))
 
     def test_target_day_already_passed_this_month(self):
         # Jan 20 → most recent 15th = Jan 15 (earlier this month)
-        result = TaskTrackerCoordinator._calc_most_recent_day_of_month(date(2024, 1, 20), 15)
+        result = self._coord()._calc_most_recent_day_of_month(date(2024, 1, 20), 15, 1)
         self.assertEqual(result, date(2024, 1, 15))
 
     def test_target_day_not_yet_reached_this_month(self):
         # Jan 10 → most recent 15th = Dec 15 (previous month)
-        result = TaskTrackerCoordinator._calc_most_recent_day_of_month(date(2024, 1, 10), 15)
+        result = self._coord()._calc_most_recent_day_of_month(date(2024, 1, 10), 15, 1)
         self.assertEqual(result, date(2023, 12, 15))
 
     def test_clamped_to_short_month(self):
         # Day 31 in February (2024 leap year): most recent Feb-31 = Feb 29
-        result = TaskTrackerCoordinator._calc_most_recent_day_of_month(date(2024, 2, 29), 31)
+        result = self._coord()._calc_most_recent_day_of_month(date(2024, 2, 29), 31, 1)
         self.assertEqual(result, date(2024, 2, 29))
 
 
 class TestCalcMostRecentDaysBeforeEndOfMonth(unittest.TestCase):
     """Tests for TaskTrackerCoordinator._calc_most_recent_days_before_end_of_month."""
 
+    def _coord(self):
+        coord = make_sensor().coordinator
+        coord.last_done = date(1970, 1, 1)
+        return coord
+
     def test_today_is_target_day(self):
         # 0 days before end of Jan = Jan 31; today = Jan 31 → Jan 31
-        result = TaskTrackerCoordinator._calc_most_recent_days_before_end_of_month(date(2024, 1, 31), 0)
+        result = self._coord()._calc_most_recent_days_before_end_of_month(date(2024, 1, 31), 0, 1)
         self.assertEqual(result, date(2024, 1, 31))
 
     def test_target_already_passed_this_month(self):
         # 0 days before end of Jan = Jan 31; today = Feb 5 → Jan 31
-        result = TaskTrackerCoordinator._calc_most_recent_days_before_end_of_month(date(2024, 2, 5), 0)
+        result = self._coord()._calc_most_recent_days_before_end_of_month(date(2024, 2, 5), 0, 1)
         self.assertEqual(result, date(2024, 1, 31))
 
     def test_target_not_yet_reached_this_month(self):
         # 0 days before end of Jan = Jan 31; today = Jan 15 → Dec 31 (prev month)
-        result = TaskTrackerCoordinator._calc_most_recent_days_before_end_of_month(date(2024, 1, 15), 0)
+        result = self._coord()._calc_most_recent_days_before_end_of_month(date(2024, 1, 15), 0, 1)
         self.assertEqual(result, date(2023, 12, 31))
 
 
@@ -1175,29 +1190,362 @@ class TestCalcMostRecentWeekdayOfMonth(unittest.TestCase):
 
     def test_first_monday_of_same_month(self):
         # 2024-01-01 is Monday (1st Monday of Jan); today = Jan 15 → Jan 1
-        result = self._coord()._calc_most_recent_weekday_of_month(date(2024, 1, 15), CONF_MONDAY, "1")
+        result = self._coord()._calc_most_recent_weekday_of_month(date(2024, 1, 15), CONF_MONDAY, "1", 1)
         self.assertEqual(result, date(2024, 1, 1))
 
     def test_first_monday_today_is_the_day(self):
         # 2024-01-01 is Monday; today = Jan 1 → Jan 1
-        result = self._coord()._calc_most_recent_weekday_of_month(date(2024, 1, 1), CONF_MONDAY, "1")
+        result = self._coord()._calc_most_recent_weekday_of_month(date(2024, 1, 1), CONF_MONDAY, "1", 1)
         self.assertEqual(result, date(2024, 1, 1))
 
     def test_first_monday_same_month_before_second_monday(self):
         # Today = Jan 6 (after 1st Monday Jan 1, but before 2nd Monday Jan 8)
         # 1st Monday of Jan = Jan 1 ≤ Jan 6 → Jan 1
-        result = self._coord()._calc_most_recent_weekday_of_month(date(2024, 1, 6), CONF_MONDAY, "1")
+        result = self._coord()._calc_most_recent_weekday_of_month(date(2024, 1, 6), CONF_MONDAY, "1", 1)
         self.assertEqual(result, date(2024, 1, 1))
 
     def test_first_monday_current_month_not_yet(self):
         # 2024-03-01 is Friday; first Monday of March = Mar 4
         # today = Mar 2 → Mar 4 hasn't occurred yet → Feb 5 (first Monday of Feb)
         # Feb 2024: Feb 1 is Thursday; first Monday = Feb 5
-        result = self._coord()._calc_most_recent_weekday_of_month(date(2024, 3, 2), CONF_MONDAY, "1")
+        result = self._coord()._calc_most_recent_weekday_of_month(date(2024, 3, 2), CONF_MONDAY, "1", 1)
         self.assertEqual(result, date(2024, 2, 5))
 
     def test_last_monday_same_month(self):
         # Jan 2024 last Monday = Jan 29; today = Jan 30 → Jan 29
-        result = self._coord()._calc_most_recent_weekday_of_month(date(2024, 1, 30), CONF_MONDAY, "last")
+        result = self._coord()._calc_most_recent_weekday_of_month(date(2024, 1, 30), CONF_MONDAY, "last", 1)
         self.assertEqual(result, date(2024, 1, 29))
 
+
+# ---------------------------------------------------------------------------
+# Month interval (repeat_months_interval) tests
+# ---------------------------------------------------------------------------
+
+class TestCalcNextDayOfMonthWithInterval(unittest.TestCase):
+    """Tests for _calc_next_day_of_month with months_interval > 1."""
+
+    def _sensor(self):
+        return make_sensor()
+
+    def test_quarterly_day_15_advances_by_3_months(self):
+        sensor = self._sensor()
+        # last = Jan 15 (15th already reached today) → skip to Jan+3 = Apr 15
+        result = sensor.coordinator._calc_next_day_of_month(date(2024, 1, 15), 15, 3)
+        self.assertEqual(result, date(2024, 4, 15))
+
+    def test_quarterly_day_ahead_in_current_month(self):
+        sensor = self._sensor()
+        # last = Jan 1; day 15 in Jan is still ahead, but interval > 1 → always advance
+        # to next cycle: Jan+3 = Apr 15 (the same-month occurrence is part of the current cycle)
+        result = sensor.coordinator._calc_next_day_of_month(date(2024, 1, 1), 15, 3)
+        self.assertEqual(result, date(2024, 4, 15))
+
+    def test_biannual_advances_by_6_months(self):
+        sensor = self._sensor()
+        # last = Mar 31; day 31 in Mar already reached → Mar+6 = Sep, Sep has 30 days → Sep 30
+        result = sensor.coordinator._calc_next_day_of_month(date(2024, 3, 31), 31, 6)
+        self.assertEqual(result, date(2024, 9, 30))
+
+    def test_annual_advances_by_12_months(self):
+        sensor = self._sensor()
+        # last = Feb 29 2024 (leap); day 29 in Feb already reached → Feb 2025, not leap → Feb 28
+        result = sensor.coordinator._calc_next_day_of_month(date(2024, 2, 29), 29, 12)
+        self.assertEqual(result, date(2025, 2, 28))
+
+
+class TestCalcNextDaysBeforeEndOfMonthWithInterval(unittest.TestCase):
+    """Tests for _calc_next_days_before_end_of_month with months_interval > 1."""
+
+    def _sensor(self):
+        return make_sensor()
+
+    def test_quarterly_last_day_advances_by_3_months(self):
+        sensor = self._sensor()
+        # last = Jan 31 (0 days before end of Jan already reached) → Jan+3 = Apr 30
+        result = sensor.coordinator._calc_next_days_before_end_of_month(date(2024, 1, 31), 0, 3)
+        self.assertEqual(result, date(2024, 4, 30))
+
+    def test_quarterly_target_ahead_in_current_month(self):
+        sensor = self._sensor()
+        # last = Jan 1; target (last day of Jan = Jan 31) is still ahead, but interval > 1
+        # → always advance to next cycle: Jan+3 = Apr 30
+        result = sensor.coordinator._calc_next_days_before_end_of_month(date(2024, 1, 1), 0, 3)
+        self.assertEqual(result, date(2024, 4, 30))
+
+    def test_biannual_with_days_offset(self):
+        sensor = self._sensor()
+        # last = Jan 28 (3 days before end of Jan = Jan 28 already reached) → Jan+6 = Jul
+        # Jul has 31 days; 3 days before = Jul 28
+        result = sensor.coordinator._calc_next_days_before_end_of_month(date(2024, 1, 28), 3, 6)
+        self.assertEqual(result, date(2024, 7, 28))
+
+
+class TestCalcNextWeekdayOfMonthWithInterval(unittest.TestCase):
+    """Tests for _calc_next_weekday_of_month with months_interval > 1."""
+
+    def _sensor(self):
+        return make_sensor()
+
+    def test_quarterly_1st_monday_advances_by_3_months(self):
+        sensor = self._sensor()
+        # last = Jan 1 (1st Monday of Jan 2024) → Jan+3 = Apr; 1st Monday of Apr 2024 = Apr 1
+        result = sensor.coordinator._calc_next_weekday_of_month(date(2024, 1, 1), CONF_MONDAY, "1", 3)
+        self.assertEqual(result, date(2024, 4, 1))
+
+    def test_quarterly_1st_monday_ahead_in_current_month(self):
+        sensor = self._sensor()
+        # last = Dec 31 2023; 1st Monday of Dec = Dec 4 (already past) → advance by 3: Mar 2024
+        # 1st Monday of Mar 2024 = Mar 4
+        result = sensor.coordinator._calc_next_weekday_of_month(date(2023, 12, 31), CONF_MONDAY, "1", 3)
+        self.assertEqual(result, date(2024, 3, 4))
+
+    def test_biannual_last_friday(self):
+        sensor = self._sensor()
+        # last = Jan 26 2024 (last Friday of Jan = Jan 26); advance by 6 months
+        # Jul 2024 last Friday: Jul has last Friday = Jul 26
+        result = sensor.coordinator._calc_next_weekday_of_month(date(2024, 1, 26), CONF_FRIDAY, "last", 6)
+        self.assertEqual(result, date(2024, 7, 26))
+
+
+class TestCalcMostRecentDayOfMonthWithInterval(unittest.TestCase):
+    """Tests for _calc_most_recent_day_of_month with months_interval > 1."""
+
+    def _coord(self, last_done=date(2024, 1, 15)):
+        coord = make_sensor().coordinator
+        coord.last_done = last_done
+        return coord
+
+    def test_quarterly_today_is_in_cycle_month(self):
+        # last_done = Jan 15; quarterly day 15
+        # first_cycle = Jan 15 not > Jan 15, so advance 3 months → Apr 15
+        # today = Apr 15 (in cycle) → most recent = Apr 15
+        coord = self._coord(last_done=date(2024, 1, 15))
+        result = coord._calc_most_recent_day_of_month(date(2024, 4, 15), 15, 3)
+        self.assertEqual(result, date(2024, 4, 15))
+
+    def test_quarterly_today_is_after_cycle_date(self):
+        # last_done = Jan 15; quarterly day 15
+        # first_cycle = Apr 15; today = Apr 20 → most recent = Apr 15
+        coord = self._coord(last_done=date(2024, 1, 15))
+        result = coord._calc_most_recent_day_of_month(date(2024, 4, 20), 15, 3)
+        self.assertEqual(result, date(2024, 4, 15))
+
+    def test_quarterly_today_before_first_cycle(self):
+        # last_done = Jan 15; quarterly day 15
+        # first_cycle = Apr 15; today = Mar 1 (before first cycle) → returns last_done
+        coord = self._coord(last_done=date(2024, 1, 15))
+        result = coord._calc_most_recent_day_of_month(date(2024, 3, 1), 15, 3)
+        self.assertEqual(result, date(2024, 1, 15))
+
+    def test_annual_walks_multiple_cycles(self):
+        # last_done = Jan 1 2022; annual day 15
+        # first_cycle = Jan 15 2022; then Jan 15 2023, Jan 15 2024
+        # today = Feb 1 2024 → most recent = Jan 15 2024
+        coord = self._coord(last_done=date(2022, 1, 1))
+        result = coord._calc_most_recent_day_of_month(date(2024, 2, 1), 15, 12)
+        self.assertEqual(result, date(2024, 1, 15))
+
+
+class TestCalcMostRecentDaysBeforeEndOfMonthWithInterval(unittest.TestCase):
+    """Tests for _calc_most_recent_days_before_end_of_month with months_interval > 1."""
+
+    def _coord(self, last_done):
+        coord = make_sensor().coordinator
+        coord.last_done = last_done
+        return coord
+
+    def test_quarterly_today_is_cycle_date(self):
+        # last_done = Jan 31; quarterly 0 days before end
+        # first_cycle = Apr 30 (0 before end of Apr); today = Apr 30 → Apr 30
+        coord = self._coord(date(2024, 1, 31))
+        result = coord._calc_most_recent_days_before_end_of_month(date(2024, 4, 30), 0, 3)
+        self.assertEqual(result, date(2024, 4, 30))
+
+    def test_quarterly_today_before_first_cycle(self):
+        # last_done = Jan 31; quarterly 0 days before end
+        # first_cycle = Apr 30; today = Mar 15 → returns last_done
+        coord = self._coord(date(2024, 1, 31))
+        result = coord._calc_most_recent_days_before_end_of_month(date(2024, 3, 15), 0, 3)
+        self.assertEqual(result, date(2024, 1, 31))
+
+    def test_biannual_walks_multiple_cycles(self):
+        # last_done = Jan 28 (3 before end of Jan); biannual
+        # cycles: Jul 28 2024, Jan 28 2025, Jul 28 2025, Jan 27 2026 (Feb start + 6 = Jul 28)
+        # today = Feb 1 2025 → most recent = Jan 28 2025
+        coord = self._coord(date(2024, 1, 28))
+        result = coord._calc_most_recent_days_before_end_of_month(date(2025, 2, 1), 3, 6)
+        self.assertEqual(result, date(2025, 1, 28))
+
+
+class TestCalcMostRecentWeekdayOfMonthWithInterval(unittest.TestCase):
+    """Tests for _calc_most_recent_weekday_of_month with months_interval > 1."""
+
+    def _coord(self, last_done):
+        coord = make_sensor().coordinator
+        coord.last_done = last_done
+        return coord
+
+    def test_quarterly_today_is_cycle_date(self):
+        # last_done = Jan 1 2024 (1st Monday of Jan); quarterly
+        # first_cycle = Apr 1 2024 (1st Monday of Apr); today = Apr 1 → Apr 1
+        coord = self._coord(date(2024, 1, 1))
+        result = coord._calc_most_recent_weekday_of_month(date(2024, 4, 1), CONF_MONDAY, "1", 3)
+        self.assertEqual(result, date(2024, 4, 1))
+
+    def test_quarterly_today_before_first_cycle(self):
+        # last_done = Jan 1 2024; quarterly 1st Monday
+        # first_cycle = Apr 1 2024; today = Feb 15 → last_done
+        coord = self._coord(date(2024, 1, 1))
+        result = coord._calc_most_recent_weekday_of_month(date(2024, 2, 15), CONF_MONDAY, "1", 3)
+        self.assertEqual(result, date(2024, 1, 1))
+
+    def test_annual_walks_multiple_cycles(self):
+        # last_done = Jan 1 2022 (1st Monday of Jan); annual
+        # cycles: Jan 2 2023 (first Monday Jan 2023), Jan 1 2024
+        # today = Jan 15 2024 → most recent = Jan 1 2024
+        coord = self._coord(date(2022, 1, 3))  # Jan 3 2022 = Mon
+        result = coord._calc_most_recent_weekday_of_month(date(2024, 1, 15), CONF_MONDAY, "1", 12)
+        self.assertEqual(result, date(2024, 1, 1))
+
+
+class TestRepeatMonthsIntervalEndToEnd(unittest.TestCase):
+    """End-to-end tests for tasks with repeat_months_interval > 1."""
+
+    def test_quarterly_day_of_month_next_due(self):
+        sensor = make_sensor(
+            repeat_mode=CONF_REPEAT_EVERY,
+            repeat_every_type=CONF_REPEAT_EVERY_DAY_OF_MONTH,
+            repeat_month_day=15,
+            repeat_months_interval=3,
+        )
+        # last_done = Jan 15; next due = Apr 15
+        sensor.coordinator.last_done = date(2024, 1, 15)
+        next_due = sensor.coordinator._calculate_repeat_every_due_date()
+        self.assertEqual(next_due, date(2024, 4, 15))
+
+    def test_quarterly_weekday_of_month_next_due(self):
+        sensor = make_sensor(
+            repeat_mode=CONF_REPEAT_EVERY,
+            repeat_every_type=CONF_REPEAT_EVERY_WEEKDAY_OF_MONTH,
+            repeat_weekday=CONF_MONDAY,
+            repeat_nth_occurrence="1",
+            repeat_months_interval=3,
+        )
+        # last_done = Jan 1 2024 (1st Monday of Jan); next = 1st Monday of Apr = Apr 1
+        sensor.coordinator.last_done = date(2024, 1, 1)
+        next_due = sensor.coordinator._calculate_repeat_every_due_date()
+        self.assertEqual(next_due, date(2024, 4, 1))
+
+    def test_quarterly_days_before_end_of_month_next_due(self):
+        sensor = make_sensor(
+            repeat_mode=CONF_REPEAT_EVERY,
+            repeat_every_type=CONF_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH,
+            repeat_days_before_end=0,
+            repeat_months_interval=3,
+        )
+        # last_done = Jan 31; next = Apr 30
+        sensor.coordinator.last_done = date(2024, 1, 31)
+        next_due = sensor.coordinator._calculate_repeat_every_due_date()
+        self.assertEqual(next_due, date(2024, 4, 30))
+
+    def test_months_interval_stored_in_coordinator(self):
+        sensor = make_sensor(
+            repeat_mode=CONF_REPEAT_EVERY,
+            repeat_every_type=CONF_REPEAT_EVERY_DAY_OF_MONTH,
+            repeat_month_day=15,
+            repeat_months_interval=6,
+        )
+        self.assertEqual(sensor.coordinator.repeat_months_interval, 6)
+
+    def test_months_interval_defaults_to_1(self):
+        sensor = make_sensor(
+            repeat_mode=CONF_REPEAT_EVERY,
+            repeat_every_type=CONF_REPEAT_EVERY_DAY_OF_MONTH,
+            repeat_month_day=15,
+        )
+        self.assertEqual(sensor.coordinator.repeat_months_interval, 1)
+
+    def test_months_interval_clamped_to_1_for_zero(self):
+        coord = TaskTrackerCoordinator("abc", repeat_months_interval=0)
+        self.assertEqual(coord.repeat_months_interval, 1)
+
+    def test_months_interval_clamped_to_1_for_negative(self):
+        coord = TaskTrackerCoordinator("abc", repeat_months_interval=-5)
+        self.assertEqual(coord.repeat_months_interval, 1)
+
+
+class TestCalcNextSameMonthBugRegression(unittest.TestCase):
+    """Regression tests: same-month target MUST NOT be returned when months_interval > 1.
+
+    The bug: _calc_next_*_of_month returned the same-month occurrence even when
+    months_interval > 1, causing the due date to be identical before and after
+    changing months_interval from 1 to a larger value.
+    """
+
+    def _sensor(self):
+        return make_sensor()
+
+    # _calc_next_day_of_month ------------------------------------------------
+
+    def test_quarterly_last_done_before_task_day_in_same_month(self):
+        # last_done = Apr 5, task day = 19, interval = 4
+        # same-month candidate Apr 19 must NOT be returned → Aug 19
+        result = make_sensor().coordinator._calc_next_day_of_month(date(2024, 4, 5), 19, 4)
+        self.assertEqual(result, date(2024, 8, 19))
+
+    def test_annual_last_done_before_task_day_in_same_month(self):
+        # last_done = Jan 1, task day = 15, interval = 12
+        # same-month candidate Jan 15 must NOT be returned → Jan 15 next year
+        result = make_sensor().coordinator._calc_next_day_of_month(date(2024, 1, 1), 15, 12)
+        self.assertEqual(result, date(2025, 1, 15))
+
+    def test_changing_interval_changes_due_date_when_last_done_in_same_month(self):
+        # Reproduces the reported bug: changing months_interval from 1 to 4 must
+        # change the due date even when last_done is in the same month as task_day.
+        sensor_1 = make_sensor(
+            repeat_mode=CONF_REPEAT_EVERY,
+            repeat_every_type=CONF_REPEAT_EVERY_DAY_OF_MONTH,
+            repeat_month_day=19,
+            repeat_months_interval=1,
+        )
+        sensor_4 = make_sensor(
+            repeat_mode=CONF_REPEAT_EVERY,
+            repeat_every_type=CONF_REPEAT_EVERY_DAY_OF_MONTH,
+            repeat_month_day=19,
+            repeat_months_interval=4,
+        )
+        # last_done is in the same month but before the task day
+        last_done = date(2024, 4, 5)
+        sensor_1.coordinator.last_done = last_done
+        sensor_4.coordinator.last_done = last_done
+        due_1 = sensor_1.coordinator._calculate_repeat_every_due_date()
+        due_4 = sensor_4.coordinator._calculate_repeat_every_due_date()
+        self.assertEqual(due_1, date(2024, 4, 19))   # monthly → same month
+        self.assertEqual(due_4, date(2024, 8, 19))   # quarterly → 4 months out
+        self.assertNotEqual(due_1, due_4)
+
+    # _calc_next_days_before_end_of_month ------------------------------------
+
+    def test_quarterly_last_done_before_target_in_same_month(self):
+        # last_done = Apr 5, 0 days before end, interval = 4 → Apr 30 must NOT be returned
+        # → Aug 31 (Apr+4 months = August, last day = 31)
+        result = make_sensor().coordinator._calc_next_days_before_end_of_month(date(2024, 4, 5), 0, 4)
+        self.assertEqual(result, date(2024, 8, 31))
+
+    # _calc_next_weekday_of_month --------------------------------------------
+
+    def test_quarterly_last_done_before_weekday_in_same_month(self):
+        # last_done = Apr 1 2024 (Mon); 1st Monday of Apr = Apr 1, which is NOT ahead.
+        # Advance by 3 months → Jul 2024, 1st Monday = Jul 1.
+        result = make_sensor().coordinator._calc_next_weekday_of_month(
+            date(2024, 4, 1), CONF_MONDAY, "1", 3
+        )
+        self.assertEqual(result, date(2024, 7, 1))
+
+    def test_quarterly_1st_monday_ahead_skipped(self):
+        # last_done = Apr 2 2024 (Tue); 1st Monday of Apr = Apr 1 (already past, not ahead).
+        # Advance by 3 → Jul 1 2024.
+        result = make_sensor().coordinator._calc_next_weekday_of_month(
+            date(2024, 4, 2), CONF_MONDAY, "1", 3
+        )
+        self.assertEqual(result, date(2024, 7, 1))

@@ -93,9 +93,9 @@ The task repeats on a **fixed calendar schedule**, independent of when it was co
 | Schedule Type | Description | Example |
 |---------------|-------------|---------|
 | **Every Nth weekday** | Every *N* weeks on a chosen day of the week | Every week on Monday; Every 2 weeks on Friday |
-| **Every Nth day of the month** | A fixed day number each month | Every 15th of the month |
-| **Every Nth weekday of the month** | A specific occurrence of a weekday each month | Every 2nd Tuesday; Every last Friday |
-| **N days before month end** | A fixed number of days before the last day of the month | 3 days before month end |
+| **Every Nth day of the month** | A fixed day number every *N* months | Every 15th of the month; Every 15th every 3 months (quarterly) |
+| **Every Nth weekday of the month** | A specific occurrence of a weekday every *N* months | Every 2nd Tuesday; Every last Friday every 6 months |
+| **N days before month end** | A fixed number of days before the last day of the month, every *N* months | 3 days before month end; 0 days before month end every 12 months (last day of month, annually) |
 
 #### Mark as done behaviour for fixed schedules
 
@@ -142,22 +142,25 @@ Access task settings through the cog icon ⚙️ on the integration page.
 
 **Options specific to *Repeat Every Nth Day of the Month*:**
 
-| Option              | Description           |
-|---------------------|-----------------------|
-| **Day Of Month**    | Modify the day number |
+| Option               | Description                                               |
+|----------------------|-----------------------------------------------------------|
+| **Day Of Month**     | Modify the day number                                     |
+| **Every (months)**   | Modify the month interval (1 = every month, 3 = quarterly, 12 = annually) |
 
-**Options specific to *Repeat Every Nth weekday of the month *:**
+**Options specific to *Repeat Every Nth weekday of the month*:**
 
-| Option        | Description                         |
-|---------------|-------------------------------------|
-| **Weekday**   | Modify the weekday                  |
-| **Occurence** | Modify the occurence of the weekday |
+| Option             | Description                                                   |
+|--------------------|---------------------------------------------------------------|
+| **Weekday**        | Modify the weekday                                            |
+| **Occurrence**     | Modify the occurrence of the weekday                          |
+| **Every (months)** | Modify the month interval (1 = every month, 3 = quarterly, 12 = annually) |
 
 **Options specific to *Repeat Every N Days Before the End of the Month*:**
 
-| Option                    | Description                                      |
-|---------------------------|--------------------------------------------------|
-| **Days Before Month end** | Modify the number of days before the month's end |
+| Option                    | Description                                                                 |
+|---------------------------|-----------------------------------------------------------------------------|
+| **Days Before Month end** | Modify the number of days before the month's end                            |
+| **Every (months)**        | Modify the month interval (1 = every month, 3 = quarterly, 12 = annually)  |
 
 > **Note:** Tags and notification intervals require you to implement filtering logic in your own automations.
 >
@@ -189,6 +192,8 @@ The card shows the schedule in a human-readable form that reflects the repeat mo
 <td><img src="assets/7_due_soon.png" alt="Due soon card"/><br/><b>Due soon</b></td>
 </tr>
 </table>
+
+> **Note:** For tasks of mode "repeat every" in state "done", the button "Mark is done" is not shown, as clicking it would not change the state of the task.
 
 ---
 

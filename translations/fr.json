@@ -6,7 +6,7 @@
     "error": {
       "unknown": "Erreur inattendue",
       "invalid_month_day": "Le jour du mois doit être compris entre 1 et 31",
-      "invalid_days_before_end": "Les jours avant la fin du mois doivent être compris entre 0 et 30"
+      "invalid_months_interval": "L'intervalle en mois doit être supérieur ou égal à 1"
     },
     "step": {
       "user": {
@@ -58,10 +58,12 @@
         "title": "Chaque Nème jour du mois",
         "description": "La tâche se répète un jour fixe chaque mois.",
         "data": {
-          "repeat_month_day": "Jour du mois"
+          "repeat_month_day": "Jour du mois",
+          "repeat_months_interval": "Tous les (mois)"
         },
         "data_description": {
-          "repeat_month_day": "Le jour du mois auquel la tâche se répète (1-31)."
+          "repeat_month_day": "Le jour du mois auquel la tâche se répète (1-31).",
+          "repeat_months_interval": "Combien de mois entre les occurrences (1 = chaque mois, 3 = trimestriel, 12 = annuel, etc.)."
         }
       },
       "repeat_every_weekday_of_month": {
@@ -69,21 +71,25 @@
         "description": "La tâche se répète à une occurrence spécifique d'un jour de la semaine chaque mois (par exemple, le 2ème lundi).",
         "data": {
           "repeat_weekday": "Jour de la semaine",
-          "repeat_nth_occurrence": "Occurrence"
+          "repeat_nth_occurrence": "Occurrence",
+          "repeat_months_interval": "Tous les (mois)"
         },
         "data_description": {
           "repeat_weekday": "Le jour de la semaine auquel la tâche se répète.",
-          "repeat_nth_occurrence": "Quelle occurrence de ce jour de la semaine dans le mois."
+          "repeat_nth_occurrence": "Quelle occurrence de ce jour de la semaine dans le mois.",
+          "repeat_months_interval": "Combien de mois entre les occurrences (1 = chaque mois, 3 = trimestriel, 12 = annuel, etc.)."
         }
       },
       "repeat_every_days_before_end_of_month": {
         "title": "N jours avant la fin du mois",
         "description": "La tâche se répète un nombre défini de jours avant le dernier jour de chaque mois.",
         "data": {
-          "repeat_days_before_end": "Jours avant la fin du mois"
+          "repeat_days_before_end": "Jours avant la fin du mois",
+          "repeat_months_interval": "Tous les (mois)"
         },
         "data_description": {
-          "repeat_days_before_end": "Combien de jours avant le dernier jour du mois la tâche est due (0 = dernier jour, 1 = avant-dernier jour, etc.)."
+          "repeat_days_before_end": "Combien de jours avant le dernier jour du mois la tâche est due (0 = dernier jour, 1 = avant-dernier jour, etc.).",
+          "repeat_months_interval": "Combien de mois entre les occurrences (1 = chaque mois, 3 = trimestriel, 12 = annuel, etc.)."
         }
       }
     }
@@ -95,7 +101,8 @@
     "error": {
       "unknown": "Erreur inattendue",
       "invalid_month_day": "Le jour du mois doit être compris entre 1 et 31",
-      "invalid_days_before_end": "Les jours avant la fin du mois doivent être compris entre 0 et 30"
+      "invalid_days_before_end": "Les jours avant la fin du mois doivent être compris entre 0 et 30",
+      "invalid_months_interval": "L'intervalle en mois doit être supérieur ou égal à 1"
     },
     "step": {
       "repeat_every": {
@@ -124,10 +131,12 @@
         "title": "Chaque Nème jour du mois",
         "description": "La tâche se répète un jour fixe chaque mois.",
         "data": {
-          "repeat_month_day": "Jour du mois"
+          "repeat_month_day": "Jour du mois",
+          "repeat_months_interval": "Tous les (mois)"
         },
         "data_description": {
-          "repeat_month_day": "Le jour du mois auquel la tâche se répète (1-31)."
+          "repeat_month_day": "Le jour du mois auquel la tâche se répète (1-31).",
+          "repeat_months_interval": "Combien de mois entre les occurrences (1 = chaque mois, 3 = trimestriel, 12 = annuel, etc.)."
         }
       },
       "repeat_every_weekday_of_month": {
@@ -135,21 +144,25 @@
         "description": "La tâche se répète à une occurrence spécifique d'un jour de la semaine chaque mois (par exemple, le 2ème lundi).",
         "data": {
           "repeat_weekday": "Jour de la semaine",
-          "repeat_nth_occurrence": "Occurrence"
+          "repeat_nth_occurrence": "Occurrence",
+          "repeat_months_interval": "Tous les (mois)"
         },
         "data_description": {
           "repeat_weekday": "Le jour de la semaine auquel la tâche se répète.",
-          "repeat_nth_occurrence": "Quelle occurrence de ce jour de la semaine dans le mois."
+          "repeat_nth_occurrence": "Quelle occurrence de ce jour de la semaine dans le mois.",
+          "repeat_months_interval": "Combien de mois entre les occurrences (1 = chaque mois, 3 = trimestriel, 12 = annuel, etc.)."
         }
       },
       "repeat_every_days_before_end_of_month": {
         "title": "N jours avant la fin du mois",
         "description": "La tâche se répète un nombre défini de jours avant le dernier jour de chaque mois.",
         "data": {
-          "repeat_days_before_end": "Jours avant la fin du mois"
+          "repeat_days_before_end": "Jours avant la fin du mois",
+          "repeat_months_interval": "Tous les (mois)"
         },
         "data_description": {
-          "repeat_days_before_end": "Combien de jours avant le dernier jour du mois la tâche est due (0 = dernier jour, 1 = avant-dernier jour, etc.)."
+          "repeat_days_before_end": "Combien de jours avant le dernier jour du mois la tâche est due (0 = dernier jour, 1 = avant-dernier jour, etc.).",
+          "repeat_months_interval": "Combien de mois entre les occurrences (1 = chaque mois, 3 = trimestriel, 12 = annuel, etc.)."
         }
       },
       "options_repeat_every_weekday": {
@@ -185,6 +198,7 @@
         "description": "Mettez à jour la planification et les paramètres de la tâche.",
         "data": {
           "repeat_month_day": "Jour du mois",
+          "repeat_months_interval": "Tous les (mois)",
           "active": "Actif",
           "active_override": "Surcharge d'activation",
           "icon": "Icône",
@@ -196,6 +210,7 @@
         },
         "data_description": {
           "repeat_month_day": "Le jour du mois auquel la tâche se répète (1-31).",
+          "repeat_months_interval": "Combien de mois entre les occurrences (1 = chaque mois, 3 = trimestriel, 12 = annuel, etc.).",
           "active": "Activer ou désactiver la tâche.",
           "active_override": "Sélectionnez un input_boolean pour surcharger le paramètre Actif.",
           "icon": "Icône représentant la tâche.",
@@ -212,6 +227,7 @@
         "data": {
           "repeat_weekday": "Jour de la semaine",
           "repeat_nth_occurrence": "Occurrence",
+          "repeat_months_interval": "Tous les (mois)",
           "active": "Actif",
           "active_override": "Surcharge d'activation",
           "icon": "Icône",
@@ -224,6 +240,7 @@
         "data_description": {
           "repeat_weekday": "Le jour de la semaine auquel la tâche se répète.",
           "repeat_nth_occurrence": "Quelle occurrence de ce jour de la semaine dans le mois.",
+          "repeat_months_interval": "Combien de mois entre les occurrences (1 = chaque mois, 3 = trimestriel, 12 = annuel, etc.).",
           "active": "Activer ou désactiver la tâche.",
           "active_override": "Sélectionnez un input_boolean pour surcharger le paramètre Actif.",
           "icon": "Icône représentant la tâche.",
@@ -239,6 +256,7 @@
         "description": "Mettez à jour la planification et les paramètres de la tâche.",
         "data": {
           "repeat_days_before_end": "Jours avant la fin du mois",
+          "repeat_months_interval": "Tous les (mois)",
           "active": "Actif",
           "active_override": "Surcharge d'activation",
           "icon": "Icône",
@@ -250,6 +268,7 @@
         },
         "data_description": {
           "repeat_days_before_end": "Combien de jours avant le dernier jour du mois la tâche est due (0 = dernier jour, 1 = avant-dernier jour, etc.).",
+          "repeat_months_interval": "Combien de mois entre les occurrences (1 = chaque mois, 3 = trimestriel, 12 = annuel, etc.).",
           "active": "Activer ou désactiver la tâche.",
           "active_override": "Sélectionnez un input_boolean pour surcharger le paramètre Actif.",
           "icon": "Icône représentant la tâche.",
@@ -488,6 +507,9 @@
       },
       "occurrence_last": {
         "name": "Dernier"
+      },
+      "name_filter_placeholder": {
+        "name": "Filtrer les tâches…"
       }
     }
   },
