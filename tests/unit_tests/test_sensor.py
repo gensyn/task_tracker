@@ -691,7 +691,6 @@ class TestTaskTrackerSensorRepeatMode(unittest.IsolatedAsyncioTestCase):
         Expected: last_done → 2026-04-07 (the most recent cycle date ≤ today).
         Wrong:    last_done → 2026-04-14 (the latest Tuesday, ignoring the cycle).
         """
-        from datetime import timedelta
         sensor = make_sensor(
             repeat_mode=CONF_REPEAT_EVERY,
             repeat_every_type=CONF_REPEAT_EVERY_WEEKDAY,
@@ -700,10 +699,7 @@ class TestTaskTrackerSensorRepeatMode(unittest.IsolatedAsyncioTestCase):
             due_soon_days=0,
         )
         sensor.coordinator.last_done = date(2026, 2, 24)  # Tuesday
-        with patch("task_tracker.coordinator.date") as mock_date:
-            mock_date.today.return_value = date(2026, 4, 14)
-            mock_date.side_effect = lambda *args, **kwargs: date(*args, **kwargs)
-            await sensor.coordinator.async_mark_as_done()
+        await sensor.coordinator.async_mark_as_done(today=date(2026, 4, 14))
         self.assertEqual(sensor.coordinator.last_done, date(2026, 4, 7))
         # Next due date should be 3 weeks after 2026-04-07 = 2026-04-28
         next_due = sensor.coordinator._calculate_repeat_every_due_date()
