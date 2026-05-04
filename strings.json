@@ -511,6 +511,18 @@
       },
       "name_filter_placeholder": {
         "name": "Filter tasks…"
+      },
+      "area": {
+        "name": "Area"
+      },
+      "tags": {
+        "name": "Tags"
+      },
+      "labels": {
+        "name": "Labels"
+      },
+      "show": {
+        "name": "Show"
       }
     }
   },

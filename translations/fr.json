@@ -510,6 +510,18 @@
       },
       "name_filter_placeholder": {
         "name": "Filtrer les tâches…"
+      },
+      "area": {
+        "name": "Zone"
+      },
+      "tags": {
+        "name": "Tags"
+      },
+      "labels": {
+        "name": "Étiquettes"
+      },
+      "show": {
+        "name": "Afficher"
       }
     }
   },

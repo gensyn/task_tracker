@@ -507,6 +507,18 @@
       },
       "name_filter_placeholder": {
         "name": "Aufgaben filtern…"
+      },
+      "area": {
+        "name": "Bereich"
+      },
+      "tags": {
+        "name": "Tags"
+      },
+      "labels": {
+        "name": "Beschriftungen"
+      },
+      "show": {
+        "name": "Anzeigen"
       }
     }
   },

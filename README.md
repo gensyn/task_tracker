@@ -182,6 +182,27 @@ The card shows the schedule in a human-readable form that reflects the repeat mo
 - **Repeat after completion** — displays the interval, e.g. *Every 3 days*, *Every 2 weeks*
 - **Repeat every (fixed schedule)** — displays the calendar schedule, e.g. *Every week on Monday*, *Every 15th*, *Every 2nd Tuesday*, *3 days before month end*
 
+#### Optional display fields
+
+By default the card shows only the core task data (schedule, last done, due date, days until/overdue).
+You can opt in to additional fields with the following config options (all default to `false`):
+
+| Option         | Description                                          |
+|----------------|------------------------------------------------------|
+| `show_area`    | Show the HA area the task device/entity belongs to   |
+| `show_tags`    | Show the tags configured for the task                |
+| `show_labels`  | Show the HA labels assigned to the task entity       |
+
+Example:
+
+```yaml
+type: custom:task-tracker-card
+entity: sensor.task_tracker_mow_the_lawn
+show_area: true
+show_tags: true
+show_labels: true
+```
+
 #### Card States
 
 <table>
@@ -214,6 +235,8 @@ The panel shows all tasks in one place with live state filtering:
 | **Inactive** | Tasks with the *Active* option turned off |
 
 Each task card displays the same information as the Lovelace card (status, schedule, last done date, due date, days until due / overdue by) and includes a ✓ button to mark the task as done immediately.
+
+Use the **Show** toggle buttons in the panel toolbar to optionally display each task's **Area**, **Tags**, and **Labels** alongside the core information.
 
 #### Disabling the sidebar panel
 

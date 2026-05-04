@@ -8,6 +8,9 @@ class TaskTrackerPanel extends HTMLElement {
     this._sortBy = "name";
     this._sortDir = "asc";
     this._narrow = false;
+    this._showArea = false;
+    this._showTags = false;
+    this._showLabels = false;
     // Pre-render sort controls immediately so they are present in the
     // shadow DOM as soon as the element is created, even before HA calls
     // set hass().  Full render (with live task data) happens once hass
@@ -20,6 +23,8 @@ class TaskTrackerPanel extends HTMLElement {
       if (sortBtn) { this._setSort(sortBtn.dataset.sort); return; }
       const doneBtn = e.target.closest(".mark-done-btn");
       if (doneBtn) { this._markAsDone(doneBtn.dataset.entityId); return; }
+      const showBtn = e.target.closest(".show-toggle-btn");
+      if (showBtn) { this._toggleShow(showBtn.dataset.show); return; }
     });
     this.shadowRoot.addEventListener("input", (e) => {
       const nameInput = e.target.closest(".name-filter-input");
@@ -119,6 +124,13 @@ class TaskTrackerPanel extends HTMLElement {
     this._render();
   }
 
+  _toggleShow(key) {
+    if (key === "area")   this._showArea   = !this._showArea;
+    else if (key === "tags")   this._showTags   = !this._showTags;
+    else if (key === "labels") this._showLabels = !this._showLabels;
+    this._render();
+  }
+
   _stateColor(state) {
     switch (state) {
       case "due":      return "#e74c3c";
@@ -214,6 +226,29 @@ class TaskTrackerPanel extends HTMLElement {
     // "Mark as done" is a no-op for repeat_every tasks that are already done.
     const showMarkDone = !(attrs.repeat_mode === "repeat_every" && state === "done");
 
+    // --- optional area / tags / labels ---
+    let areaName = null;
+    if (this._showArea) {
+      const entityEntry = this._hass.entities && this._hass.entities[entity.entity_id];
+      const areaId = entityEntry && entityEntry.area_id;
+      if (areaId) {
+        const areaEntry = this._hass.areas && this._hass.areas[areaId];
+        areaName = (areaEntry && areaEntry.name) || null;
+      }
+    }
+
+    const tagsArr = this._showTags ? (attrs.tags || []) : [];
+
+    let labelItems = [];
+    if (this._showLabels) {
+      const entityEntry = this._hass.entities && this._hass.entities[entity.entity_id];
+      const labelIds = (entityEntry && entityEntry.labels) || [];
+      labelItems = labelIds.map((id) => {
+        const le = this._hass.labels && this._hass.labels[id];
+        return le || { name: id, color: null };
+      });
+    }
+
     return `
       <div class="task-card">
         <div class="task-card-header" style="background:${this._stateColor(state)}">
@@ -226,6 +261,9 @@ class TaskTrackerPanel extends HTMLElement {
             <tr><td>${this._t("last_done")}</td><td>${lastDoneStr}</td></tr>
             <tr><td>${this._t("due_date")}</td><td>${dueDateStr}</td></tr>
             <tr><td>${dueLabel}</td><td>${dueValue}</td></tr>
+            ${areaName ? `<tr><td>${this._t("area")}</td><td>${areaName}</td></tr>` : ""}
+            ${tagsArr.length ? `<tr><td>${this._t("tags")}</td><td class="chips-cell">${tagsArr.map((t) => `<span class="tag-chip">${t}</span>`).join(" ")}</td></tr>` : ""}
+            ${labelItems.length ? `<tr><td>${this._t("labels")}</td><td class="chips-cell">${labelItems.map((l) => `<span class="label-chip" style="background:${l.color || "#616161"}">${l.name}</span>`).join(" ")}</td></tr>` : ""}
           </table>
           ${showMarkDone ? `
           <div class="action-buttons">
@@ -393,6 +431,50 @@ class TaskTrackerPanel extends HTMLElement {
         }
         .action-btn:hover { opacity: 0.85; }
         .mark-done-btn { background: #27ae60; }
+        .show-controls {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 16px;
+        }
+        .show-toggle-btn {
+          padding: 6px 14px;
+          border: 2px solid var(--secondary-color, #727272);
+          background: transparent;
+          color: var(--secondary-text-color, #727272);
+          border-radius: 20px;
+          cursor: pointer;
+          font-size: 0.875rem;
+          font-family: inherit;
+          transition: background 0.2s, color 0.2s;
+        }
+        .show-toggle-btn.active {
+          border-color: var(--primary-color, #03a9f4);
+          background: var(--primary-color, #03a9f4);
+          color: var(--text-primary-color, white);
+        }
+        .show-toggle-btn:hover:not(.active) {
+          background: rgba(3, 169, 244, 0.1);
+        }
+        .chips-cell { text-align: right; }
+        .tag-chip {
+          display: inline-block;
+          padding: 1px 8px;
+          border-radius: 10px;
+          font-size: 0.75em;
+          background: var(--primary-color, #03a9f4);
+          color: white;
+          margin: 1px;
+        }
+        .label-chip {
+          display: inline-block;
+          padding: 1px 8px;
+          border-radius: 10px;
+          font-size: 0.75em;
+          color: white;
+          margin: 1px;
+        }
         .name-filter-wrap {
           margin-bottom: 12px;
         }
@@ -506,6 +588,18 @@ class TaskTrackerPanel extends HTMLElement {
           </button>
           <button class="sort-btn${this._sortBy === "due_date" ? " active" : ""}" data-sort="due_date">
             ${this._t("sort_due_date") || "Due date"}${this._sortIndicator("due_date")}
+          </button>
+        </div>
+        <div class="show-controls">
+          <span class="sort-label">${this._t("show") || "Show"}:</span>
+          <button class="show-toggle-btn${this._showArea ? " active" : ""}" data-show="area">
+            ${this._t("area") || "Area"}
+          </button>
+          <button class="show-toggle-btn${this._showTags ? " active" : ""}" data-show="tags">
+            ${this._t("tags") || "Tags"}
+          </button>
+          <button class="show-toggle-btn${this._showLabels ? " active" : ""}" data-show="labels">
+            ${this._t("labels") || "Labels"}
           </button>
         </div>
         <div class="name-filter-wrap">
