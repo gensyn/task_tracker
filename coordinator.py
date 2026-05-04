@@ -86,7 +86,7 @@ class TaskTrackerCoordinator:
         for listener in list(self._listeners):
             listener()
 
-    async def async_mark_as_done(self, today: date | None = None) -> None:
+    async def async_mark_as_done(self, today: date) -> None:
         """Mark the task as done and notify listeners.
 
         *today* is the caller-supplied current local date (obtained from the HA
@@ -120,7 +120,7 @@ class TaskTrackerCoordinator:
         without needing to pass any hint about the current task state.
         """
         if today is None:
-            today = date.today()
+            raise ValueError("No completion date provided")
         if self.repeat_mode == CONF_REPEAT_EVERY:
             if self.last_done > today:
                 # Already pre-marked a future cycle; pressing again is a no-op.
