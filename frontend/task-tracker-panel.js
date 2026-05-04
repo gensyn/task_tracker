@@ -35,7 +35,11 @@ class TaskTrackerPanel extends HTMLElement {
   set hass(hass) {
     const oldHass = this._hass;
     this._hass = hass;
-    if (!oldHass || this._tasksChanged(oldHass.states, hass.states)) {
+    if (!oldHass ||
+        this._tasksChanged(oldHass.states, hass.states) ||
+        oldHass.entities !== hass.entities ||
+        oldHass.areas !== hass.areas ||
+        oldHass.labels !== hass.labels) {
       this._render();
     }
   }

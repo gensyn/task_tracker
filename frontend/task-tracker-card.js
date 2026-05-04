@@ -31,8 +31,10 @@ class TaskTracker extends HTMLElement {
   set hass(hass) {
     this._hass = hass;
     const entity = hass.states[this.config?.entity];
-    if (entity === this._entity) return;
+    const entityEntry = hass.entities && hass.entities[this.config?.entity];
+    if (entity === this._entity && entityEntry === this._entityEntry) return;
     this._entity = entity;
+    this._entityEntry = entityEntry;
     this._render();
   }
 
@@ -141,9 +143,10 @@ class TaskTracker extends HTMLElement {
     const showMarkDone = !(attrs.repeat_mode === "repeat_every" && stateStr === "done");
 
     // --- optional area / tags / labels ---
+    const entityEntry = this._entityEntry;
+
     let areaName = null;
     if (this._showArea) {
-      const entityEntry = this._hass.entities && this._hass.entities[entityId];
       const areaId = entityEntry && entityEntry.area_id;
       if (areaId) {
         const areaEntry = this._hass.areas && this._hass.areas[areaId];
@@ -155,7 +158,6 @@ class TaskTracker extends HTMLElement {
 
     let labelItems = [];
     if (this._showLabels) {
-      const entityEntry = this._hass.entities && this._hass.entities[entityId];
       const labelIds = (entityEntry && entityEntry.labels) || [];
       labelItems = labelIds.map((id) => {
         const le = this._hass.labels && this._hass.labels[id];
