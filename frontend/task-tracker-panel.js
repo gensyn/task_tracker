@@ -179,7 +179,7 @@ class TaskTrackerPanel extends HTMLElement {
     const locale =
       (this._hass && this._hass.locale && this._hass.locale.language) ||
       undefined;
-    return new Date(dateStr).toLocaleDateString(locale, {
+    return new Date(dateStr + "T00:00:00").toLocaleDateString(locale, {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
