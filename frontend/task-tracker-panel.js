@@ -8,9 +8,9 @@ class TaskTrackerPanel extends HTMLElement {
     this._sortBy = "name";
     this._sortDir = "asc";
     this._narrow = false;
-    this._showArea = false;
-    this._showTags = false;
-    this._showLabels = false;
+    this._showArea   = localStorage.getItem("tt_panel_show_area")   === "1";
+    this._showTags   = localStorage.getItem("tt_panel_show_tags")   === "1";
+    this._showLabels = localStorage.getItem("tt_panel_show_labels") === "1";
     // Pre-render sort controls immediately so they are present in the
     // shadow DOM as soon as the element is created, even before HA calls
     // set hass().  Full render (with live task data) happens once hass
@@ -141,9 +141,16 @@ class TaskTrackerPanel extends HTMLElement {
   }
 
   _toggleShow(key) {
-    if (key === "area") this._showArea = !this._showArea;
-    else if (key === "tags") this._showTags = !this._showTags;
-    else if (key === "labels") this._showLabels = !this._showLabels;
+    if (key === "area") {
+      this._showArea = !this._showArea;
+      localStorage.setItem("tt_panel_show_area", this._showArea ? "1" : "0");
+    } else if (key === "tags") {
+      this._showTags = !this._showTags;
+      localStorage.setItem("tt_panel_show_tags", this._showTags ? "1" : "0");
+    } else if (key === "labels") {
+      this._showLabels = !this._showLabels;
+      localStorage.setItem("tt_panel_show_labels", this._showLabels ? "1" : "0");
+    }
     this._render();
   }
 
