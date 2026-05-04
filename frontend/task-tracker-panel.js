@@ -70,6 +70,22 @@ class TaskTrackerPanel extends HTMLElement {
     );
   }
 
+  /** Escape text for safe HTML interpolation. */
+  _esc(str) {
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  /** Return a safe CSS color value (hex only) or a fallback. */
+  _safeColor(color, fallback) {
+    if (!color) return fallback;
+    // Accept only hex colors: #rgb, #rrggbb, #rrggbbaa
+    return /^#[0-9a-fA-F]{3,8}$/.test(color) ? color : fallback;
+  }
+
   _getAllTasks() {
     return Object.values(this._hass.states)
       .filter((entity) => entity.entity_id.startsWith("sensor.task_tracker_"))
@@ -125,8 +141,8 @@ class TaskTrackerPanel extends HTMLElement {
   }
 
   _toggleShow(key) {
-    if (key === "area")   this._showArea   = !this._showArea;
-    else if (key === "tags")   this._showTags   = !this._showTags;
+    if (key === "area") this._showArea = !this._showArea;
+    else if (key === "tags") this._showTags = !this._showTags;
     else if (key === "labels") this._showLabels = !this._showLabels;
     this._render();
   }
@@ -261,9 +277,9 @@ class TaskTrackerPanel extends HTMLElement {
             <tr><td>${this._t("last_done")}</td><td>${lastDoneStr}</td></tr>
             <tr><td>${this._t("due_date")}</td><td>${dueDateStr}</td></tr>
             <tr><td>${dueLabel}</td><td>${dueValue}</td></tr>
-            ${areaName ? `<tr><td>${this._t("area")}</td><td>${areaName}</td></tr>` : ""}
-            ${tagsArr.length ? `<tr><td>${this._t("tags")}</td><td class="chips-cell">${tagsArr.map((t) => `<span class="tag-chip">${t}</span>`).join(" ")}</td></tr>` : ""}
-            ${labelItems.length ? `<tr><td>${this._t("labels")}</td><td class="chips-cell">${labelItems.map((l) => `<span class="label-chip" style="background:${l.color || "#616161"}">${l.name}</span>`).join(" ")}</td></tr>` : ""}
+            ${areaName ? `<tr><td>${this._t("area")}</td><td>${this._esc(areaName)}</td></tr>` : ""}
+            ${tagsArr.length ? `<tr><td>${this._t("tags")}</td><td class="chips-cell">${tagsArr.map((t) => `<span class="tag-chip">${this._esc(t)}</span>`).join(" ")}</td></tr>` : ""}
+            ${labelItems.length ? `<tr><td>${this._t("labels")}</td><td class="chips-cell">${labelItems.map((l) => `<span class="label-chip" style="background:${this._safeColor(l.color, "#616161")}">${this._esc(l.name)}</span>`).join(" ")}</td></tr>` : ""}
           </table>
           ${showMarkDone ? `
           <div class="action-buttons">

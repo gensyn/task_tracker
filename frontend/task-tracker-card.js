@@ -12,6 +12,22 @@ class TaskTracker extends HTMLElement {
     return this._hass.localize(`component.task_tracker.entity.ui.${key}.name`);
   }
 
+  /** Escape text for safe HTML interpolation. */
+  _esc(str) {
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  /** Return a safe CSS color value (hex only) or a fallback. */
+  _safeColor(color, fallback) {
+    if (!color) return fallback;
+    // Accept only hex colors: #rgb, #rrggbb, #rrggbbaa
+    return /^#[0-9a-fA-F]{3,8}$/.test(color) ? color : fallback;
+  }
+
   set hass(hass) {
     this._hass = hass;
     const entity = hass.states[this.config?.entity];
@@ -251,17 +267,17 @@ class TaskTracker extends HTMLElement {
             ${areaName ? `
             <tr>
               <td>${this._t("area")}</td>
-              <td>${areaName}</td>
+              <td>${this._esc(areaName)}</td>
             </tr>` : ""}
             ${tagsArr.length ? `
             <tr>
               <td>${this._t("tags")}</td>
-              <td class="chips-cell">${tagsArr.map((t) => `<span class="tag-chip">${t}</span>`).join(" ")}</td>
+              <td class="chips-cell">${tagsArr.map((t) => `<span class="tag-chip">${this._esc(t)}</span>`).join(" ")}</td>
             </tr>` : ""}
             ${labelItems.length ? `
             <tr>
               <td>${this._t("labels")}</td>
-              <td class="chips-cell">${labelItems.map((l) => `<span class="label-chip" style="background:${l.color || "#616161"}">${l.name}</span>`).join(" ")}</td>
+              <td class="chips-cell">${labelItems.map((l) => `<span class="label-chip" style="background:${this._safeColor(l.color, "#616161")}">${this._esc(l.name)}</span>`).join(" ")}</td>
             </tr>` : ""}
           </table>
           ${showMarkDone ? `
