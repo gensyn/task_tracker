@@ -39,7 +39,8 @@ class TaskTrackerPanel extends HTMLElement {
         this._tasksChanged(oldHass.states, hass.states) ||
         oldHass.entities !== hass.entities ||
         oldHass.areas !== hass.areas ||
-        oldHass.labels !== hass.labels) {
+        oldHass.labels !== hass.labels ||
+        oldHass.devices !== hass.devices) {
       this._render();
     }
   }
@@ -254,10 +255,14 @@ class TaskTrackerPanel extends HTMLElement {
     const showMarkDone = !(attrs.repeat_mode === "repeat_every" && state === "done");
 
     // --- optional area / tags / labels ---
+    const entityEntry = this._hass.entities && this._hass.entities[entity.entity_id];
+    const deviceEntry = entityEntry && entityEntry.device_id &&
+      this._hass.devices && this._hass.devices[entityEntry.device_id];
+
     let areaName = null;
     if (this._showArea) {
-      const entityEntry = this._hass.entities && this._hass.entities[entity.entity_id];
-      const areaId = entityEntry && entityEntry.area_id;
+      const areaId = (entityEntry && entityEntry.area_id) ||
+                     (deviceEntry && deviceEntry.area_id);
       if (areaId) {
         const areaEntry = this._hass.areas && this._hass.areas[areaId];
         areaName = (areaEntry && areaEntry.name) || null;
@@ -268,8 +273,9 @@ class TaskTrackerPanel extends HTMLElement {
 
     let labelItems = [];
     if (this._showLabels) {
-      const entityEntry = this._hass.entities && this._hass.entities[entity.entity_id];
-      const labelIds = (entityEntry && entityEntry.labels) || [];
+      const entityLabelIds = (entityEntry && entityEntry.labels) || [];
+      const deviceLabelIds = (deviceEntry && deviceEntry.labels) || [];
+      const labelIds = [...new Set([...entityLabelIds, ...deviceLabelIds])];
       labelItems = labelIds.map((id) => {
         const le = this._hass.labels && this._hass.labels[id];
         return le || { name: id, color: null };

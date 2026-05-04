@@ -32,9 +32,14 @@ class TaskTracker extends HTMLElement {
     this._hass = hass;
     const entity = hass.states[this.config?.entity];
     const entityEntry = hass.entities && hass.entities[this.config?.entity];
-    if (entity === this._entity && entityEntry === this._entityEntry) return;
+    const deviceEntry = entityEntry && entityEntry.device_id &&
+      hass.devices && hass.devices[entityEntry.device_id];
+    if (entity === this._entity &&
+        entityEntry === this._entityEntry &&
+        deviceEntry === this._deviceEntry) return;
     this._entity = entity;
     this._entityEntry = entityEntry;
+    this._deviceEntry = deviceEntry;
     this._render();
   }
 
@@ -144,10 +149,12 @@ class TaskTracker extends HTMLElement {
 
     // --- optional area / tags / labels ---
     const entityEntry = this._entityEntry;
+    const deviceEntry = this._deviceEntry;
 
     let areaName = null;
     if (this._showArea) {
-      const areaId = entityEntry && entityEntry.area_id;
+      const areaId = (entityEntry && entityEntry.area_id) ||
+                     (deviceEntry && deviceEntry.area_id);
       if (areaId) {
         const areaEntry = this._hass.areas && this._hass.areas[areaId];
         areaName = (areaEntry && areaEntry.name) || null;
@@ -158,7 +165,9 @@ class TaskTracker extends HTMLElement {
 
     let labelItems = [];
     if (this._showLabels) {
-      const labelIds = (entityEntry && entityEntry.labels) || [];
+      const entityLabelIds = (entityEntry && entityEntry.labels) || [];
+      const deviceLabelIds = (deviceEntry && deviceEntry.labels) || [];
+      const labelIds = [...new Set([...entityLabelIds, ...deviceLabelIds])];
       labelItems = labelIds.map((id) => {
         const le = this._hass.labels && this._hass.labels[id];
         return le || { name: id, color: null };
