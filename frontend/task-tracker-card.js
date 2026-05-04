@@ -12,11 +12,34 @@ class TaskTracker extends HTMLElement {
     return this._hass.localize(`component.task_tracker.entity.ui.${key}.name`);
   }
 
+  /** Escape text for safe HTML interpolation. */
+  _esc(str) {
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  /** Return a safe CSS color value (hex only) or a fallback. */
+  _safeColor(color, fallback) {
+    if (!color) return fallback;
+    // Accept only hex colors: #rgb, #rrggbb, #rrggbbaa
+    return /^#[0-9a-fA-F]{3,8}$/.test(color) ? color : fallback;
+  }
+
   set hass(hass) {
     this._hass = hass;
     const entity = hass.states[this.config?.entity];
-    if (entity === this._entity) return;
+    const entityEntry = hass.entities && hass.entities[this.config?.entity];
+    const deviceEntry = entityEntry && entityEntry.device_id &&
+      hass.devices && hass.devices[entityEntry.device_id];
+    if (entity === this._entity &&
+        entityEntry === this._entityEntry &&
+        deviceEntry === this._deviceEntry) return;
     this._entity = entity;
+    this._entityEntry = entityEntry;
+    this._deviceEntry = deviceEntry;
     this._render();
   }
 
@@ -25,6 +48,10 @@ class TaskTracker extends HTMLElement {
       throw new Error("You need to define an entity");
     }
     this.config = config;
+    // show_area, show_tags, show_labels default to false when omitted
+    this._showArea   = config.show_area   === true;
+    this._showTags   = config.show_tags   === true;
+    this._showLabels = config.show_labels === true;
   }
 
   _stateColor(state) {
@@ -120,6 +147,33 @@ class TaskTracker extends HTMLElement {
     // "Mark as done" is a no-op for repeat_every tasks that are already done.
     const showMarkDone = !(attrs.repeat_mode === "repeat_every" && stateStr === "done");
 
+    // --- optional area / tags / labels ---
+    const entityEntry = this._entityEntry;
+    const deviceEntry = this._deviceEntry;
+
+    let areaName = null;
+    if (this._showArea) {
+      const areaId = (entityEntry && entityEntry.area_id) ||
+                     (deviceEntry && deviceEntry.area_id);
+      if (areaId) {
+        const areaEntry = this._hass.areas && this._hass.areas[areaId];
+        areaName = (areaEntry && areaEntry.name) || null;
+      }
+    }
+
+    const tagsArr = this._showTags ? (attrs.tags || []) : [];
+
+    let labelItems = [];
+    if (this._showLabels) {
+      const entityLabelIds = (entityEntry && entityEntry.labels) || [];
+      const deviceLabelIds = (deviceEntry && deviceEntry.labels) || [];
+      const labelIds = [...new Set([...entityLabelIds, ...deviceLabelIds])];
+      labelItems = labelIds.map((id) => {
+        const le = this._hass.labels && this._hass.labels[id];
+        return le || { name: id, color: null };
+      });
+    }
+
     this.shadowRoot.innerHTML = `
       <style>
         :host { display: block; }
@@ -179,6 +233,24 @@ class TaskTracker extends HTMLElement {
         }
         .action-btn:hover { opacity: 0.85; }
         .mark-done-btn { background: #27ae60; }
+        .chips-cell { text-align: right; }
+        .tag-chip {
+          display: inline-block;
+          padding: 1px 8px;
+          border-radius: 10px;
+          font-size: 0.75em;
+          background: var(--primary-color, #03a9f4);
+          color: white;
+          margin: 1px;
+        }
+        .label-chip {
+          display: inline-block;
+          padding: 1px 8px;
+          border-radius: 10px;
+          font-size: 0.75em;
+          color: white;
+          margin: 1px;
+        }
       </style>
       <ha-card>
         <div class="card-header">
@@ -203,6 +275,21 @@ class TaskTracker extends HTMLElement {
               <td>${dueLabel}</td>
               <td>${dueValue}</td>
             </tr>
+            ${areaName ? `
+            <tr>
+              <td>${this._t("area")}</td>
+              <td>${this._esc(areaName)}</td>
+            </tr>` : ""}
+            ${tagsArr.length ? `
+            <tr>
+              <td>${this._t("tags")}</td>
+              <td class="chips-cell">${tagsArr.map((t) => `<span class="tag-chip">${this._esc(t)}</span>`).join(" ")}</td>
+            </tr>` : ""}
+            ${labelItems.length ? `
+            <tr>
+              <td>${this._t("labels")}</td>
+              <td class="chips-cell">${labelItems.map((l) => `<span class="label-chip" style="background:${this._safeColor(l.color, "#616161")}">${this._esc(l.name)}</span>`).join(" ")}</td>
+            </tr>` : ""}
           </table>
           ${showMarkDone ? `
           <div class="action-buttons">
