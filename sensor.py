@@ -17,8 +17,7 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import generate_entity_id
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_call_later
-from homeassistant.util import slugify
-from homeassistant.util.dt import UTC
+from homeassistant.util import dt as dt_util, slugify
 
 from .const import DOMAIN, CONF_TASK_INTERVAL_VALUE, CONF_NOTIFICATION_INTERVAL, CONF_TAGS, CONF_ACTIVE, \
     CONST_DUE, CONST_DUE_SOON, CONST_INACTIVE, CONST_DONE, CONF_TASK_INTERVAL_TYPE, \
@@ -194,8 +193,9 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
         effective_due_soon_days = self._resolve_due_soon_override()
 
         self.due_date = self.coordinator.calculate_due_date(effective_task_interval_value, effective_task_interval_type)
-        self.due_in: int = (self.due_date - date.today()).days if self.due_date > date.today() else 0
-        overdue_by: int = (date.today() - self.due_date).days if self.due_date < date.today() else 0
+        today = dt_util.now().date()
+        self.due_in: int = (self.due_date - today).days if self.due_date > today else 0
+        overdue_by: int = (today - self.due_date).days if self.due_date < today else 0
 
         if not effective_active:
             self._attr_native_value = CONST_INACTIVE
@@ -301,7 +301,7 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
                     self.entry_name,
                 )
                 return
-            if datetime.now(UTC) - completed < timedelta(minutes=5):
+            if dt_util.now() - completed < timedelta(minutes=5):
                 # the item was marked as done, so we need to update our last_done date
                 await self.async_mark_as_done()
 
@@ -391,7 +391,7 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
         if (self.coordinator.repeat_mode == CONF_REPEAT_EVERY
                 and self._attr_native_value == CONST_INACTIVE):
             return
-        await self.coordinator.async_mark_as_done()
+        await self.coordinator.async_mark_as_done(today=dt_util.now().date())
 
     async def async_set_last_done_date(self, new_date: date) -> None:
         """Set the last done date."""

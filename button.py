@@ -10,7 +10,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import generate_entity_id
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.util import slugify
+from homeassistant.util import dt as dt_util, slugify
 
 from .const import DOMAIN
 from .coordinator import TaskTrackerCoordinator
@@ -49,4 +49,4 @@ class TaskTrackerButton(ButtonEntity):
 
     async def async_press(self) -> None:
         coordinator: TaskTrackerCoordinator = self.hass.data[DOMAIN][self._entry_id]
-        await coordinator.async_mark_as_done()
+        await coordinator.async_mark_as_done(today=dt_util.now().date())

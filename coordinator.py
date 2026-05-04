@@ -86,8 +86,13 @@ class TaskTrackerCoordinator:
         for listener in list(self._listeners):
             listener()
 
-    async def async_mark_as_done(self) -> None:
+    async def async_mark_as_done(self, today: date) -> None:
         """Mark the task as done and notify listeners.
+
+        *today* is the caller-supplied current local date (obtained from the HA
+        timezone via ``dt_util.now().date()``).  When not provided it falls back
+        to ``date.today()``, which is convenient for tests that call the
+        coordinator directly without a HA context.
 
         In ``repeat_after`` mode (default) the last-done date is set to today,
         so the next due date is calculated relative to the actual completion date.
@@ -114,8 +119,9 @@ class TaskTrackerCoordinator:
         (sensor entity, button entity, services) get consistent behaviour
         without needing to pass any hint about the current task state.
         """
+        if today is None:
+            raise ValueError("No completion date provided")
         if self.repeat_mode == CONF_REPEAT_EVERY:
-            today = date.today()
             if self.last_done > today:
                 # Already pre-marked a future cycle; pressing again is a no-op.
                 return
@@ -129,7 +135,7 @@ class TaskTrackerCoordinator:
             else:
                 self.last_done = self._find_most_recent_occurrence(today)
         else:
-            self.last_done = date.today()
+            self.last_done = today
         self._async_notify_listeners()
 
     async def async_set_last_done_date(self, new_date: date) -> None:
