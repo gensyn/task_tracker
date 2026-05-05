@@ -122,7 +122,7 @@ class TaskTracker extends HTMLElement {
       undefined;
 
     const formatDate = (dateStr) =>
-      new Date(dateStr).toLocaleDateString(haLocale, {
+      new Date(dateStr + "T00:00:00").toLocaleDateString(haLocale, {
         day: "2-digit",
         month: "2-digit",
         year: "numeric",
