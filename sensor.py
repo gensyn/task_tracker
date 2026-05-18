@@ -24,7 +24,8 @@ from .const import DOMAIN, CONF_TASK_INTERVAL_VALUE, CONF_NOTIFICATION_INTERVAL,
     CONF_DUE_SOON_DAYS, CONF_TODO_LISTS, CONF_DAY, CONF_ACTIVE_OVERRIDE, CONF_TASK_INTERVAL_OVERRIDE, \
     CONF_DUE_SOON_OVERRIDE, CONF_REPEAT_EVERY, \
     CONF_REPEAT_EVERY_WEEKDAY, CONF_REPEAT_EVERY_DAY_OF_MONTH, \
-    CONF_REPEAT_EVERY_WEEKDAY_OF_MONTH, CONF_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH
+    CONF_REPEAT_EVERY_WEEKDAY_OF_MONTH, CONF_REPEAT_EVERY_DAYS_BEFORE_END_OF_MONTH, \
+    CONF_DEPENDENCIES
 from .coordinator import TaskTrackerCoordinator
 
 LOGGER = getLogger(__name__)
@@ -47,7 +48,8 @@ async def async_setup_entry(
                            options[CONF_ACTIVE], options[CONF_ICON], entry.entry_id, hass,
                            options.get(CONF_ACTIVE_OVERRIDE),
                            options.get(CONF_TASK_INTERVAL_OVERRIDE),
-                           options.get(CONF_DUE_SOON_OVERRIDE))])
+                           options.get(CONF_DUE_SOON_OVERRIDE),
+                           options.get(CONF_DEPENDENCIES) or [])])
 
 
 class TaskTrackerSensor(RestoreSensor, SensorEntity):
@@ -63,7 +65,8 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
                  icon: str, entry_id: str, hass: HomeAssistant,
                  active_override: str | None = None,
                  task_interval_override: str | None = None,
-                 due_soon_override: str | None = None) -> None:
+                 due_soon_override: str | None = None,
+                 dependencies: list[str] | None = None) -> None:
         """Initialize the sensor with a service name."""
         self.coordinator = coordinator
         self.task_interval_value: int = task_interval_value
@@ -83,6 +86,7 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
         self.active_override: str | None = active_override
         self.task_interval_override: str | None = task_interval_override
         self.due_soon_override: str | None = due_soon_override
+        self.dependencies: list[str] = dependencies or []
         # Effective values after applying overrides; initialised to configured values
         self._effective_active: bool = active
         self._effective_due_soon_days: int = due_soon_days
@@ -148,6 +152,21 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
                 )
             )
 
+        # Subscribe to dependency state changes so the task re-evaluates whenever
+        # a dependency's state changes.
+        if self.dependencies:
+            @callback
+            def _async_dependency_state_changed(_event: Any) -> None:
+                self.async_schedule_update_ha_state(force_refresh=True)
+
+            self.async_on_remove(
+                self.hass.bus.async_listen(
+                    EVENT_STATE_CHANGED,
+                    _async_dependency_state_changed,
+                    self._filter_dependency_changes,
+                )
+            )
+
         await self.async_update()
 
     def _resolve_active_override(self) -> bool:
@@ -204,6 +223,25 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
         elif self.due_in <= effective_due_soon_days:
             self._attr_native_value = CONST_DUE_SOON
 
+        # Apply dependency constraint: a task's state cannot be more urgent than its
+        # least-urgent dependency.  Urgency ordering: done < due_soon < due.
+        if self._attr_native_value in (CONST_DUE, CONST_DUE_SOON) and self.dependencies:
+            # State ordering: done=0, due_soon=1, due=2
+            _state_rank = {CONST_DONE: 0, CONST_DUE_SOON: 1, CONST_DUE: 2}
+            own_rank = _state_rank.get(self._attr_native_value, 2)
+            min_dep_rank = own_rank
+            for dep_entity_id in self.dependencies:
+                dep_state_obj = self.hass.states.get(dep_entity_id)
+                if dep_state_obj is None:
+                    continue
+                dep_rank = _state_rank.get(dep_state_obj.state)
+                if dep_rank is not None and dep_rank < min_dep_rank:
+                    min_dep_rank = dep_rank
+            if min_dep_rank < own_rank:
+                # Clamp to the least-urgent dependency state
+                _rank_state = {0: CONST_DONE, 1: CONST_DUE_SOON, 2: CONST_DUE}
+                self._attr_native_value = _rank_state[min_dep_rank]
+
         self._effective_active: bool = effective_active
         self._effective_due_soon_days: int = effective_due_soon_days
 
@@ -218,6 +256,7 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
             "todo_lists": self.todo_lists,
             "due_soon_days": effective_due_soon_days,
             "notification_interval": self.notification_interval,
+            "dependencies": self.dependencies,
         }
         if self.coordinator.repeat_mode == CONF_REPEAT_EVERY:
             repeat_every_type = self.coordinator.repeat_every_type
@@ -267,6 +306,11 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
         override_entities = {e for e in
                              [self.active_override, self.task_interval_override, self.due_soon_override] if e}
         return event_data["entity_id"] in override_entities
+
+    @callback
+    def _filter_dependency_changes(self, event_data: EventStateChangedData) -> bool:
+        """Listen only for state changes in dependency entities."""
+        return event_data["entity_id"] in self.dependencies
 
     async def async_todo_list_changed(self, event: Any) -> None:
         """Handle a todo list state-change event.
