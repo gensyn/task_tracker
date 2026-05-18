@@ -4,9 +4,8 @@ from typing import Any
 import voluptuous as vol
 from homeassistant.config_entries import ConfigFlowResult, OptionsFlowWithReload
 from homeassistant.const import CONF_ICON, CONF_MODE
-from homeassistant.helpers.selector import selector
-
 from homeassistant.helpers import entity_registry
+from homeassistant.helpers.selector import selector
 
 from .const import (
     CONF_TASK_INTERVAL_VALUE, CONF_NOTIFICATION_INTERVAL, CONF_TAGS, CONF_ACTIVE,

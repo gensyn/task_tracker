@@ -227,20 +227,20 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
         # least-urgent dependency.  Urgency ordering: done < due_soon < due.
         if self._attr_native_value in (CONST_DUE, CONST_DUE_SOON) and self.dependencies:
             # State ordering: done=0, due_soon=1, due=2
-            _state_rank = {CONST_DONE: 0, CONST_DUE_SOON: 1, CONST_DUE: 2}
-            own_rank = _state_rank.get(self._attr_native_value, 2)
+            state_rank = {CONST_DONE: 0, CONST_DUE_SOON: 1, CONST_DUE: 2}
+            own_rank = state_rank.get(self._attr_native_value, 2)
             min_dep_rank = own_rank
             for dep_entity_id in self.dependencies:
                 dep_state_obj = self.hass.states.get(dep_entity_id)
                 if dep_state_obj is None:
                     continue
-                dep_rank = _state_rank.get(dep_state_obj.state)
+                dep_rank = state_rank.get(dep_state_obj.state)
                 if dep_rank is not None and dep_rank < min_dep_rank:
                     min_dep_rank = dep_rank
             if min_dep_rank < own_rank:
                 # Clamp to the least-urgent dependency state
-                _rank_state = {0: CONST_DONE, 1: CONST_DUE_SOON, 2: CONST_DUE}
-                self._attr_native_value = _rank_state[min_dep_rank]
+                rank_state = {0: CONST_DONE, 1: CONST_DUE_SOON, 2: CONST_DUE}
+                self._attr_native_value = rank_state[min_dep_rank]
 
         self._effective_active: bool = effective_active
         self._effective_due_soon_days: int = effective_due_soon_days

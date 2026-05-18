@@ -1041,7 +1041,7 @@ class TestDependencies:
         assert hass.states.get("sensor.task_tracker_main_task").state == CONST_DONE
 
         # Now set the dependency's last_done to 10 days ago → dependency becomes 'due'.
-        old_last_done = date.today() - __import__("datetime").timedelta(days=10)
+        old_last_done = date.today() - datetime.timedelta(days=10)
         await hass.services.async_call(
             DOMAIN,
             SERVICE_SET_LAST_DONE_DATE,
