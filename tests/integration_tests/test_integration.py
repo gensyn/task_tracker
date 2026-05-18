@@ -23,6 +23,7 @@ from custom_components.task_tracker.const import (
     CONF_ACTIVE_OVERRIDE,
     CONF_DATE,
     CONF_DAY,
+    CONF_DEPENDENCIES,
     CONF_DUE_SOON_DAYS,
     CONF_DUE_SOON_OVERRIDE,
     CONF_MONTH,
@@ -63,6 +64,7 @@ def _make_entry(
     active_override: str | None = None,
     task_interval_override: str | None = None,
     due_soon_override: str | None = None,
+    dependencies: list | None = None,
 ) -> MockConfigEntry:
     """Return a MockConfigEntry covering all configurable options."""
     options: dict = {
@@ -74,6 +76,7 @@ def _make_entry(
         CONF_DUE_SOON_DAYS: due_soon_days,
         CONF_TAGS: tags,
         CONF_ICON: icon,
+        CONF_DEPENDENCIES: dependencies if dependencies is not None else [],
     }
     if active_override is not None:
         options[CONF_ACTIVE_OVERRIDE] = active_override
@@ -864,3 +867,189 @@ class TestDueSoonState:
 
         state = hass.states.get("sensor.task_tracker_water_plants")
         assert state.state == CONST_DONE
+
+
+# ---------------------------------------------------------------------------
+# Dependencies
+# ---------------------------------------------------------------------------
+
+
+class TestDependencies:
+    """Tasks can depend on other tasks; the state is clamped to the least urgent dependency."""
+
+    async def test_due_task_clamped_to_done_when_dependency_is_done(
+        self, hass: HomeAssistant
+    ) -> None:
+        """An overdue task is clamped to 'done' while its dependency is 'done'."""
+        import datetime as dt
+
+        # Set up the dependency task: done recently so it is in 'done' state.
+        dep_entry = _make_entry(
+            entry_id="dep",
+            name="Dependency Task",
+            task_interval_value=7,
+        )
+        await _setup_entry(hass, dep_entry)
+        # Mark dependency as done today so state = done.
+        await hass.services.async_call(
+            DOMAIN,
+            SERVICE_MARK_AS_DONE,
+            {"entity_id": "sensor.task_tracker_dependency_task"},
+            blocking=True,
+        )
+        await hass.async_block_till_done()
+
+        dep_state = hass.states.get("sensor.task_tracker_dependency_task")
+        assert dep_state.state == CONST_DONE
+
+        # Set up the main task: overdue (default last_done = epoch) but depends on dep.
+        main_entry = _make_entry(
+            entry_id="main",
+            name="Main Task",
+            task_interval_value=7,
+            dependencies=["sensor.task_tracker_dependency_task"],
+        )
+        await _setup_entry(hass, main_entry)
+
+        state = hass.states.get("sensor.task_tracker_main_task")
+        # Main task would be 'due' on its own, but dep is 'done' → clamped to 'done'.
+        assert state.state == CONST_DONE
+
+    async def test_due_task_stays_due_when_dependency_is_due(
+        self, hass: HomeAssistant
+    ) -> None:
+        """An overdue task remains 'due' when its dependency is also 'due'."""
+        # Dependency: overdue (default epoch last_done) → state 'due'.
+        dep_entry = _make_entry(
+            entry_id="dep",
+            name="Dependency Task",
+            task_interval_value=7,
+        )
+        await _setup_entry(hass, dep_entry)
+
+        dep_state = hass.states.get("sensor.task_tracker_dependency_task")
+        assert dep_state.state == CONST_DUE
+
+        # Main task: also overdue, depends on dep.
+        main_entry = _make_entry(
+            entry_id="main",
+            name="Main Task",
+            task_interval_value=7,
+            dependencies=["sensor.task_tracker_dependency_task"],
+        )
+        await _setup_entry(hass, main_entry)
+
+        state = hass.states.get("sensor.task_tracker_main_task")
+        # Both are 'due', so main remains 'due'.
+        assert state.state == CONST_DUE
+
+    async def test_due_task_clamped_to_due_soon_when_dependency_is_due_soon(
+        self, hass: HomeAssistant
+    ) -> None:
+        """An overdue task is clamped to 'due_soon' when its dependency is 'due_soon'."""
+        import datetime
+
+        # Dependency: due in 3 days (due_soon_days=5 → state 'due_soon').
+        dep_entry = _make_entry(
+            entry_id="dep",
+            name="Dependency Task",
+            task_interval_value=7,
+            due_soon_days=5,
+        )
+        await _setup_entry(hass, dep_entry)
+        last_done = date.today() - datetime.timedelta(days=4)
+        await hass.services.async_call(
+            DOMAIN,
+            SERVICE_SET_LAST_DONE_DATE,
+            {"entity_id": "sensor.task_tracker_dependency_task", "date": last_done},
+            blocking=True,
+        )
+        await hass.async_block_till_done()
+
+        dep_state = hass.states.get("sensor.task_tracker_dependency_task")
+        assert dep_state.state == CONST_DUE_SOON
+
+        # Main task: overdue, depends on dep.
+        main_entry = _make_entry(
+            entry_id="main",
+            name="Main Task",
+            task_interval_value=7,
+            dependencies=["sensor.task_tracker_dependency_task"],
+        )
+        await _setup_entry(hass, main_entry)
+
+        state = hass.states.get("sensor.task_tracker_main_task")
+        # Main task is 'due' on its own, but dep is 'due_soon' → clamped to 'due_soon'.
+        assert state.state == CONST_DUE_SOON
+
+    async def test_no_clamping_without_dependencies(self, hass: HomeAssistant) -> None:
+        """A task with no dependencies is not clamped."""
+        main_entry = _make_entry(
+            entry_id="main",
+            name="Main Task",
+            task_interval_value=7,
+        )
+        await _setup_entry(hass, main_entry)
+
+        state = hass.states.get("sensor.task_tracker_main_task")
+        assert state.state == CONST_DUE
+
+    async def test_dependencies_attribute_stored(self, hass: HomeAssistant) -> None:
+        """The dependencies list is exposed as a sensor attribute."""
+        deps = ["sensor.task_tracker_other_task"]
+        entry = _make_entry(
+            entry_id="main",
+            name="Main Task",
+            task_interval_value=7,
+            dependencies=deps,
+        )
+        await _setup_entry(hass, entry)
+
+        state = hass.states.get("sensor.task_tracker_main_task")
+        assert state.attributes["dependencies"] == deps
+
+    async def test_dependency_state_change_updates_main_task(
+        self, hass: HomeAssistant
+    ) -> None:
+        """When a dependency transitions from 'done' to 'due', the main task re-evaluates."""
+        import datetime
+
+        # Set up dependency task as 'done' (recently completed).
+        dep_entry = _make_entry(
+            entry_id="dep",
+            name="Dependency Task",
+            task_interval_value=7,
+        )
+        await _setup_entry(hass, dep_entry)
+        await hass.services.async_call(
+            DOMAIN,
+            SERVICE_MARK_AS_DONE,
+            {"entity_id": "sensor.task_tracker_dependency_task"},
+            blocking=True,
+        )
+        await hass.async_block_till_done()
+        assert hass.states.get("sensor.task_tracker_dependency_task").state == CONST_DONE
+
+        # Set up main task (overdue) depending on dep → currently clamped to 'done'.
+        main_entry = _make_entry(
+            entry_id="main",
+            name="Main Task",
+            task_interval_value=7,
+            dependencies=["sensor.task_tracker_dependency_task"],
+        )
+        await _setup_entry(hass, main_entry)
+        assert hass.states.get("sensor.task_tracker_main_task").state == CONST_DONE
+
+        # Now set the dependency's last_done to 10 days ago → dependency becomes 'due'.
+        old_last_done = date.today() - datetime.timedelta(days=10)
+        await hass.services.async_call(
+            DOMAIN,
+            SERVICE_SET_LAST_DONE_DATE,
+            {"entity_id": "sensor.task_tracker_dependency_task", "date": old_last_done},
+            blocking=True,
+        )
+        await hass.async_block_till_done()
+
+        assert hass.states.get("sensor.task_tracker_dependency_task").state == CONST_DUE
+        # Main task should now be unclamped and show its true 'due' state.
+        assert hass.states.get("sensor.task_tracker_main_task").state == CONST_DUE

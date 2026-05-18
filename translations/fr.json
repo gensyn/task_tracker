@@ -6,7 +6,9 @@
     "error": {
       "unknown": "Erreur inattendue",
       "invalid_month_day": "Le jour du mois doit être compris entre 1 et 31",
-      "invalid_months_interval": "L'intervalle en mois doit être supérieur ou égal à 1"
+      "invalid_months_interval": "L'intervalle en mois doit être supérieur ou égal à 1",
+      "circular_dependency": "L'ajout de ces dépendances créerait une dépendance circulaire",
+      "invalid_dependency": "Une ou plusieurs dépendances sélectionnées n'appartiennent pas à l'intégration Task Tracker"
     },
     "step": {
       "user": {
@@ -102,7 +104,9 @@
       "unknown": "Erreur inattendue",
       "invalid_month_day": "Le jour du mois doit être compris entre 1 et 31",
       "invalid_days_before_end": "Les jours avant la fin du mois doivent être compris entre 0 et 30",
-      "invalid_months_interval": "L'intervalle en mois doit être supérieur ou égal à 1"
+      "invalid_months_interval": "L'intervalle en mois doit être supérieur ou égal à 1",
+      "circular_dependency": "L'ajout de ces dépendances créerait une dépendance circulaire",
+      "invalid_dependency": "Une ou plusieurs dépendances sélectionnées n'appartiennent pas à l'intégration Task Tracker"
     },
     "step": {
       "repeat_every": {
@@ -178,7 +182,8 @@
           "todo_lists": "Listes de tâches",
           "due_soon_days": "Bientôt due (jours)",
           "due_soon_override": "Surcharge Bientôt due (jours)",
-          "notification_interval": "Intervalle de notification (jours)"
+          "notification_interval": "Intervalle de notification (jours)",
+          "dependencies": "Dépendances"
         },
         "data_description": {
           "repeat_weekday": "Le jour de la semaine auquel la tâche se répète.",
@@ -190,7 +195,8 @@
           "todo_lists": "Listes de tâches auxquelles cette tâche sera ajoutée.",
           "due_soon_days": "Le nombre de jours avant l'échéance pour afficher la tâche comme bientôt due.",
           "due_soon_override": "Sélectionnez un input_number (valeur en jours) pour surcharger le seuil Bientôt due.",
-          "notification_interval": "Le délai en jours après lequel les notifications sont renvoyées."
+          "notification_interval": "Le délai en jours après lequel les notifications sont renvoyées.",
+          "dependencies": "Autres tâches dont celle-ci dépend. L'état de cette tâche ne sera pas plus urgent que l'état de la dépendance la moins urgente."
         }
       },
       "options_repeat_every_day_of_month": {
@@ -206,7 +212,8 @@
           "todo_lists": "Listes de tâches",
           "due_soon_days": "Bientôt due (jours)",
           "due_soon_override": "Surcharge Bientôt due (jours)",
-          "notification_interval": "Intervalle de notification (jours)"
+          "notification_interval": "Intervalle de notification (jours)",
+          "dependencies": "Dépendances"
         },
         "data_description": {
           "repeat_month_day": "Le jour du mois auquel la tâche se répète (1-31).",
@@ -218,7 +225,8 @@
           "todo_lists": "Listes de tâches auxquelles cette tâche sera ajoutée.",
           "due_soon_days": "Le nombre de jours avant l'échéance pour afficher la tâche comme bientôt due.",
           "due_soon_override": "Sélectionnez un input_number (valeur en jours) pour surcharger le seuil Bientôt due.",
-          "notification_interval": "Le délai en jours après lequel les notifications sont renvoyées."
+          "notification_interval": "Le délai en jours après lequel les notifications sont renvoyées.",
+          "dependencies": "Autres tâches dont celle-ci dépend. L'état de cette tâche ne sera pas plus urgent que l'état de la dépendance la moins urgente."
         }
       },
       "options_repeat_every_weekday_of_month": {
@@ -235,7 +243,8 @@
           "todo_lists": "Listes de tâches",
           "due_soon_days": "Bientôt due (jours)",
           "due_soon_override": "Surcharge Bientôt due (jours)",
-          "notification_interval": "Intervalle de notification (jours)"
+          "notification_interval": "Intervalle de notification (jours)",
+          "dependencies": "Dépendances"
         },
         "data_description": {
           "repeat_weekday": "Le jour de la semaine auquel la tâche se répète.",
@@ -248,7 +257,8 @@
           "todo_lists": "Listes de tâches auxquelles cette tâche sera ajoutée.",
           "due_soon_days": "Le nombre de jours avant l'échéance pour afficher la tâche comme bientôt due.",
           "due_soon_override": "Sélectionnez un input_number (valeur en jours) pour surcharger le seuil Bientôt due.",
-          "notification_interval": "Le délai en jours après lequel les notifications sont renvoyées."
+          "notification_interval": "Le délai en jours après lequel les notifications sont renvoyées.",
+          "dependencies": "Autres tâches dont celle-ci dépend. L'état de cette tâche ne sera pas plus urgent que l'état de la dépendance la moins urgente."
         }
       },
       "options_repeat_every_days_before_end_of_month": {
@@ -264,7 +274,8 @@
           "todo_lists": "Listes de tâches",
           "due_soon_days": "Bientôt due (jours)",
           "due_soon_override": "Surcharge Bientôt due (jours)",
-          "notification_interval": "Intervalle de notification (jours)"
+          "notification_interval": "Intervalle de notification (jours)",
+          "dependencies": "Dépendances"
         },
         "data_description": {
           "repeat_days_before_end": "Combien de jours avant le dernier jour du mois la tâche est due (0 = dernier jour, 1 = avant-dernier jour, etc.).",
@@ -276,7 +287,8 @@
           "todo_lists": "Listes de tâches auxquelles cette tâche sera ajoutée.",
           "due_soon_days": "Le nombre de jours avant l'échéance pour afficher la tâche comme bientôt due.",
           "due_soon_override": "Sélectionnez un input_number (valeur en jours) pour surcharger le seuil Bientôt due.",
-          "notification_interval": "Le délai en jours après lequel les notifications sont renvoyées."
+          "notification_interval": "Le délai en jours après lequel les notifications sont renvoyées.",
+          "dependencies": "Autres tâches dont celle-ci dépend. L'état de cette tâche ne sera pas plus urgent que l'état de la dépendance la moins urgente."
         }
       },
       "options_repeat_after": {
@@ -293,7 +305,8 @@
           "todo_lists": "Listes de tâches",
           "due_soon_days": "Bientôt due (jours)",
           "due_soon_override": "Surcharge Bientôt due (jours)",
-          "notification_interval": "Intervalle de notification (jours)"
+          "notification_interval": "Intervalle de notification (jours)",
+          "dependencies": "Dépendances"
         },
         "data_description": {
           "active": "Activer ou désactiver la tâche.",
@@ -306,7 +319,8 @@
           "todo_lists": "Listes de tâches auxquelles cette tâche sera ajoutée.",
           "due_soon_days": "Le nombre de jours avant l'échéance pour afficher la tâche comme bientôt due.",
           "due_soon_override": "Sélectionnez un input_number (valeur en jours) pour surcharger le seuil Bientôt due.",
-          "notification_interval": "Le délai en jours après lequel les notifications sont renvoyées."
+          "notification_interval": "Le délai en jours après lequel les notifications sont renvoyées.",
+          "dependencies": "Autres tâches dont celle-ci dépend. L'état de cette tâche ne sera pas plus urgent que l'état de la dépendance la moins urgente."
         }
       }
     }

@@ -329,3 +329,28 @@ class TestValidateOptionsRepeatEveryDaysBeforeEndOfMonth(unittest.IsolatedAsynci
         })
         self.assertIsNone(result[CONF_REPEAT_DAYS_BEFORE_END])
 
+
+class TestValidateOptionsDependencies(unittest.IsolatedAsyncioTestCase):
+    """Tests for the dependencies field in validate_options."""
+
+    async def test_dependencies_defaults_to_empty_list(self):
+        result = await validate_options({**_BASE_REPEAT_AFTER})
+        from task_tracker.const import CONF_DEPENDENCIES
+        self.assertEqual(result[CONF_DEPENDENCIES], [])
+
+    async def test_dependencies_preserved(self):
+        from task_tracker.const import CONF_DEPENDENCIES
+        deps = ["sensor.task_tracker_task_a", "sensor.task_tracker_task_b"]
+        result = await validate_options({**_BASE_REPEAT_AFTER, CONF_DEPENDENCIES: deps})
+        self.assertEqual(result[CONF_DEPENDENCIES], deps)
+
+    async def test_dependencies_none_becomes_empty_list(self):
+        from task_tracker.const import CONF_DEPENDENCIES
+        result = await validate_options({**_BASE_REPEAT_AFTER, CONF_DEPENDENCIES: None})
+        self.assertEqual(result[CONF_DEPENDENCIES], [])
+
+    async def test_dependencies_preserved_for_repeat_every(self):
+        from task_tracker.const import CONF_DEPENDENCIES
+        deps = ["sensor.task_tracker_task_a"]
+        result = await validate_options({**_BASE_REPEAT_EVERY_WEEKDAY, CONF_DEPENDENCIES: deps})
+        self.assertEqual(result[CONF_DEPENDENCIES], deps)

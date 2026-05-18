@@ -19,7 +19,8 @@ from .const import DOMAIN, CONF_TASK_INTERVAL_VALUE, CONF_DAY, CONF_TASK_INTERVA
     SERVICE_MARK_AS_DONE_SCHEMA, SERVICE_SET_LAST_DONE_DATE, SERVICE_SET_LAST_DONE_DATE_SCHEMA, CONF_DATE, \
     CONF_SHOW_PANEL, CONF_REPEAT_MODE, CONF_REPEAT_AFTER, \
     CONF_REPEAT_EVERY_TYPE, CONF_REPEAT_WEEKDAY, CONF_REPEAT_WEEKS_INTERVAL, \
-    CONF_REPEAT_MONTH_DAY, CONF_REPEAT_NTH_OCCURRENCE, CONF_REPEAT_DAYS_BEFORE_END, CONF_REPEAT_MONTHS_INTERVAL
+    CONF_REPEAT_MONTH_DAY, CONF_REPEAT_NTH_OCCURRENCE, CONF_REPEAT_DAYS_BEFORE_END, CONF_REPEAT_MONTHS_INTERVAL, \
+    CONF_DEPENDENCIES
 from .coordinator import TaskTrackerCoordinator
 from .frontend import TaskTrackerCardRegistration
 
@@ -150,7 +151,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Migrate old config entry."""
 
-    if entry.version > 1 or entry.minor_version > 7:
+    if entry.version > 1 or entry.minor_version > 8:
         # This means the user has downgraded from a later version
         return False
 
@@ -243,6 +244,18 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             options=new_options,
             version=1,
             minor_version=7,
+        )
+
+    if entry.version == 1 and entry.minor_version == 7:
+        # 1.7 → 1.8: Add dependencies field (empty list for all existing entries).
+        new_options = dict(entry.options)
+        new_options.setdefault(CONF_DEPENDENCIES, [])
+
+        hass.config_entries.async_update_entry(
+            entry,
+            options=new_options,
+            version=1,
+            minor_version=8,
         )
 
     return True

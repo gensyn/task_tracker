@@ -4,6 +4,7 @@ from typing import Any
 import voluptuous as vol
 from homeassistant.config_entries import ConfigFlowResult, OptionsFlowWithReload
 from homeassistant.const import CONF_ICON, CONF_MODE
+from homeassistant.helpers import entity_registry
 from homeassistant.helpers.selector import selector
 
 from .const import (
@@ -16,6 +17,7 @@ from .const import (
     CONF_REPEAT_WEEKDAY, CONF_REPEAT_WEEKS_INTERVAL, CONF_REPEAT_MONTH_DAY, CONF_REPEAT_NTH_OCCURRENCE,
     CONF_REPEAT_DAYS_BEFORE_END, CONF_REPEAT_MONTHS_INTERVAL,
     CONF_MONDAY, CONF_TUESDAY, CONF_WEDNESDAY, CONF_THURSDAY, CONF_FRIDAY, CONF_SATURDAY, CONF_SUNDAY,
+    CONF_DEPENDENCIES, DOMAIN,
 )
 
 _WEEKDAYS = [CONF_MONDAY, CONF_TUESDAY, CONF_WEDNESDAY, CONF_THURSDAY, CONF_FRIDAY, CONF_SATURDAY, CONF_SUNDAY]
@@ -122,6 +124,13 @@ _REPEAT_EVERY_TAIL_OPTIONS: dict = {
         }
     }),
     vol.Optional(CONF_NOTIFICATION_INTERVAL, default=1): int,
+    vol.Optional(CONF_DEPENDENCIES): selector({
+        "entity": {
+            "integration": DOMAIN,
+            "domain": "sensor",
+            "multiple": True,
+        }
+    }),
 }
 
 # Combined options steps for repeat_after mode.
@@ -223,6 +232,71 @@ class TaskTrackerOptionsFlow(OptionsFlowWithReload):
         super().__init__()
         self._accumulated_options: dict[str, Any] = {}
 
+    def _has_circular_dependency(self, new_dep_entity_ids: list[str]) -> bool:
+        """Return True if adding *new_dep_entity_ids* to the current entry creates a cycle.
+
+        Builds the full dependency graph (entity_id → [dep entity_ids]) from all
+        existing task entries, temporarily applying the proposed new dependencies
+        for the current entry, then checks whether the current entry's entity_id
+        is reachable from any of the proposed new dependencies.
+        """
+        reg = entity_registry.async_get(self.hass)
+
+        # Find the entity_id of the sensor for the current config entry.
+        current_entity_id: str | None = None
+        for e in entity_registry.async_entries_for_config_entry(reg, self.config_entry.entry_id):
+            if e.entity_id.startswith("sensor."):
+                current_entity_id = e.entity_id
+                break
+
+        if current_entity_id is None:
+            # The entry has not created a sensor entity yet (e.g. during initial
+            # setup).  No cycle can exist.
+            return False
+
+        # Build graph: sensor entity_id → list of dependency entity_ids.
+        graph: dict[str, list[str]] = {}
+        for entry in self.hass.config_entries.async_entries(DOMAIN):
+            for e in entity_registry.async_entries_for_config_entry(reg, entry.entry_id):
+                if e.entity_id.startswith("sensor."):
+                    if entry.entry_id == self.config_entry.entry_id:
+                        graph[e.entity_id] = new_dep_entity_ids
+                    else:
+                        graph[e.entity_id] = entry.options.get(CONF_DEPENDENCIES) or []
+                    break
+
+        # BFS/DFS from each proposed dependency to see if current_entity_id is reachable.
+        for dep_id in new_dep_entity_ids:
+            visited: set[str] = set()
+            stack = [dep_id]
+            while stack:
+                node = stack.pop()
+                if node == current_entity_id:
+                    return True
+                if node in visited:
+                    continue
+                visited.add(node)
+                stack.extend(graph.get(node, []))
+
+        return False
+
+    def _validate_dependencies(self, user_input: dict[str, Any]) -> dict[str, str]:
+        """Return an errors dict if the proposed dependencies are invalid or create a cycle."""
+        new_deps = user_input.get(CONF_DEPENDENCIES) or []
+        if new_deps:
+            reg = entity_registry.async_get(self.hass)
+            task_tracker_entity_ids = {
+                e.entity_id
+                for entry in self.hass.config_entries.async_entries(DOMAIN)
+                for e in entity_registry.async_entries_for_config_entry(reg, entry.entry_id)
+                if e.entity_id.startswith("sensor.")
+            }
+            if any(dep not in task_tracker_entity_ids for dep in new_deps):
+                return {CONF_DEPENDENCIES: "invalid_dependency"}
+        if new_deps and self._has_circular_dependency(new_deps):
+            return {CONF_DEPENDENCIES: "circular_dependency"}
+        return {}
+
     async def async_step_init(
             self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
@@ -262,6 +336,16 @@ class TaskTrackerOptionsFlow(OptionsFlowWithReload):
                 data_schema=self.add_suggested_values_to_schema(
                     _STEP_OPTIONS_REPEAT_AFTER_SCHEMA, self.config_entry.options
                 ),
+            )
+
+        errors = self._validate_dependencies(user_input)
+        if errors:
+            return self.async_show_form(
+                step_id="options_repeat_after",
+                data_schema=self.add_suggested_values_to_schema(
+                    _STEP_OPTIONS_REPEAT_AFTER_SCHEMA, user_input
+                ),
+                errors=errors,
             )
 
         self._accumulated_options.update(user_input)
@@ -407,6 +491,16 @@ class TaskTrackerOptionsFlow(OptionsFlowWithReload):
                 ),
             )
 
+        errors = self._validate_dependencies(user_input)
+        if errors:
+            return self.async_show_form(
+                step_id="options_repeat_every_weekday",
+                data_schema=self.add_suggested_values_to_schema(
+                    _STEP_OPTIONS_REPEAT_EVERY_WEEKDAY_SCHEMA, user_input
+                ),
+                errors=errors,
+            )
+
         self._accumulated_options.update(user_input)
         options = await validate_options(self._accumulated_options)
         return self.async_create_entry(data=options)
@@ -425,6 +519,7 @@ class TaskTrackerOptionsFlow(OptionsFlowWithReload):
 
         errors = _validate_month_day(user_input.get(CONF_REPEAT_MONTH_DAY))
         errors.update(_validate_months_interval(user_input.get(CONF_REPEAT_MONTHS_INTERVAL)))
+        errors.update(self._validate_dependencies(user_input))
         if errors:
             return self.async_show_form(
                 step_id="options_repeat_every_day_of_month",
@@ -451,6 +546,7 @@ class TaskTrackerOptionsFlow(OptionsFlowWithReload):
             )
 
         errors = _validate_months_interval(user_input.get(CONF_REPEAT_MONTHS_INTERVAL))
+        errors.update(self._validate_dependencies(user_input))
         if errors:
             return self.async_show_form(
                 step_id="options_repeat_every_weekday_of_month",
@@ -478,6 +574,7 @@ class TaskTrackerOptionsFlow(OptionsFlowWithReload):
 
         errors = _validate_days_before_end(user_input.get(CONF_REPEAT_DAYS_BEFORE_END))
         errors.update(_validate_months_interval(user_input.get(CONF_REPEAT_MONTHS_INTERVAL)))
+        errors.update(self._validate_dependencies(user_input))
         if errors:
             return self.async_show_form(
                 step_id="options_repeat_every_days_before_end_of_month",
@@ -530,6 +627,7 @@ async def validate_options(user_input: dict[str, Any]) -> dict[str, Any]:
         CONF_DUE_SOON_DAYS: user_input[CONF_DUE_SOON_DAYS],
         CONF_DUE_SOON_OVERRIDE: user_input.get(CONF_DUE_SOON_OVERRIDE) or None,
         CONF_NOTIFICATION_INTERVAL: user_input[CONF_NOTIFICATION_INTERVAL],
+        CONF_DEPENDENCIES: user_input.get(CONF_DEPENDENCIES) or [],
     }
 
     if repeat_mode == CONF_REPEAT_AFTER:
