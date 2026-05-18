@@ -7,7 +7,8 @@
       "unknown": "Erreur inattendue",
       "invalid_month_day": "Le jour du mois doit être compris entre 1 et 31",
       "invalid_months_interval": "L'intervalle en mois doit être supérieur ou égal à 1",
-      "circular_dependency": "L'ajout de ces dépendances créerait une dépendance circulaire"
+      "circular_dependency": "L'ajout de ces dépendances créerait une dépendance circulaire",
+      "invalid_dependency": "Une ou plusieurs dépendances sélectionnées n'appartiennent pas à l'intégration Task Tracker"
     },
     "step": {
       "user": {
@@ -104,7 +105,8 @@
       "invalid_month_day": "Le jour du mois doit être compris entre 1 et 31",
       "invalid_days_before_end": "Les jours avant la fin du mois doivent être compris entre 0 et 30",
       "invalid_months_interval": "L'intervalle en mois doit être supérieur ou égal à 1",
-      "circular_dependency": "L'ajout de ces dépendances créerait une dépendance circulaire"
+      "circular_dependency": "L'ajout de ces dépendances créerait une dépendance circulaire",
+      "invalid_dependency": "Une ou plusieurs dépendances sélectionnées n'appartiennent pas à l'intégration Task Tracker"
     },
     "step": {
       "repeat_every": {

@@ -126,6 +126,7 @@ _REPEAT_EVERY_TAIL_OPTIONS: dict = {
     vol.Optional(CONF_NOTIFICATION_INTERVAL, default=1): int,
     vol.Optional(CONF_DEPENDENCIES): selector({
         "entity": {
+            "integration": DOMAIN,
             "domain": "sensor",
             "multiple": True,
         }
@@ -280,8 +281,18 @@ class TaskTrackerOptionsFlow(OptionsFlowWithReload):
         return False
 
     def _validate_dependencies(self, user_input: dict[str, Any]) -> dict[str, str]:
-        """Return an errors dict if the proposed dependencies introduce a cycle."""
+        """Return an errors dict if the proposed dependencies are invalid or create a cycle."""
         new_deps = user_input.get(CONF_DEPENDENCIES) or []
+        if new_deps:
+            reg = entity_registry.async_get(self.hass)
+            task_tracker_entity_ids = {
+                e.entity_id
+                for entry in self.hass.config_entries.async_entries(DOMAIN)
+                for e in entity_registry.async_entries_for_config_entry(reg, entry.entry_id)
+                if e.entity_id.startswith("sensor.")
+            }
+            if any(dep not in task_tracker_entity_ids for dep in new_deps):
+                return {CONF_DEPENDENCIES: "invalid_dependency"}
         if new_deps and self._has_circular_dependency(new_deps):
             return {CONF_DEPENDENCIES: "circular_dependency"}
         return {}

@@ -8,7 +8,8 @@
       "invalid_month_day": "Day of month must be between 1 and 31",
       "invalid_days_before_end": "Days before month end must be between 0 and 30",
       "invalid_months_interval": "Month interval must be 1 or greater",
-      "circular_dependency": "Adding these dependencies would create a circular dependency"
+      "circular_dependency": "Adding these dependencies would create a circular dependency",
+      "invalid_dependency": "One or more selected dependencies do not belong to the Task Tracker integration"
     },
     "step": {
       "user": {
@@ -105,7 +106,8 @@
       "invalid_month_day": "Day of month must be between 1 and 31",
       "invalid_days_before_end": "Days before month end must be between 0 and 30",
       "invalid_months_interval": "Month interval must be 1 or greater",
-      "circular_dependency": "Adding these dependencies would create a circular dependency"
+      "circular_dependency": "Adding these dependencies would create a circular dependency",
+      "invalid_dependency": "One or more selected dependencies do not belong to the Task Tracker integration"
     },
     "step": {
       "repeat_every": {

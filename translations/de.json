@@ -7,7 +7,8 @@
       "unknown": "Unerwarteter Fehler",
       "invalid_month_day": "Der Tag im Monat muss zwischen 1 und 31 liegen",
       "invalid_months_interval": "Das Monatsintervall muss mindestens 1 betragen",
-      "circular_dependency": "Das Hinzufügen dieser Abhängigkeiten würde eine zirkuläre Abhängigkeit erzeugen"
+      "circular_dependency": "Das Hinzufügen dieser Abhängigkeiten würde eine zirkuläre Abhängigkeit erzeugen",
+      "invalid_dependency": "Eine oder mehrere ausgewählte Abhängigkeiten gehören nicht zur Task Tracker Integration"
     },
     "step": {
       "user": {
@@ -101,7 +102,8 @@
       "invalid_month_day": "Der Tag im Monat muss zwischen 1 und 31 liegen",
       "invalid_days_before_end": "Die Anzahl der Tage vor Monatsende muss zwischen 0 und 30 liegen",
       "invalid_months_interval": "Das Monatsintervall muss mindestens 1 betragen",
-      "circular_dependency": "Das Hinzufügen dieser Abhängigkeiten würde eine zirkuläre Abhängigkeit erzeugen"
+      "circular_dependency": "Das Hinzufügen dieser Abhängigkeiten würde eine zirkuläre Abhängigkeit erzeugen",
+      "invalid_dependency": "Eine oder mehrere ausgewählte Abhängigkeiten gehören nicht zur Task Tracker Integration"
     },
     "step": {
       "repeat_every": {
