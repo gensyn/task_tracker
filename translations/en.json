@@ -195,7 +195,7 @@
           "due_soon_days": "The number of days before the task is due to show it as due soon.",
           "due_soon_override": "Select an input_number (value in days) to override the Due soon threshold.",
           "notification_interval": "The time in days after which notifications are sent again.",
-          "dependencies": "Other tasks that must be at least 'due soon' before this task can become 'due soon' or 'due'."
+          "dependencies": "Other tasks this task depends on. The state of this task will not be more urgent than the least urgent dependency."
         }
       },
       "options_repeat_every_day_of_month": {
@@ -225,7 +225,7 @@
           "due_soon_override": "Select an input_number (value in days) to override the Due soon threshold.",
           "notification_interval": "The time in days after which notifications are sent again.",
           "repeat_months_interval": "How many months between occurrences (1 = every month, 3 = quarterly, 12 = annually, etc.).",
-          "dependencies": "Other tasks that must be at least 'due soon' before this task can become 'due soon' or 'due'."
+          "dependencies": "Other tasks this task depends on. The state of this task will not be more urgent than the least urgent dependency."
         }
       },
       "options_repeat_every_weekday_of_month": {
@@ -257,7 +257,7 @@
           "due_soon_override": "Select an input_number (value in days) to override the Due soon threshold.",
           "notification_interval": "The time in days after which notifications are sent again.",
           "repeat_months_interval": "How many months between occurrences (1 = every month, 3 = quarterly, 12 = annually, etc.).",
-          "dependencies": "Other tasks that must be at least 'due soon' before this task can become 'due soon' or 'due'."
+          "dependencies": "Other tasks this task depends on. The state of this task will not be more urgent than the least urgent dependency."
         }
       },
       "options_repeat_every_days_before_end_of_month": {
@@ -287,7 +287,7 @@
           "due_soon_override": "Select an input_number (value in days) to override the Due soon threshold.",
           "notification_interval": "The time in days after which notifications are sent again.",
           "repeat_months_interval": "How many months between occurrences (1 = every month, 3 = quarterly, 12 = annually, etc.).",
-          "dependencies": "Other tasks that must be at least 'due soon' before this task can become 'due soon' or 'due'."
+          "dependencies": "Other tasks this task depends on. The state of this task will not be more urgent than the least urgent dependency."
         }
       },
       "options_repeat_after": {
@@ -319,7 +319,7 @@
           "due_soon_days": "The number of days before the task is due to show it as due soon.",
           "due_soon_override": "Select an input_number (value in days) to override the Due soon threshold.",
           "notification_interval": "The time in days after which notifications are sent again.",
-          "dependencies": "Other tasks that must be at least 'due soon' before this task can become 'due soon' or 'due'."
+          "dependencies": "Other tasks this task depends on. The state of this task will not be more urgent than the least urgent dependency."
         }
       }
     }

@@ -6,7 +6,8 @@
     "error": {
       "unknown": "Unerwarteter Fehler",
       "invalid_month_day": "Der Tag im Monat muss zwischen 1 und 31 liegen",
-      "invalid_months_interval": "Das Monatsintervall muss mindestens 1 betragen"
+      "invalid_months_interval": "Das Monatsintervall muss mindestens 1 betragen",
+      "circular_dependency": "Das Hinzufügen dieser Abhängigkeiten würde eine zirkuläre Abhängigkeit erzeugen"
     },
     "step": {
       "user": {
@@ -99,7 +100,8 @@
       "unknown": "Unerwarteter Fehler",
       "invalid_month_day": "Der Tag im Monat muss zwischen 1 und 31 liegen",
       "invalid_days_before_end": "Die Anzahl der Tage vor Monatsende muss zwischen 0 und 30 liegen",
-      "invalid_months_interval": "Das Monatsintervall muss mindestens 1 betragen"
+      "invalid_months_interval": "Das Monatsintervall muss mindestens 1 betragen",
+      "circular_dependency": "Das Hinzufügen dieser Abhängigkeiten würde eine zirkuläre Abhängigkeit erzeugen"
     },
     "step": {
       "repeat_every": {
@@ -175,7 +177,8 @@
           "todo_lists": "Todo-Listen",
           "due_soon_days": "Bald fällig (Tage)",
           "due_soon_override": "Bald-fällig-Override (Tage)",
-          "notification_interval": "Benachrichtigungsintervall (Tage)"
+          "notification_interval": "Benachrichtigungsintervall (Tage)",
+          "dependencies": "Abhängigkeiten"
         },
         "data_description": {
           "repeat_weekday": "Der Wochentag, an dem die Task wiederholt wird.",
@@ -187,7 +190,8 @@
           "todo_lists": "Todo-Listen, zu denen diese Task hinzugefügt wird.",
           "due_soon_days": "Anzahl der Tage vor Fälligkeit, ab denen die Task als 'bald fällig' gilt.",
           "due_soon_override": "Wähle ein input_number (Wert in Tagen), um den 'Bald fällig'-Schwellenwert zu überschreiben.",
-          "notification_interval": "Zeitintervall in Tagen, nach dem Benachrichtigungen erneut gesendet werden."
+          "notification_interval": "Zeitintervall in Tagen, nach dem Benachrichtigungen erneut gesendet werden.",
+          "dependencies": "Andere Tasks, von denen diese Task abhängt. Der Status dieser Task wird nicht dringlicher sein als der der am wenigsten dringlichen Abhängigkeit."
         }
       },
       "options_repeat_every_day_of_month": {
@@ -203,7 +207,8 @@
           "todo_lists": "Todo-Listen",
           "due_soon_days": "Bald fällig (Tage)",
           "due_soon_override": "Bald-fällig-Override (Tage)",
-          "notification_interval": "Benachrichtigungsintervall (Tage)"
+          "notification_interval": "Benachrichtigungsintervall (Tage)",
+          "dependencies": "Abhängigkeiten"
         },
         "data_description": {
           "repeat_month_day": "Der Tag des Monats, an dem die Task wiederholt wird (1–31).",
@@ -215,7 +220,8 @@
           "todo_lists": "Todo-Listen, zu denen diese Task hinzugefügt wird.",
           "due_soon_days": "Anzahl der Tage vor Fälligkeit, ab denen die Task als 'bald fällig' gilt.",
           "due_soon_override": "Wähle ein input_number (Wert in Tagen), um den 'Bald fällig'-Schwellenwert zu überschreiben.",
-          "notification_interval": "Zeitintervall in Tagen, nach dem Benachrichtigungen erneut gesendet werden."
+          "notification_interval": "Zeitintervall in Tagen, nach dem Benachrichtigungen erneut gesendet werden.",
+          "dependencies": "Andere Tasks, von denen diese Task abhängt. Der Status dieser Task wird nicht dringlicher sein als der der am wenigsten dringlichen Abhängigkeit."
         }
       },
       "options_repeat_every_weekday_of_month": {
@@ -232,7 +238,8 @@
           "todo_lists": "Todo-Listen",
           "due_soon_days": "Bald fällig (Tage)",
           "due_soon_override": "Bald-fällig-Override (Tage)",
-          "notification_interval": "Benachrichtigungsintervall (Tage)"
+          "notification_interval": "Benachrichtigungsintervall (Tage)",
+          "dependencies": "Abhängigkeiten"
         },
         "data_description": {
           "repeat_weekday": "Der Wochentag, an dem die Task wiederholt wird.",
@@ -245,7 +252,8 @@
           "todo_lists": "Todo-Listen, zu denen diese Task hinzugefügt wird.",
           "due_soon_days": "Anzahl der Tage vor Fälligkeit, ab denen die Task als 'bald fällig' gilt.",
           "due_soon_override": "Wähle ein input_number (Wert in Tagen), um den 'Bald fällig'-Schwellenwert zu überschreiben.",
-          "notification_interval": "Zeitintervall in Tagen, nach dem Benachrichtigungen erneut gesendet werden."
+          "notification_interval": "Zeitintervall in Tagen, nach dem Benachrichtigungen erneut gesendet werden.",
+          "dependencies": "Andere Tasks, von denen diese Task abhängt. Der Status dieser Task wird nicht dringlicher sein als der der am wenigsten dringlichen Abhängigkeit."
         }
       },
       "options_repeat_every_days_before_end_of_month": {
@@ -261,7 +269,8 @@
           "todo_lists": "Todo-Listen",
           "due_soon_days": "Bald fällig (Tage)",
           "due_soon_override": "Bald-fällig-Override (Tage)",
-          "notification_interval": "Benachrichtigungsintervall (Tage)"
+          "notification_interval": "Benachrichtigungsintervall (Tage)",
+          "dependencies": "Abhängigkeiten"
         },
         "data_description": {
           "repeat_days_before_end": "Wie viele Tage vor dem letzten Tag des Monats die Task fällig wird (0 = letzter Tag, 1 = vorletzter Tag usw.).",
@@ -273,7 +282,8 @@
           "todo_lists": "Todo-Listen, zu denen diese Task hinzugefügt wird.",
           "due_soon_days": "Anzahl der Tage vor Fälligkeit, ab denen die Task als 'bald fällig' gilt.",
           "due_soon_override": "Wähle ein input_number (Wert in Tagen), um den 'Bald fällig'-Schwellenwert zu überschreiben.",
-          "notification_interval": "Zeitintervall in Tagen, nach dem Benachrichtigungen erneut gesendet werden."
+          "notification_interval": "Zeitintervall in Tagen, nach dem Benachrichtigungen erneut gesendet werden.",
+          "dependencies": "Andere Tasks, von denen diese Task abhängt. Der Status dieser Task wird nicht dringlicher sein als der der am wenigsten dringlichen Abhängigkeit."
         }
       },
       "options_repeat_after": {
@@ -290,7 +300,8 @@
           "todo_lists": "Todo-Listen",
           "due_soon_days": "Bald fällig (Tage)",
           "due_soon_override": "Bald-fällig-Override (Tage)",
-          "notification_interval": "Benachrichtigungsintervall (Tage)"
+          "notification_interval": "Benachrichtigungsintervall (Tage)",
+          "dependencies": "Abhängigkeiten"
         },
         "data_description": {
           "active": "Aktiviert oder deaktiviert die Task.",
@@ -303,7 +314,8 @@
           "todo_lists": "Todo-Listen, zu denen diese Task hinzugefügt wird.",
           "due_soon_days": "Anzahl der Tage vor Fälligkeit, ab denen die Task als 'bald fällig' gilt.",
           "due_soon_override": "Wähle ein input_number (Wert in Tagen), um den 'Bald fällig'-Schwellenwert zu überschreiben.",
-          "notification_interval": "Zeitintervall in Tagen, nach dem Benachrichtigungen erneut gesendet werden."
+          "notification_interval": "Zeitintervall in Tagen, nach dem Benachrichtigungen erneut gesendet werden.",
+          "dependencies": "Andere Tasks, von denen diese Task abhängt. Der Status dieser Task wird nicht dringlicher sein als der der am wenigsten dringlichen Abhängigkeit."
         }
       }
     }
