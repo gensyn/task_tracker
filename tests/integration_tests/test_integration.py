@@ -16,6 +16,7 @@ from datetime import date
 import pytest
 from homeassistant.core import HomeAssistant
 from homeassistant.const import CONF_ICON
+from homeassistant.util import dt as dt_util
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.task_tracker.const import (
@@ -200,7 +201,7 @@ class TestMarkAsDoneService:
         await hass.async_block_till_done()
 
         coordinator = hass.data[DOMAIN]["e1"]
-        assert coordinator.last_done == date.today()
+        assert coordinator.last_done == dt_util.now().date()
 
     async def test_last_done_attribute_updated_to_today(self, hass: HomeAssistant) -> None:
         entry = _make_entry()
@@ -215,7 +216,7 @@ class TestMarkAsDoneService:
         await hass.async_block_till_done()
 
         state = hass.states.get("sensor.task_tracker_water_plants")
-        assert state.attributes["last_done"] == str(date.today())
+        assert state.attributes["last_done"] == str(dt_util.now().date())
 
 
 # ---------------------------------------------------------------------------
@@ -303,7 +304,7 @@ class TestButtonPress:
         await hass.async_block_till_done()
 
         coordinator = hass.data[DOMAIN]["e1"]
-        assert coordinator.last_done == date.today()
+        assert coordinator.last_done == dt_util.now().date()
 
 
 # ---------------------------------------------------------------------------
