@@ -12,6 +12,7 @@ A powerful Home Assistant custom component for managing recurring tasks with aut
 
 - ✅ **Recurring Task Management** - Create tasks with flexible repeat modes: after completion or on a fixed schedule
 - 📅 **Automatic Due Date Tracking** - Never forget when a task needs to be done
+- 🔗 **Task Dependencies** - Gate task urgency based on other Task Tracker tasks
 - 📝 **Todo List Integration** - Automatically sync with Home Assistant's Local Todo lists
 - 🎨 **Custom Lovelace Card** - Beautiful task display in Lovelace
 - 📊 **Sidebar Panel** - Auto-registered dashboard showing all tasks at a glance with state filtering
@@ -125,6 +126,7 @@ Access task settings through the cog icon ⚙️ on the integration page.
 | **Due Soon**              | Number of days before due date when the sensor switches to `due_soon` state and the task is added to todo lists |
 | **Due Soon Override**     | Select an `input_number` helper (value in days) to override the Due Soon threshold at runtime                   |
 | **Notification Interval** | Reference value for automation/template notification timing                                                     |
+| **Dependencies**          | Select other Task Tracker sensors this task depends on                                                        |
 
 **Options specific to *Repeat after completion*:**
 
@@ -161,6 +163,15 @@ Access task settings through the cog icon ⚙️ on the integration page.
 |---------------------------|-----------------------------------------------------------------------------|
 | **Days Before Month end** | Modify the number of days before the month's end                            |
 | **Every (months)**        | Modify the month interval (1 = every month, 3 = quarterly, 12 = annually)  |
+
+#### Due dependencies
+
+Use **Dependencies** to make a task wait on other Task Tracker tasks:
+
+- A task cannot become more urgent than its least urgent dependency (`done` < `due_soon` < `due`)
+- If a dependency changes state, dependent tasks update immediately
+- Circular dependencies are blocked
+- Only Task Tracker sensors can be selected as dependencies
 
 > **Note:** Tags and notification intervals require you to implement filtering logic in your own automations.
 >
