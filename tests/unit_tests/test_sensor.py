@@ -323,8 +323,7 @@ class TestTaskTrackerSensorSyncTodoList(unittest.IsolatedAsyncioTestCase):
 
     async def test_removes_item_when_not_due_and_exists(self):
         sensor = make_sensor(task_interval_value=7, due_soon_days=0)
-        sensor.due_in = 10
-        sensor.due_date = date.today()
+        sensor._attr_native_value = CONST_DONE
         existing = {"summary": "Test Task", "status": "needs_action"}
         with patch.object(sensor, "async_get_item_from_todo_list", new_callable=AsyncMock, return_value=existing):
             with patch.object(sensor, "async_remove_item_from_todo_list", new_callable=AsyncMock) as mock_remove:
@@ -333,8 +332,7 @@ class TestTaskTrackerSensorSyncTodoList(unittest.IsolatedAsyncioTestCase):
 
     async def test_no_action_when_not_due_and_not_exists(self):
         sensor = make_sensor(task_interval_value=7, due_soon_days=0)
-        sensor.due_in = 10
-        sensor.due_date = date.today()
+        sensor._attr_native_value = CONST_DONE
         with patch.object(sensor, "async_get_item_from_todo_list", new_callable=AsyncMock, return_value=None):
             with patch.object(sensor, "async_add_item_to_todo_list", new_callable=AsyncMock) as mock_add:
                 with patch.object(sensor, "async_remove_item_from_todo_list", new_callable=AsyncMock) as mock_remove:
