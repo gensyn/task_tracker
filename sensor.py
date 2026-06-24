@@ -353,7 +353,7 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
         """Add, update, or remove this task's item in *todo_list* as appropriate."""
         existing_item: dict | None = await self.async_get_item_from_todo_list(todo_list)
 
-        if self._effective_active and self.due_in <= self._effective_due_soon_days:
+        if self._effective_active and self._attr_native_value in [CONST_DUE, CONST_DUE_SOON]:
             # there is supposed to be an item in the todo list
             if existing_item is None:
                 # The item does not exist, so we need to add it
