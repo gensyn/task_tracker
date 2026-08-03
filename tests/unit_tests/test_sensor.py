@@ -435,6 +435,28 @@ class TestTaskTrackerSensorActiveOverride(unittest.IsolatedAsyncioTestCase):
         await self._run_update(sensor)
         self.assertEqual(sensor._attr_native_value, CONST_INACTIVE)
 
+    async def test_active_override_binary_sensor_on_makes_task_active(self):
+        hass = MagicMock()
+        override_state = MagicMock()
+        override_state.state = "on"
+        hass.states.get.return_value = override_state
+        sensor = make_sensor(active=False, active_override="binary_sensor.my_sensor")
+        sensor.hass = hass
+        sensor.coordinator.last_done = date(1970, 1, 1)
+        await self._run_update(sensor)
+        self.assertNotEqual(sensor._attr_native_value, CONST_INACTIVE)
+
+    async def test_active_override_binary_sensor_off_makes_task_inactive(self):
+        hass = MagicMock()
+        override_state = MagicMock()
+        override_state.state = "off"
+        hass.states.get.return_value = override_state
+        sensor = make_sensor(active=True, active_override="binary_sensor.my_sensor")
+        sensor.hass = hass
+        sensor.coordinator.last_done = date(1970, 1, 1)
+        await self._run_update(sensor)
+        self.assertEqual(sensor._attr_native_value, CONST_INACTIVE)
+
 
 class TestTaskTrackerSensorTaskIntervalOverride(unittest.IsolatedAsyncioTestCase):
 
