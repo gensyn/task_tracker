@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import logging
+import pathlib
 
 import voluptuous as vol
+from homeassistant.components import blueprint
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform, CONF_ICON, CONF_ENTITY_ID
 from homeassistant.core import HomeAssistant, ServiceCall
@@ -103,7 +105,36 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     cards = TaskTrackerCardRegistration(hass)
     await cards.async_register(show_panel=show_panel)
 
+    await _async_register_blueprints(hass)
+
     return True
+
+
+async def _async_register_blueprints(hass: HomeAssistant) -> None:
+    """Register bundled automation blueprints into the HA config directory."""
+    from homeassistant.components.automation.helpers import async_get_blueprints  # noqa: PLC0415
+    from homeassistant.components.blueprint.const import BLUEPRINT_FOLDER  # noqa: PLC0415
+    from homeassistant.components.blueprint.errors import FileAlreadyExists  # noqa: PLC0415
+    from homeassistant.util.yaml import load_yaml_dict  # noqa: PLC0415
+
+    domain_blueprints = async_get_blueprints(hass)
+    blueprints_path = pathlib.Path(__file__).parent / BLUEPRINT_FOLDER / "automation" / DOMAIN
+    for blueprint_file in blueprints_path.glob("*.yaml"):
+        blueprint_rel_path = f"{DOMAIN}/{blueprint_file.name}"
+        try:
+            bp_data = await hass.async_add_executor_job(load_yaml_dict, blueprint_file)
+            bp = blueprint.Blueprint(
+                bp_data,
+                expected_domain="automation",
+                path=blueprint_rel_path,
+                schema=domain_blueprints._blueprint_schema,
+            )
+            await domain_blueprints.async_add_blueprint(bp, blueprint_rel_path, allow_override=False)
+            _LOGGER.debug("Registered blueprint %s", blueprint_rel_path)
+        except FileAlreadyExists:
+            _LOGGER.debug("Blueprint %s already exists, skipping", blueprint_rel_path)
+        except Exception as err:  # noqa: BLE001
+            _LOGGER.warning("Failed to register blueprint %s: %s", blueprint_rel_path, err)
 
 
 async def async_update_entities(entity_ids: list[str], hass: HomeAssistant) -> dict | None:
