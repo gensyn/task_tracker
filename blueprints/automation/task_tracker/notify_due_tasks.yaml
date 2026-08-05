@@ -1,0 +1,75 @@
+blueprint:
+  name: Task Tracker - Notify about due tasks
+  description: >-
+    Send a mobile app notification for each due task at a specified time each day.
+    Only tasks whose overdue_by value is a multiple of their notification_interval
+    will trigger a notification, preventing repeated daily alerts.
+
+    The notify action and user tag can be customised via the blueprint inputs.
+  domain: automation
+  input:
+    notification_time:
+      name: Notification time
+      description: Time of day to check for due tasks and send notifications.
+      default: "08:00:00"
+      selector:
+        time: {}
+    notify_action:
+      name: Notify action
+      description: >-
+        The notify action to call (e.g. notify.mobile_app_my_phone).
+      selector:
+        action: {}
+    user_tag:
+      name: User tag
+      description: >-
+        The tag that must be present in a task's tags attribute for the
+        notification to be sent.
+      default: user_tag
+      selector:
+        text: {}
+
+triggers:
+  - trigger: time
+    at: !input notification_time
+
+conditions: []
+
+actions:
+  - variables:
+      tasks: |-
+        [  {%- for entity_id in integration_entities('task_tracker') %}
+          {%- if "sensor." in entity_id and states[entity_id].state == "due" %}
+            {%- set last_done = as_datetime(states[entity_id].attributes.last_done) if 'last_done' in states[entity_id].attributes else None %}
+            {%- set overdue_by = states[entity_id].attributes.overdue_by if 'overdue_by' in states[entity_id].attributes else None %}
+            {%- set notification_interval = states[entity_id].attributes.notification_interval if 'notification_interval' in states[entity_id].attributes else None %}
+            {%- if last_done is not none and overdue_by is not none and notification_interval is not none %}
+              {%- if overdue_by % notification_interval == 0 %}
+                "{{ entity_id }}"{% if not loop.last %},{% endif %}
+              {%- endif %}
+            {%- endif %}
+          {%- endif %}
+        {%- endfor %}  ]
+      configured_user_tag: !input user_tag
+  - repeat:
+      for_each: "{{ tasks }}"
+      sequence:
+        - alias: Notify User
+          if:
+            - condition: template
+              value_template: "{{ configured_user_tag in states[repeat.item].attributes.tags }}"
+          then:
+            - action: !input notify_action
+              data:
+                title: "{{ states[repeat.item].attributes.friendly_name }}"
+                message: >-
+                  {%- set overdue_by = states[repeat.item].attributes.overdue_by
+                  %} due since {{ 'today' if overdue_by == 0 else ('yesterday'
+                  if overdue_by == 1 else overdue_by ~ ' days') }}
+                data:
+                  tag: "{{ repeat.item }}"
+                  color: green
+                  group: "{{ repeat.item }}"
+                  notification_icon: "{{ states[repeat.item].attributes.icon }}"
+
+mode: single
