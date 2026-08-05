@@ -19,7 +19,8 @@ blueprint:
       description: >-
         The notify action to call (e.g. notify.mobile_app_my_phone).
       selector:
-        action: {}
+        entity:
+          domain: notify
     user_tag:
       name: User tag
       description: >-
