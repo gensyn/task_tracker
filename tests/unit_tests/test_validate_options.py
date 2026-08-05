@@ -146,6 +146,10 @@ class TestValidateOptionsRepeatAfter(unittest.IsolatedAsyncioTestCase):
         result = await validate_options({**_BASE_REPEAT_AFTER, CONF_ACTIVE_OVERRIDE: "input_boolean.my_switch"})
         self.assertEqual(result[CONF_ACTIVE_OVERRIDE], "input_boolean.my_switch")
 
+    async def test_active_override_binary_sensor_preserved(self):
+        result = await validate_options({**_BASE_REPEAT_AFTER, CONF_ACTIVE_OVERRIDE: "binary_sensor.my_sensor"})
+        self.assertEqual(result[CONF_ACTIVE_OVERRIDE], "binary_sensor.my_sensor")
+
     async def test_active_override_empty_string_becomes_none(self):
         result = await validate_options({**_BASE_REPEAT_AFTER, CONF_ACTIVE_OVERRIDE: ""})
         self.assertIsNone(result[CONF_ACTIVE_OVERRIDE])

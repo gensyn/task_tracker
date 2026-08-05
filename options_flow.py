@@ -103,7 +103,7 @@ _REPEAT_EVERY_HEAD_OPTIONS: dict = {
     vol.Optional(CONF_ACTIVE): bool,
     vol.Optional(CONF_ACTIVE_OVERRIDE): selector({
         "entity": {
-            "domain": "input_boolean",
+            "domain": ["input_boolean", "binary_sensor"],
         }
     }),
 }
