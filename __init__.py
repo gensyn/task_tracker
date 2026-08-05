@@ -114,11 +114,13 @@ async def _async_register_blueprints(hass: HomeAssistant) -> None:
     """Register bundled automation blueprints into the HA config directory."""
     from homeassistant.components.automation.helpers import async_get_blueprints  # noqa: PLC0415
     from homeassistant.components.blueprint.const import BLUEPRINT_FOLDER  # noqa: PLC0415
-    from homeassistant.components.blueprint.errors import FileAlreadyExists  # noqa: PLC0415
     from homeassistant.util.yaml import load_yaml_dict  # noqa: PLC0415
 
     domain_blueprints = async_get_blueprints(hass)
     blueprints_path = pathlib.Path(__file__).parent / BLUEPRINT_FOLDER / "automation" / DOMAIN
+    if not blueprints_path.is_dir():
+        _LOGGER.debug("No bundled blueprints found at %s", blueprints_path)
+        return
     for blueprint_file in blueprints_path.glob("*.yaml"):
         blueprint_rel_path = f"{DOMAIN}/{blueprint_file.name}"
         try:
@@ -129,10 +131,8 @@ async def _async_register_blueprints(hass: HomeAssistant) -> None:
                 path=blueprint_rel_path,
                 schema=domain_blueprints._blueprint_schema,
             )
-            await domain_blueprints.async_add_blueprint(bp, blueprint_rel_path, allow_override=False)
+            await domain_blueprints.async_add_blueprint(bp, blueprint_rel_path, allow_override=True)
             _LOGGER.debug("Registered blueprint %s", blueprint_rel_path)
-        except FileAlreadyExists:
-            _LOGGER.debug("Blueprint %s already exists, skipping", blueprint_rel_path)
         except Exception as err:  # noqa: BLE001
             _LOGGER.warning("Failed to register blueprint %s: %s", blueprint_rel_path, err)
 
