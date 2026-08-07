@@ -5,7 +5,7 @@ blueprint:
     Only tasks whose overdue_by value is a multiple of their notification_interval
     will trigger a notification, preventing repeated daily alerts.
 
-    The notify action and user tag can be customised via the blueprint inputs.
+    The notify action, user tag, and language can be customised via the blueprint inputs.
   domain: automation
   input:
     notification_time:
@@ -19,8 +19,7 @@ blueprint:
       description: >-
         The notify action to call (e.g. notify.mobile_app_my_phone).
       selector:
-        entity:
-          domain: notify
+        action: {}
     user_tag:
       name: User tag
       description: >-
@@ -29,6 +28,15 @@ blueprint:
       default: user_tag
       selector:
         text: {}
+    language:
+      name: Language
+      description: Language used for notification messages.
+      default: en
+      selector:
+        language:
+          languages:
+            - en
+            - de
 
 triggers:
   - trigger: time
@@ -38,6 +46,22 @@ conditions: []
 
 actions:
   - variables:
+      language_tmp: !input language
+      language: >
+        {{
+          language_tmp
+          if language_tmp is string and language_tmp in ["de"]
+          else "en"
+        }}
+      mui:
+        en:
+          due_since_today: "due today"
+          due_since_yesterday: "due since yesterday"
+          due_since_days: "due since %d days"
+        de:
+          due_since_today: "heute fällig"
+          due_since_yesterday: "seit gestern fällig"
+          due_since_days: "seit %d Tagen fällig"
       tasks: |-
         [  {%- for entity_id in integration_entities('task_tracker') %}
           {%- if "sensor." in entity_id and states[entity_id].state == "due" %}
@@ -64,9 +88,14 @@ actions:
               data:
                 title: "{{ states[repeat.item].attributes.friendly_name }}"
                 message: >-
-                  {%- set overdue_by = states[repeat.item].attributes.overdue_by
-                  %} due since {{ 'today' if overdue_by == 0 else ('yesterday'
-                  if overdue_by == 1 else overdue_by ~ ' days') }}
+                  {%- set overdue_by = states[repeat.item].attributes.overdue_by -%}
+                  {%- if overdue_by == 0 -%}
+                    {{ mui[language].due_since_today }}
+                  {%- elif overdue_by == 1 -%}
+                    {{ mui[language].due_since_yesterday }}
+                  {%- else -%}
+                    {{ mui[language].due_since_days | replace('%d', overdue_by | string) }}
+                  {%- endif -%}
                 data:
                   tag: "{{ repeat.item }}"
                   color: green
