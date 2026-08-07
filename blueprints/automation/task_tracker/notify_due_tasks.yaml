@@ -37,6 +37,7 @@ blueprint:
           languages:
             - en
             - de
+            - fr
 
 triggers:
   - trigger: time
@@ -50,7 +51,7 @@ actions:
       language: >
         {{
           language_tmp
-          if language_tmp is string and language_tmp in ["de"]
+          if language_tmp is string and language_tmp in ["de", "fr"]
           else "en"
         }}
       mui:
@@ -62,6 +63,10 @@ actions:
           due_since_today: "heute fällig"
           due_since_yesterday: "seit gestern fällig"
           due_since_days: "seit %d Tagen fällig"
+        fr:
+          due_since_today: "à faire aujourd'hui"
+          due_since_yesterday: "dû depuis hier"
+          due_since_days: "dû depuis %d jours"
       tasks: |-
         [  {%- for entity_id in integration_entities('task_tracker') %}
           {%- if "sensor." in entity_id and states[entity_id].state == "due" %}
