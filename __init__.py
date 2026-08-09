@@ -6,6 +6,9 @@ import logging
 import pathlib
 
 import voluptuous as vol
+from homeassistant.components import blueprint
+from homeassistant.components.automation.helpers import async_get_blueprints
+from homeassistant.components.blueprint.const import BLUEPRINT_FOLDER
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform, CONF_ICON, CONF_ENTITY_ID
 from homeassistant.core import HomeAssistant, ServiceCall
@@ -14,6 +17,7 @@ from homeassistant.helpers import entity_registry
 from homeassistant.helpers.event import async_track_time_change
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.util import dt as dt_util
+from homeassistant.util.yaml import load_yaml_dict
 
 from .const import DOMAIN, CONF_TASK_INTERVAL_VALUE, CONF_DAY, CONF_TASK_INTERVAL_TYPE, CONF_NOTIFICATION_INTERVAL, \
     CONF_DUE_SOON_DAYS, CONF_DUE_SOON_OVERRIDE, CONF_TAGS, CONF_ACTIVE, CONF_TODO_LISTS, SERVICE_MARK_AS_DONE, \
@@ -111,11 +115,6 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
 async def _async_register_blueprints(hass: HomeAssistant) -> None:
     """Register bundled automation blueprints with Home Assistant's blueprint manager."""
-    from homeassistant.components import blueprint  # noqa: PLC0415
-    from homeassistant.components.automation.helpers import async_get_blueprints  # noqa: PLC0415
-    from homeassistant.components.blueprint.const import BLUEPRINT_FOLDER  # noqa: PLC0415
-    from homeassistant.util.yaml import load_yaml_dict  # noqa: PLC0415
-
     domain_blueprints = async_get_blueprints(hass)
     blueprint_file = pathlib.Path(__file__).parent / BLUEPRINT_FOLDER / "task_tracker_notify.yaml"
     blueprint_rel_path = f"{DOMAIN}/{blueprint_file.name}"

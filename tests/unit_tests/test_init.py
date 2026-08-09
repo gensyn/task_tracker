@@ -1,7 +1,7 @@
 import sys
 import unittest
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 absolute_mock_path = str(Path(__file__).parent / "homeassistant_mock")
 sys.path.insert(0, absolute_mock_path)
@@ -12,7 +12,7 @@ sys.path.insert(0, absolute_plugin_path)
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_ICON
 
-from task_tracker import async_migrate_entry, _get_coordinator
+from task_tracker import _async_register_blueprints, async_migrate_entry, _get_coordinator
 from task_tracker.const import (
     CONF_ACTIVE, CONF_TASK_INTERVAL_VALUE, CONF_TASK_INTERVAL_TYPE,
     CONF_TAGS, CONF_TODO_LISTS, CONF_DUE_SOON_DAYS, CONF_DUE_SOON_OVERRIDE,
@@ -419,3 +419,41 @@ class TestGetCoordinator(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(ValueError):
             _get_coordinator(mock_hass, "sensor.task_tracker_my_task")
 
+
+class TestRegisterBlueprints(unittest.IsolatedAsyncioTestCase):
+
+    async def test_registers_bundled_blueprint(self):
+        mock_hass = MagicMock()
+        mock_hass.async_add_executor_job = AsyncMock(return_value={"blueprint": {}})
+        domain_blueprints = MagicMock()
+        domain_blueprints._blueprint_schema = {}
+        domain_blueprints.async_add_blueprint = AsyncMock()
+
+        with (
+            patch("task_tracker.async_get_blueprints", return_value=domain_blueprints),
+            patch("task_tracker.blueprint.Blueprint", return_value=MagicMock()) as mock_blueprint,
+        ):
+            await _async_register_blueprints(mock_hass)
+
+        mock_hass.async_add_executor_job.assert_awaited_once()
+        async_job_args = mock_hass.async_add_executor_job.call_args.args
+        self.assertGreaterEqual(len(async_job_args), 2)
+        blueprint_file = async_job_args[1]
+        self.assertEqual(blueprint_file.name, "task_tracker_notify.yaml")
+        mock_blueprint.assert_called_once()
+        domain_blueprints.async_add_blueprint.assert_awaited_once()
+
+    async def test_logs_and_continues_when_blueprint_registration_fails(self):
+        mock_hass = MagicMock()
+        mock_hass.async_add_executor_job = AsyncMock(side_effect=RuntimeError("boom"))
+        domain_blueprints = MagicMock()
+        domain_blueprints._blueprint_schema = {}
+
+        with (
+            patch("task_tracker.async_get_blueprints", return_value=domain_blueprints),
+            patch("task_tracker._LOGGER.exception") as mock_exception,
+        ):
+            await _async_register_blueprints(mock_hass)
+
+        mock_exception.assert_called_once()
+        domain_blueprints.async_add_blueprint.assert_not_called()
