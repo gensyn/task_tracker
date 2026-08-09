@@ -129,8 +129,8 @@ async def _async_register_blueprints(hass: HomeAssistant) -> None:
         )
         await domain_blueprints.async_add_blueprint(bp, blueprint_rel_path, allow_override=True)
         _LOGGER.debug("Registered blueprint %s", blueprint_rel_path)
-    except Exception as err:  # noqa: BLE001
-        _LOGGER.warning("Failed to register blueprint %s: %s", blueprint_rel_path, err)
+    except Exception:  # noqa: BLE001
+        _LOGGER.exception("Failed to register blueprint %s", blueprint_rel_path)
 
 
 async def async_update_entities(entity_ids: list[str], hass: HomeAssistant) -> dict | None:
