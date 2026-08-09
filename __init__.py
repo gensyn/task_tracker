@@ -6,7 +6,6 @@ import logging
 import pathlib
 
 import voluptuous as vol
-from homeassistant.components import blueprint
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform, CONF_ICON, CONF_ENTITY_ID
 from homeassistant.core import HomeAssistant, ServiceCall
@@ -112,6 +111,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
 async def _async_register_blueprints(hass: HomeAssistant) -> None:
     """Register bundled automation blueprints into the HA config directory."""
+    from homeassistant.components import blueprint  # noqa: PLC0415
     from homeassistant.components.automation.helpers import async_get_blueprints  # noqa: PLC0415
     from homeassistant.components.blueprint.const import BLUEPRINT_FOLDER  # noqa: PLC0415
     from homeassistant.util.yaml import load_yaml_dict  # noqa: PLC0415
