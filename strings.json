@@ -372,6 +372,9 @@
   },
   "entity": {
     "sensor": {
+      "times_completed": {
+        "name": "Times completed"
+      },
       "status": {
         "state": {
           "done": "Done",

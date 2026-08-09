@@ -368,6 +368,9 @@
   },
   "entity": {
     "sensor": {
+      "times_completed": {
+        "name": "Anzahl Abschlüsse"
+      },
       "status": {
         "state": {
           "done": "Erledigt",

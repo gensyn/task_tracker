@@ -371,6 +371,9 @@
   },
   "entity": {
     "sensor": {
+      "times_completed": {
+        "name": "Nombre d'accomplissements"
+      },
       "status": {
         "state": {
           "done": "Fait",
