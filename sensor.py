@@ -8,7 +8,7 @@ from logging import getLogger
 from typing import Any, Callable
 
 from homeassistant.components.sensor import (
-    SensorEntity, RestoreSensor,
+    SensorEntity, RestoreSensor, SensorStateClass,
 )
 from homeassistant.const import CONF_NAME, CONF_ICON, CONF_ENTITY_ID, EVENT_STATE_CHANGED
 from homeassistant.core import HomeAssistant, EventStateChangedData, callback
@@ -49,7 +49,8 @@ async def async_setup_entry(
                            options.get(CONF_ACTIVE_OVERRIDE),
                            options.get(CONF_TASK_INTERVAL_OVERRIDE),
                            options.get(CONF_DUE_SOON_OVERRIDE),
-                           options.get(CONF_DEPENDENCIES) or [])])
+                           options.get(CONF_DEPENDENCIES) or []),
+         TaskTrackerTimesCompletedSensor(coordinator, data[CONF_NAME], entry.entry_id, hass)])
 
 
 class TaskTrackerSensor(RestoreSensor, SensorEntity):
@@ -440,3 +441,48 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
     async def async_set_last_done_date(self, new_date: date) -> None:
         """Set the last done date."""
         await self.coordinator.async_set_last_done_date(new_date)
+
+
+class TaskTrackerTimesCompletedSensor(RestoreSensor, SensorEntity):
+    """Sensor tracking how many times a task was completed."""
+
+    _attr_has_entity_name = True
+    _attr_should_poll = False
+    _attr_name = "Times completed"
+    _attr_state_class = SensorStateClass.TOTAL_INCREASING
+
+    def __init__(self, coordinator: TaskTrackerCoordinator, entry_name: str, entry_id: str, hass: HomeAssistant) -> None:
+        """Initialize the times-completed sensor."""
+        self.coordinator = coordinator
+        self.entry_id = entry_id
+        device_id = f"{DOMAIN}_{self.entry_id}"
+        self._attr_unique_id = f"{entry_id}_times_completed"
+        self.entity_id = generate_entity_id("sensor.task_tracker_{}_times_completed", slugify(entry_name), hass=hass)
+        self._attr_native_value = 0
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, device_id)},
+            manufacturer="Gensyn",
+            model="Task Tracker",
+            name=entry_name,
+        )
+
+    async def async_added_to_hass(self) -> None:
+        """Restore last known state on startup."""
+        await super().async_added_to_hass()
+        self.async_on_remove(
+            self.coordinator.async_add_listener(
+                lambda: self.async_schedule_update_ha_state(force_refresh=True)
+            )
+        )
+        last_sensor_state = await self.async_get_last_sensor_data()
+        if last_sensor_state is not None:
+            try:
+                restored_times_completed = int(last_sensor_state.native_value)
+            except (TypeError, ValueError):
+                restored_times_completed = 0
+            self.coordinator.times_completed = max(self.coordinator.times_completed, restored_times_completed)
+        self._attr_native_value = self.coordinator.times_completed
+
+    async def async_update(self) -> None:
+        """Update sensor state from coordinator."""
+        self._attr_native_value = self.coordinator.times_completed

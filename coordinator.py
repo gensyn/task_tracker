@@ -70,6 +70,7 @@ class TaskTrackerCoordinator:
         self.repeat_days_before_end: int = max(0, repeat_days_before_end or 0)
         self.repeat_months_interval: int = max(1, repeat_months_interval or 1)
         self.due_soon_days: int = max(0, due_soon_days or 0)
+        self.times_completed: int = 0
         self._listeners: list[Callable[[], None]] = []
 
     def async_add_listener(self, update_callback: Callable[[], None]) -> Callable[[], None]:
@@ -136,6 +137,7 @@ class TaskTrackerCoordinator:
                 self.last_done = self._find_most_recent_occurrence(today)
         else:
             self.last_done = today
+        self.times_completed += 1
         self._async_notify_listeners()
 
     async def async_set_last_done_date(self, new_date: date) -> None:
