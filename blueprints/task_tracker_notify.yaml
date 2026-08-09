@@ -65,19 +65,19 @@ actions:
           due_since_yesterday: "dû depuis hier"
           due_since_days: "dû depuis %d jours"
       tasks: |-
-        [  {%- for entity_id in integration_entities('task_tracker') %}
-          {%- if "sensor." in entity_id and states[entity_id].state == "due" %}
-            {%- set last_done = as_datetime(states[entity_id].attributes.last_done) if 'last_done' in states[entity_id].attributes else None %}
-            {%- set overdue_by = states[entity_id].attributes.overdue_by if 'overdue_by' in states[entity_id].attributes else None %}
-            {%- set notification_interval = states[entity_id].attributes.notification_interval if 'notification_interval' in states[entity_id].attributes else None %}
-            {%- if last_done is not none and overdue_by is not none and notification_interval is not none %}
-              {%- if overdue_by % notification_interval == 0 %}
-                "{{ entity_id }}"{% if not loop.last %},{% endif %}
-              {%- endif %}
-            {%- endif %}
-          {%- endif %}
-        {%- endfor %}  ]
-      configured_tags: !input tags
+        {%- set ns = namespace(items=[]) -%}
+        {%- for entity_id in integration_entities('task_tracker') -%}
+          {%- if entity_id.startswith('sensor.') and states[entity_id].state == "due" -%}
+            {%- set overdue_by = states[entity_id].attributes.overdue_by if 'overdue_by' in states[entity_id].attributes else None -%}
+            {%- set notification_interval = states[entity_id].attributes.notification_interval if 'notification_interval' in states[entity_id].attributes else None -%}
+            {%- if overdue_by is not none and notification_interval is not none and (overdue_by % notification_interval == 0) -%}
+              {%- set ns.items = ns.items + [entity_id] -%}
+            {%- endif -%}
+          {%- endif -%}
+        {%- endfor -%}
+        {%- for item in ns.items -%}
+        - {{ item }}
+        {%- endfor -%}
   - repeat:
       for_each: "{{ tasks }}"
       sequence:
