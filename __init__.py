@@ -110,7 +110,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
 
 async def _async_register_blueprints(hass: HomeAssistant) -> None:
-    """Register bundled automation blueprints into the HA config directory."""
+    """Register bundled automation blueprints with Home Assistant's blueprint manager."""
     from homeassistant.components import blueprint  # noqa: PLC0415
     from homeassistant.components.automation.helpers import async_get_blueprints  # noqa: PLC0415
     from homeassistant.components.blueprint.const import BLUEPRINT_FOLDER  # noqa: PLC0415
