@@ -483,6 +483,7 @@ class TaskTrackerTimesCompletedSensor(RestoreSensor, SensorEntity):
                 restored_times_completed = 0
             self.coordinator.times_completed = max(self.coordinator.times_completed, restored_times_completed)
         self._attr_native_value = self.coordinator.times_completed
+        self.async_write_ha_state()
 
     async def async_update(self) -> None:
         """Update sensor state from coordinator."""
