@@ -5,7 +5,7 @@ blueprint:
     Only tasks whose overdue_by value is a multiple of their notification_interval
     will trigger a notification, preventing repeated daily alerts.
 
-    The notify action, user tag, and language can be customised via the blueprint inputs.
+    The notify action, tags, and language can be customised via the blueprint inputs.
   domain: automation
   input:
     notification_time:
@@ -16,16 +16,13 @@ blueprint:
         time: {}
     notify_action:
       name: Notify action
-      description: >-
-        The notify action to call (e.g. notify.mobile_app_my_phone).
+      description: The notify action to call (e.g. notify.mobile_app_my_phone).
       selector:
-        action: {}
-    user_tag:
-      name: User tag
-      description: >-
-        The tag that must be present in a task's tags attribute for the
-        notification to be sent.
-      default: user_tag
+        text: {}
+    tags:
+      name: Tags
+      description: The tags that must be present in a task's tags attribute for the notification to be sent.
+      default: tag
       selector:
         text: {}
     language:
@@ -80,14 +77,14 @@ actions:
             {%- endif %}
           {%- endif %}
         {%- endfor %}  ]
-      configured_user_tag: !input user_tag
+      configured_tags: !input tags
   - repeat:
       for_each: "{{ tasks }}"
       sequence:
         - alias: Notify User
           if:
             - condition: template
-              value_template: "{{ configured_user_tag in states[repeat.item].attributes.tags }}"
+              value_template: "{{ configured_tags in states[repeat.item].attributes.tags }}"
           then:
             - action: !input notify_action
               data:
