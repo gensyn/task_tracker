@@ -24,7 +24,8 @@ blueprint:
       description: The tags that must be present in a task's tags attribute for the notification to be sent.
       default: tag
       selector:
-        text: {}
+        text:
+          multiple: true
     language:
       name: Language
       description: Language used for notification messages.
@@ -35,7 +36,6 @@ blueprint:
             - en
             - de
             - fr
-
 triggers:
   - trigger: time
     at: !input notification_time
@@ -75,16 +75,15 @@ actions:
             {%- endif -%}
           {%- endif -%}
         {%- endfor -%}
-        {%- for item in ns.items -%}
-        - {{ item }}
-        {%- endfor -%}
+        {{ ns.items }}
+      configured_tags: !input tags
   - repeat:
       for_each: "{{ tasks }}"
       sequence:
         - alias: Notify User
           if:
             - condition: template
-              value_template: "{{ configured_tags in states[repeat.item].attributes.tags }}"
+              value_template: "{{ configured_tags | select('in', states[repeat.item].attributes.tags | default([])) | list | length == configured_tags | length }}"
           then:
             - action: !input notify_action
               data:
