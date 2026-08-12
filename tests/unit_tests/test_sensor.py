@@ -109,12 +109,6 @@ class TestTaskTrackerSensorInit(unittest.TestCase):
         self.assertIn("tag2", sensor.tags)
         self.assertIn("tag3", sensor.tags)
 
-    def test_init_legacy_string_tags(self):
-        sensor = make_sensor(tags="tag1, tag2; tag3")
-        self.assertIn("tag1", sensor.tags)
-        self.assertIn("tag2", sensor.tags)
-        self.assertIn("tag3", sensor.tags)
-
     def test_init_empty_tags(self):
         sensor = make_sensor(tags=[])
         self.assertEqual(sensor.tags, [])

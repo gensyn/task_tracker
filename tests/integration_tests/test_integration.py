@@ -538,8 +538,8 @@ class TestTagsOption:
         state = hass.states.get("sensor.task_tracker_water_plants")
         assert state.attributes["tags"] == []
 
-    async def test_legacy_comma_separated_string_still_works(self, hass: HomeAssistant) -> None:
-        """Entries not yet migrated (string tags) are handled gracefully."""
+    async def test_migration_converts_comma_separated_string_tags(self, hass: HomeAssistant) -> None:
+        """Entries with legacy string tags are converted to a list by migration (1.8 → 1.9)."""
         entry = _make_entry(tags="garden,outdoor")
         await _setup_entry(hass, entry)
 

@@ -294,7 +294,7 @@ class TestOptionsRepeatEveryWeekday(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(opts[CONF_REPEAT_WEEKDAY], CONF_WEDNESDAY)
         self.assertEqual(opts[CONF_REPEAT_WEEKS_INTERVAL], 2)
         self.assertEqual(opts[CONF_DUE_SOON_DAYS], 3)
-        self.assertEqual(opts[CONF_TAGS], "cleaning")
+        self.assertEqual(opts[CONF_TAGS], ["cleaning"])
 
     async def test_repeat_mode_not_changeable(self):
         """repeat_mode must remain CONF_REPEAT_EVERY even if not in the form."""
@@ -475,7 +475,7 @@ class TestOptionsRepeatEveryDaysBeforeEndOfMonth(unittest.IsolatedAsyncioTestCas
         self.assertEqual(opts[CONF_REPEAT_MONTHS_INTERVAL], 1)
         self.assertFalse(opts[CONF_ACTIVE])
         self.assertEqual(opts[CONF_DUE_SOON_DAYS], 7)
-        self.assertEqual(opts[CONF_TAGS], "finance")
+        self.assertEqual(opts[CONF_TAGS], ["finance"])
 
     async def test_routed_from_init(self):
         flow = self._make_flow()
@@ -503,7 +503,7 @@ class TestOptionsRepeatEveryDaysBeforeEndOfMonth(unittest.IsolatedAsyncioTestCas
         self.assertTrue(opts[CONF_ACTIVE])
         self.assertEqual(opts[CONF_ACTIVE_OVERRIDE], "input_boolean.toggle")
         self.assertIn("star", opts[CONF_ICON])
-        self.assertEqual(opts[CONF_TAGS], "tag1,tag2")
+        self.assertEqual(opts[CONF_TAGS], ["tag1", "tag2"])
         self.assertEqual(opts[CONF_TODO_LISTS], ["todo.list_a"])
         self.assertEqual(opts[CONF_DUE_SOON_DAYS], 2)
         self.assertEqual(opts[CONF_DUE_SOON_OVERRIDE], "input_number.threshold")
