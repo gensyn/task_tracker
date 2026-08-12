@@ -125,6 +125,15 @@ class TestSetupEntry:
         state = hass.states.get("button.task_tracker_water_plants_mark_as_done")
         assert state is not None
 
+    async def test_times_completed_sensor_created(self, hass: HomeAssistant) -> None:
+        entry = _make_entry()
+        await _setup_entry(hass, entry)
+
+        state = hass.states.get("sensor.task_tracker_water_plants_times_completed")
+        assert state is not None
+        assert state.state == "0"
+        assert state.attributes["state_class"] == "total_increasing"
+
     async def test_sensor_initial_state_is_due(self, hass: HomeAssistant) -> None:
         """With last_done at the epoch the task is always overdue → state is 'due'."""
         entry = _make_entry()
@@ -218,6 +227,21 @@ class TestMarkAsDoneService:
         state = hass.states.get("sensor.task_tracker_water_plants")
         assert state.attributes["last_done"] == str(dt_util.now().date())
 
+    async def test_service_increments_times_completed(self, hass: HomeAssistant) -> None:
+        entry = _make_entry()
+        await _setup_entry(hass, entry)
+
+        await hass.services.async_call(
+            DOMAIN,
+            SERVICE_MARK_AS_DONE,
+            {"entity_id": "sensor.task_tracker_water_plants"},
+            blocking=True,
+        )
+        await hass.async_block_till_done()
+
+        state = hass.states.get("sensor.task_tracker_water_plants_times_completed")
+        assert state.state == "1"
+
 
 # ---------------------------------------------------------------------------
 # set_last_done_date service
@@ -266,6 +290,21 @@ class TestSetLastDoneDateService:
         state = hass.states.get("sensor.task_tracker_water_plants")
         assert state.attributes["due_date"] == "2024-06-22"
 
+    async def test_service_does_not_increment_times_completed(self, hass: HomeAssistant) -> None:
+        entry = _make_entry()
+        await _setup_entry(hass, entry)
+
+        await hass.services.async_call(
+            DOMAIN,
+            SERVICE_SET_LAST_DONE_DATE,
+            {"entity_id": "sensor.task_tracker_water_plants", "date": date(2024, 6, 15)},
+            blocking=True,
+        )
+        await hass.async_block_till_done()
+
+        state = hass.states.get("sensor.task_tracker_water_plants_times_completed")
+        assert state.state == "0"
+
 
 # ---------------------------------------------------------------------------
 # Button press
@@ -305,6 +344,21 @@ class TestButtonPress:
 
         coordinator = hass.data[DOMAIN]["e1"]
         assert coordinator.last_done == dt_util.now().date()
+
+    async def test_button_press_increments_times_completed(self, hass: HomeAssistant) -> None:
+        entry = _make_entry()
+        await _setup_entry(hass, entry)
+
+        await hass.services.async_call(
+            "button",
+            "press",
+            {"entity_id": "button.task_tracker_water_plants_mark_as_done"},
+            blocking=True,
+        )
+        await hass.async_block_till_done()
+
+        state = hass.states.get("sensor.task_tracker_water_plants_times_completed")
+        assert state.state == "1"
 
 
 # ---------------------------------------------------------------------------

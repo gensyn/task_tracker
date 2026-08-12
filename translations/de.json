@@ -368,6 +368,9 @@
   },
   "entity": {
     "sensor": {
+      "times_completed": {
+        "name": "Anzahl Abschlüsse"
+      },
       "status": {
         "state": {
           "done": "Erledigt",
@@ -440,6 +443,9 @@
       },
       "overdue_by": {
         "name": "Überfällig&nbsp;seit"
+      },
+      "times_completed": {
+        "name": "Anzahl Abschlüsse"
       },
       "mark_as_done": {
         "name": "Als erledigt markieren"

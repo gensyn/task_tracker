@@ -371,6 +371,9 @@
   },
   "entity": {
     "sensor": {
+      "times_completed": {
+        "name": "Nombre d'accomplissements"
+      },
       "status": {
         "state": {
           "done": "Fait",
@@ -443,6 +446,9 @@
       },
       "overdue_by": {
         "name": "En&nbsp;retard&nbsp;de"
+      },
+      "times_completed": {
+        "name": "Nombre d'accomplissements"
       },
       "mark_as_done": {
         "name": "Marquer comme fait"

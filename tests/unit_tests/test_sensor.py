@@ -11,7 +11,7 @@ absolute_plugin_path = str(Path(__file__).parent.parent.parent.parent.absolute()
 sys.path.insert(0, absolute_plugin_path)
 
 from task_tracker.coordinator import TaskTrackerCoordinator
-from task_tracker.sensor import TaskTrackerSensor
+from task_tracker.sensor import TaskTrackerSensor, TaskTrackerTimesCompletedSensor
 from task_tracker.const import (
     CONF_DAY, CONF_WEEK, CONF_MONTH, CONF_YEAR,
     CONST_DUE, CONST_DUE_SOON, CONST_DONE, CONST_INACTIVE,
@@ -233,6 +233,30 @@ class TestTaskTrackerSensorUpdate(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(mock_sync.call_count, 2)
         mock_sync.assert_any_call("todo.list1")
         mock_sync.assert_any_call("todo.list2")
+
+
+class TestTaskTrackerTimesCompletedSensor(unittest.IsolatedAsyncioTestCase):
+
+    def test_uses_translation_key_for_name(self):
+        sensor = TaskTrackerTimesCompletedSensor(make_sensor().coordinator, "My Task", "abc123", MagicMock())
+        self.assertIsNone(sensor._attr_name)
+        self.assertEqual(sensor._attr_translation_key, "times_completed")
+
+    def test_entity_id_uses_times_completed_suffix(self):
+        sensor = TaskTrackerTimesCompletedSensor(make_sensor().coordinator, "My Task", "abc123", MagicMock())
+        self.assertIn("times_completed", sensor.entity_id)
+
+    async def test_async_added_to_hass_writes_restored_state(self):
+        sensor = TaskTrackerTimesCompletedSensor(make_sensor().coordinator, "My Task", "abc123", MagicMock())
+        sensor.async_on_remove = MagicMock()
+        restored_state = MagicMock(native_value="3")
+
+        with patch.object(sensor, "async_get_last_sensor_data", new_callable=AsyncMock, return_value=restored_state):
+            with patch.object(sensor, "async_write_ha_state") as mock_write_ha_state:
+                await sensor.async_added_to_hass()
+
+        self.assertEqual(sensor._attr_native_value, 3)
+        mock_write_ha_state.assert_called_once()
 
 
 class TestTaskTrackerSensorFilterStateChanges(unittest.TestCase):

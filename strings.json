@@ -372,6 +372,9 @@
   },
   "entity": {
     "sensor": {
+      "times_completed": {
+        "name": "Times completed"
+      },
       "status": {
         "state": {
           "done": "Done",
@@ -444,6 +447,9 @@
       },
       "overdue_by": {
         "name": "Overdue&nbsp;by"
+      },
+      "times_completed": {
+        "name": "Times completed"
       },
       "mark_as_done": {
         "name": "Mark as done"

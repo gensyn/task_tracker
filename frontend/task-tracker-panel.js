@@ -8,9 +8,10 @@ class TaskTrackerPanel extends HTMLElement {
     this._sortBy = "name";
     this._sortDir = "asc";
     this._narrow = false;
-    this._showArea   = localStorage.getItem("tt_panel_show_area")   === "1";
-    this._showTags   = localStorage.getItem("tt_panel_show_tags")   === "1";
-    this._showLabels = localStorage.getItem("tt_panel_show_labels") === "1";
+    this._showArea           = localStorage.getItem("tt_panel_show_area")            === "1";
+    this._showTags           = localStorage.getItem("tt_panel_show_tags")            === "1";
+    this._showLabels         = localStorage.getItem("tt_panel_show_labels")          === "1";
+    this._showTimesCompleted = localStorage.getItem("tt_panel_show_times_completed") === "1";
     // Pre-render sort controls immediately so they are present in the
     // shadow DOM as soon as the element is created, even before HA calls
     // set hass().  Full render (with live task data) happens once hass
@@ -45,8 +46,13 @@ class TaskTrackerPanel extends HTMLElement {
     }
   }
 
+  _isStatusSensor(entityId) {
+    return entityId.startsWith("sensor.task_tracker_") &&
+           !entityId.endsWith("_times_completed");
+  }
+
   _tasksChanged(oldStates, newStates) {
-    const isTask = (id) => id.startsWith("sensor.task_tracker_");
+    const isTask = (id) => this._isStatusSensor(id);
     const oldTaskIds = Object.keys(oldStates).filter(isTask);
     const newTaskIds = Object.keys(newStates).filter(isTask);
     if (oldTaskIds.length !== newTaskIds.length) return true;
@@ -93,7 +99,7 @@ class TaskTrackerPanel extends HTMLElement {
 
   _getAllTasks() {
     return Object.values(this._hass.states)
-      .filter((entity) => entity.entity_id.startsWith("sensor.task_tracker_"))
+      .filter((entity) => this._isStatusSensor(entity.entity_id))
       .sort((a, b) => {
         let cmp = 0;
         if (this._sortBy === "due_date") {
@@ -155,6 +161,9 @@ class TaskTrackerPanel extends HTMLElement {
     } else if (key === "labels") {
       this._showLabels = !this._showLabels;
       localStorage.setItem("tt_panel_show_labels", this._showLabels ? "1" : "0");
+    } else if (key === "times_completed") {
+      this._showTimesCompleted = !this._showTimesCompleted;
+      localStorage.setItem("tt_panel_show_times_completed", this._showTimesCompleted ? "1" : "0");
     }
     this._render();
   }
@@ -190,6 +199,24 @@ class TaskTrackerPanel extends HTMLElement {
     if (!n || n <= 1) return "";
     const sp = n === 1 ? "singular" : "plural";
     return `,\u00a0${this._t("every")}\u00a0${n}\u00a0${this._t(`month_${sp}`)}`;
+  }
+
+  _todayInHassTimeZone() {
+    const now = new Date();
+    const timeZone = this._hass && this._hass.config && this._hass.config.time_zone;
+    try {
+      const parts = new Intl.DateTimeFormat("en-CA", {
+        timeZone: timeZone || undefined,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).formatToParts(now);
+      const year = parts.find((p) => p.type === "year")?.value;
+      const month = parts.find((p) => p.type === "month")?.value;
+      const day = parts.find((p) => p.type === "day")?.value;
+      if (year && month && day) return `${year}-${month}-${day}`;
+    } catch (_err) {}
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
   }
 
   _scheduleStr(attrs) {
@@ -251,8 +278,11 @@ class TaskTrackerPanel extends HTMLElement {
       dueValue = `${attrs.overdue_by}\u00a0${this._t(`day_${sp}`)}`;
     }
 
-    // "Mark as done" is a no-op for repeat_every tasks that are already done.
-    const showMarkDone = !(attrs.repeat_mode === "repeat_every" && state === "done");
+    const todayStr = this._todayInHassTimeZone();
+    const completedTodayRepeatAfter = attrs.repeat_mode === "repeat_after" && attrs.last_done === todayStr;
+    // "Mark as done" is a no-op for repeat_every tasks that are already done,
+    // and for repeat_after tasks that were already completed today.
+    const showMarkDone = !(attrs.repeat_mode === "repeat_every" && state === "done") && !completedTodayRepeatAfter;
 
     // --- optional area / tags / labels ---
     const entityEntry = this._hass.entities && this._hass.entities[entity.entity_id];
@@ -270,6 +300,13 @@ class TaskTrackerPanel extends HTMLElement {
     }
 
     const tagsArr = this._showTags ? (attrs.tags || []) : [];
+
+    let timesCompletedValue = null;
+    if (this._showTimesCompleted) {
+      const tcEntityId = entity.entity_id + "_times_completed";
+      const tcState = this._hass.states[tcEntityId];
+      timesCompletedValue = tcState ? tcState.state : null;
+    }
 
     let labelItems = [];
     if (this._showLabels) {
@@ -297,6 +334,7 @@ class TaskTrackerPanel extends HTMLElement {
             ${areaName ? `<tr><td>${this._t("area")}</td><td>${this._esc(areaName)}</td></tr>` : ""}
             ${tagsArr.length ? `<tr><td>${this._t("tags")}</td><td class="chips-cell">${tagsArr.map((t) => `<span class="tag-chip">${this._esc(t)}</span>`).join(" ")}</td></tr>` : ""}
             ${labelItems.length ? `<tr><td>${this._t("labels")}</td><td class="chips-cell">${labelItems.map((l) => `<span class="label-chip" style="background:${this._safeColor(l.color, "#616161")}">${this._esc(l.name)}</span>`).join(" ")}</td></tr>` : ""}
+            ${timesCompletedValue !== null ? `<tr><td>${this._t("times_completed") || "Times completed"}</td><td>${this._esc(timesCompletedValue)}</td></tr>` : ""}
           </table>
           ${showMarkDone ? `
           <div class="action-buttons">
@@ -633,6 +671,9 @@ class TaskTrackerPanel extends HTMLElement {
           </button>
           <button class="show-toggle-btn${this._showLabels ? " active" : ""}" data-show="labels">
             ${this._t("labels") || "Labels"}
+          </button>
+          <button class="show-toggle-btn${this._showTimesCompleted ? " active" : ""}" data-show="times_completed">
+            ${this._t("times_completed") || "Times completed"}
           </button>
         </div>
         <div class="name-filter-wrap">
