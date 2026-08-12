@@ -1,4 +1,5 @@
 """Options flow for the Task Tracker integration."""
+import re
 from typing import Any
 
 import voluptuous as vol
@@ -110,7 +111,7 @@ _REPEAT_EVERY_HEAD_OPTIONS: dict = {
 
 _REPEAT_EVERY_TAIL_OPTIONS: dict = {
     vol.Optional(CONF_ICON, default="mdi:calendar-question"): str,
-    vol.Optional(CONF_TAGS): str,
+    vol.Optional(CONF_TAGS): selector({"select": {"multiple": True, "custom_value": True, "options": []}}),
     vol.Optional(CONF_TODO_LISTS): selector({
         "entity": {
             "domain": "todo",
@@ -602,7 +603,9 @@ async def validate_options(user_input: dict[str, Any]) -> dict[str, Any]:
         user_input[CONF_ICON] = f"mdi:{user_input[CONF_ICON]}"
 
     if not user_input.get(CONF_TAGS):
-        user_input[CONF_TAGS] = ""
+        user_input[CONF_TAGS] = []
+    elif isinstance(user_input[CONF_TAGS], str):
+        user_input[CONF_TAGS] = [t.strip() for t in re.split(r'[;, ]+', user_input[CONF_TAGS]) if t.strip()]
 
     if user_input.get(CONF_TODO_LISTS) is None:
         user_input[CONF_TODO_LISTS] = []

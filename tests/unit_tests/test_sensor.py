@@ -29,7 +29,7 @@ def make_sensor(
     notification_interval=1,
     todo_lists=None,
     due_soon_days=0,
-    tags="",
+    tags=[],
     active=True,
     icon="mdi:calendar",
     entry_id="abc123",
@@ -104,13 +104,19 @@ class TestTaskTrackerSensorInit(unittest.TestCase):
         self.assertEqual(sensor.coordinator.last_done, date(1970, 1, 1))
 
     def test_init_splits_tags(self):
+        sensor = make_sensor(tags=["tag1", "tag2", "tag3"])
+        self.assertIn("tag1", sensor.tags)
+        self.assertIn("tag2", sensor.tags)
+        self.assertIn("tag3", sensor.tags)
+
+    def test_init_legacy_string_tags(self):
         sensor = make_sensor(tags="tag1, tag2; tag3")
         self.assertIn("tag1", sensor.tags)
         self.assertIn("tag2", sensor.tags)
         self.assertIn("tag3", sensor.tags)
 
     def test_init_empty_tags(self):
-        sensor = make_sensor(tags="")
+        sensor = make_sensor(tags=[])
         self.assertEqual(sensor.tags, [])
 
     def test_init_entity_id_generated(self):

@@ -367,6 +367,65 @@ class TestAsyncMigrateEntry(unittest.IsolatedAsyncioTestCase):
         new_options = call_kwargs["options"]
         self.assertEqual(new_options[CONF_DEPENDENCIES], [])
 
+    async def test_migrates_version_1_8_to_1_9_converts_tags_to_list(self):
+        """1.8→1.9 should convert CONF_TAGS from a comma-separated string to a list."""
+        from task_tracker.const import CONF_DEPENDENCIES
+        entry = ConfigEntry(
+            entry_id="test",
+            version=1,
+            minor_version=8,
+            options={
+                CONF_ACTIVE: True,
+                CONF_TASK_INTERVAL_VALUE: 7,
+                CONF_TASK_INTERVAL_TYPE: CONF_DAY,
+                CONF_DUE_SOON_DAYS: 0,
+                CONF_TODO_LISTS: [],
+                CONF_NOTIFICATION_INTERVAL: 1,
+                CONF_REPEAT_MODE: CONF_REPEAT_AFTER,
+                CONF_TAGS: "garden,outdoor,weekly",
+                CONF_DEPENDENCIES: [],
+            },
+        )
+
+        mock_hass = MagicMock()
+        result = await async_migrate_entry(mock_hass, entry)
+
+        self.assertTrue(result)
+        mock_hass.config_entries.async_update_entry.assert_called_once()
+        call_kwargs = mock_hass.config_entries.async_update_entry.call_args[1]
+        self.assertEqual(call_kwargs["version"], 1)
+        self.assertEqual(call_kwargs["minor_version"], 9)
+        new_options = call_kwargs["options"]
+        self.assertEqual(new_options[CONF_TAGS], ["garden", "outdoor", "weekly"])
+
+    async def test_migrates_version_1_8_to_1_9_empty_tags_become_empty_list(self):
+        """1.8→1.9 should convert an empty CONF_TAGS string to an empty list."""
+        from task_tracker.const import CONF_DEPENDENCIES
+        entry = ConfigEntry(
+            entry_id="test",
+            version=1,
+            minor_version=8,
+            options={
+                CONF_ACTIVE: True,
+                CONF_TASK_INTERVAL_VALUE: 7,
+                CONF_TASK_INTERVAL_TYPE: CONF_DAY,
+                CONF_DUE_SOON_DAYS: 0,
+                CONF_TODO_LISTS: [],
+                CONF_NOTIFICATION_INTERVAL: 1,
+                CONF_REPEAT_MODE: CONF_REPEAT_AFTER,
+                CONF_TAGS: "",
+                CONF_DEPENDENCIES: [],
+            },
+        )
+
+        mock_hass = MagicMock()
+        result = await async_migrate_entry(mock_hass, entry)
+
+        self.assertTrue(result)
+        call_kwargs = mock_hass.config_entries.async_update_entry.call_args[1]
+        new_options = call_kwargs["options"]
+        self.assertEqual(new_options[CONF_TAGS], [])
+
     async def test_returns_false_for_future_major_version(self):
         entry = ConfigEntry(version=2, minor_version=1)
         mock_hass = MagicMock()
@@ -374,7 +433,7 @@ class TestAsyncMigrateEntry(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(result)
 
     async def test_returns_false_for_future_minor_version(self):
-        entry = ConfigEntry(version=1, minor_version=9)
+        entry = ConfigEntry(version=1, minor_version=10)
         mock_hass = MagicMock()
         result = await async_migrate_entry(mock_hass, entry)
         self.assertFalse(result)

@@ -62,7 +62,7 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
 
     def __init__(self, coordinator: TaskTrackerCoordinator, entry_name: str,
                  task_interval_value: int, task_interval_type: str,
-                 notification_interval: int, todo_lists: list[str], due_soon_days: int, tags: str, active: bool,
+                 notification_interval: int, todo_lists: list[str], due_soon_days: int, tags: list[str] | str, active: bool,
                  icon: str, entry_id: str, hass: HomeAssistant,
                  active_override: str | None = None,
                  task_interval_override: str | None = None,
@@ -77,8 +77,11 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
         self.due_soon_days: int = due_soon_days
         self.entry_id = entry_id
         self.entry_name = entry_name
-        tags_list = re.split(r'[;, ]+', tags)
-        self.tags: list[str] = [tag.strip() for tag in tags_list if tag]
+        if isinstance(tags, list):
+            self.tags: list[str] = [tag.strip() for tag in tags if tag]
+        else:
+            tags_list = re.split(r'[;, ]+', tags)
+            self.tags = [tag.strip() for tag in tags_list if tag]
         self.active: bool = active
         self.icon: str = icon
         self.due_date: date = date(1970, 1, 1)
