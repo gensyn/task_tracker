@@ -13,7 +13,6 @@ blueprint:
     notification_time:
       name: Notification time
       description: Time of day to check for due tasks and send notifications.
-      default: "08:00:00"
       selector:
         time: {}
     notify_action:
@@ -24,7 +23,7 @@ blueprint:
     tags:
       name: Tags
       description: The tags that must be present in a task's tags attribute for the notification to be sent.
-      default: tag
+      default: []
       selector:
         text:
           multiple: true
