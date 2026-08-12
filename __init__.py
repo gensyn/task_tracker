@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import pathlib
+import re
 
 import voluptuous as vol
 from homeassistant.components import blueprint
@@ -177,7 +178,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Migrate old config entry."""
 
-    if entry.version > 1 or entry.minor_version > 8:
+    if entry.version > 1 or entry.minor_version > 9:
         # This means the user has downgraded from a later version
         return False
 
@@ -282,6 +283,20 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             options=new_options,
             version=1,
             minor_version=8,
+        )
+
+    if entry.version == 1 and entry.minor_version == 8:
+        # 1.8 → 1.9: Convert CONF_TAGS from comma-separated string to list.
+        new_options = dict(entry.options)
+        raw_tags = new_options.get(CONF_TAGS, "")
+        if isinstance(raw_tags, str):
+            new_options[CONF_TAGS] = [t.strip() for t in re.split(r'[;, ]+', raw_tags) if t.strip()]
+
+        hass.config_entries.async_update_entry(
+            entry,
+            options=new_options,
+            version=1,
+            minor_version=9,
         )
 
     return True

@@ -115,7 +115,7 @@ class TaskTrackerConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Task Tracker."""
 
     VERSION = 1
-    MINOR_VERSION = 8
+    MINOR_VERSION = 9
 
     def __init__(self) -> None:
         """Initialise; accumulate user input across steps."""

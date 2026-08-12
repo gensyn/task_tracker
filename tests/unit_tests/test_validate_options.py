@@ -84,11 +84,15 @@ class TestValidateOptionsRepeatAfter(unittest.IsolatedAsyncioTestCase):
 
     async def test_tags_defaults_to_empty_string(self):
         result = await validate_options({**_BASE_REPEAT_AFTER})
-        self.assertEqual(result[CONF_TAGS], "")
+        self.assertEqual(result[CONF_TAGS], [])
 
     async def test_tags_preserved(self):
+        result = await validate_options({**_BASE_REPEAT_AFTER, CONF_TAGS: ["tag1", "tag2"]})
+        self.assertEqual(result[CONF_TAGS], ["tag1", "tag2"])
+
+    async def test_tags_string_converted_to_list(self):
         result = await validate_options({**_BASE_REPEAT_AFTER, CONF_TAGS: "tag1,tag2"})
-        self.assertEqual(result[CONF_TAGS], "tag1,tag2")
+        self.assertEqual(result[CONF_TAGS], ["tag1", "tag2"])
 
     async def test_todo_lists_defaults_to_empty_list(self):
         result = await validate_options({**_BASE_REPEAT_AFTER})
@@ -124,7 +128,7 @@ class TestValidateOptionsRepeatAfter(unittest.IsolatedAsyncioTestCase):
             CONF_TASK_INTERVAL_VALUE: 14,
             CONF_TASK_INTERVAL_TYPE: "week",
             CONF_ICON: "mdi:clock",
-            CONF_TAGS: "tag1, tag2",
+            CONF_TAGS: ["tag1", "tag2"],
             CONF_TODO_LISTS: ["todo.list1"],
             CONF_DUE_SOON_DAYS: 3,
             CONF_NOTIFICATION_INTERVAL: 2,
@@ -133,7 +137,7 @@ class TestValidateOptionsRepeatAfter(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result[CONF_TASK_INTERVAL_VALUE], 14)
         self.assertEqual(result[CONF_TASK_INTERVAL_TYPE], "week")
         self.assertEqual(result[CONF_ICON], "mdi:clock")
-        self.assertEqual(result[CONF_TAGS], "tag1, tag2")
+        self.assertEqual(result[CONF_TAGS], ["tag1", "tag2"])
         self.assertEqual(result[CONF_TODO_LISTS], ["todo.list1"])
         self.assertEqual(result[CONF_DUE_SOON_DAYS], 3)
         self.assertEqual(result[CONF_NOTIFICATION_INTERVAL], 2)

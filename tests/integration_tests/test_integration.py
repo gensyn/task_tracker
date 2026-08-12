@@ -59,7 +59,7 @@ def _make_entry(
     notification_interval: int = 2,
     todo_lists: list | None = None,
     due_soon_days: int = 0,
-    tags: str = "",
+    tags: list | str | None = None,
     active: bool = True,
     icon: str = "mdi:water",
     active_override: str | None = None,
@@ -75,7 +75,7 @@ def _make_entry(
         CONF_NOTIFICATION_INTERVAL: notification_interval,
         CONF_TODO_LISTS: todo_lists if todo_lists is not None else [],
         CONF_DUE_SOON_DAYS: due_soon_days,
-        CONF_TAGS: tags,
+        CONF_TAGS: tags if tags is not None else [],
         CONF_ICON: icon,
         CONF_DEPENDENCIES: dependencies if dependencies is not None else [],
     }
@@ -522,36 +522,29 @@ class TestTaskIntervalTypes:
 
 
 class TestTagsOption:
-    """Tags string is parsed into a list and exposed in sensor attributes."""
+    """Tags list is exposed in sensor attributes."""
 
-    async def test_comma_separated_tags(self, hass: HomeAssistant) -> None:
-        entry = _make_entry(tags="garden,outdoor,weekly")
+    async def test_list_tags(self, hass: HomeAssistant) -> None:
+        entry = _make_entry(tags=["garden", "outdoor", "weekly"])
         await _setup_entry(hass, entry)
 
         state = hass.states.get("sensor.task_tracker_water_plants")
         assert state.attributes["tags"] == ["garden", "outdoor", "weekly"]
 
-    async def test_semicolon_separated_tags(self, hass: HomeAssistant) -> None:
-        entry = _make_entry(tags="garden;outdoor")
-        await _setup_entry(hass, entry)
-
-        state = hass.states.get("sensor.task_tracker_water_plants")
-        assert state.attributes["tags"] == ["garden", "outdoor"]
-
-    async def test_space_separated_tags(self, hass: HomeAssistant) -> None:
-        entry = _make_entry(tags="garden outdoor")
-        await _setup_entry(hass, entry)
-
-        state = hass.states.get("sensor.task_tracker_water_plants")
-        assert state.attributes["tags"] == ["garden", "outdoor"]
-
     async def test_empty_tags_produces_empty_list(self, hass: HomeAssistant) -> None:
-        entry = _make_entry(tags="")
+        entry = _make_entry(tags=[])
         await _setup_entry(hass, entry)
 
         state = hass.states.get("sensor.task_tracker_water_plants")
         assert state.attributes["tags"] == []
 
+    async def test_migration_converts_comma_separated_string_tags(self, hass: HomeAssistant) -> None:
+        """Entries with legacy string tags are converted to a list by migration (1.8 → 1.9)."""
+        entry = _make_entry(tags="garden,outdoor")
+        await _setup_entry(hass, entry)
+
+        state = hass.states.get("sensor.task_tracker_water_plants")
+        assert state.attributes["tags"] == ["garden", "outdoor"]
 
 # ---------------------------------------------------------------------------
 # Icon option
