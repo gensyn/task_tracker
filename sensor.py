@@ -448,7 +448,6 @@ class TaskTrackerTimesCompletedSensor(RestoreSensor, SensorEntity):
 
     _attr_has_entity_name = True
     _attr_should_poll = False
-    _attr_name = None
     _attr_translation_key = "times_completed"
     _attr_state_class = SensorStateClass.TOTAL_INCREASING
 

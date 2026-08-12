@@ -136,6 +136,10 @@ class TaskTrackerCoordinator:
             else:
                 self.last_done = self._find_most_recent_occurrence(today)
         else:
+            if self.last_done == today:
+                # Already marked done today; nothing changed, so skip
+                # incrementing the counter and notifying listeners.
+                return
             self.last_done = today
         self.times_completed += 1
         self._async_notify_listeners()
