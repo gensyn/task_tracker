@@ -6,7 +6,7 @@
     "@gensyn"
   ],
   "config_flow": true,
-  "dependencies": [],
+  "dependencies": ["blueprint"],
   "documentation": "https://github.com/gensyn/task_tracker",
   "homekit": {},
   "iot_class": "calculated",

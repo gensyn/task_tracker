@@ -119,14 +119,14 @@ Access task settings through the cog icon ⚙️ on the integration page.
 | Option                    | Description                                                                                                     |
 |---------------------------|-----------------------------------------------------------------------------------------------------------------|
 | **Active**                | Pause tasks when disabled (sensor shows `inactive` state)                                                       |
-| **Active Override**       | Select an `input_boolean` helper to override the Active setting at runtime                                      |
+| **Active Override**       | Select an `input_boolean` or `binary_sensor` helper to override the Active setting at runtime                   |
 | **Icon**                  | Choose an icon for the sensor (available as attribute for notifications)                                        |
 | **Tags**                  | Add keywords for filtering in automations/templates (e.g., assignees, notification times)                       |
 | **Todo Lists**            | Select Todo lists for automatic task addition when due or due soon                                              |
 | **Due Soon**              | Number of days before due date when the sensor switches to `due_soon` state and the task is added to todo lists |
 | **Due Soon Override**     | Select an `input_number` helper (value in days) to override the Due Soon threshold at runtime                   |
 | **Notification Interval** | Reference value for automation/template notification timing                                                     |
-| **Dependencies**          | Select other Task Tracker sensors this task depends on                                                        |
+| **Dependencies**          | Select other Task Tracker sensors this task depends on                                                          |
 
 **Options specific to *Repeat after completion*:**
 
