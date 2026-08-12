@@ -447,6 +447,9 @@
       "overdue_by": {
         "name": "En&nbsp;retard&nbsp;de"
       },
+      "times_completed": {
+        "name": "Nombre de fois terminé"
+      },
       "mark_as_done": {
         "name": "Marquer comme fait"
       },

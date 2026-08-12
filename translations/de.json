@@ -444,6 +444,9 @@
       "overdue_by": {
         "name": "Überfällig&nbsp;seit"
       },
+      "times_completed": {
+        "name": "Anzahl Erledigungen"
+      },
       "mark_as_done": {
         "name": "Als erledigt markieren"
       },

@@ -149,8 +149,12 @@ class TaskTracker extends HTMLElement {
       dueValue = `${attrs.overdue_by}\u00a0${this._t(`day_${sp}`)}`;
     }
 
-    // "Mark as done" is a no-op for repeat_every tasks that are already done.
-    const showMarkDone = !(attrs.repeat_mode === "repeat_every" && stateStr === "done");
+    const now = new Date();
+    const todayStr = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+    const completedTodayRepeatAfter = attrs.repeat_mode === "repeat_after" && attrs.last_done === todayStr;
+    // "Mark as done" is a no-op for repeat_every tasks that are already done,
+    // and for repeat_after tasks that were already completed today.
+    const showMarkDone = !(attrs.repeat_mode === "repeat_every" && stateStr === "done") && !completedTodayRepeatAfter;
 
     // --- optional area / tags / labels ---
     const entityEntry = this._entityEntry;
