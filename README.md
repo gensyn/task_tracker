@@ -76,14 +76,14 @@ Task Tracker supports two repeat modes, selected during task creation.
 
 ### Repeat after completion
 
-The next due date is calculated **relative to when the task was last completed**. For example, if a task has a 7-day interval and you complete it on a Wednesday, the next due date will be the following Wednesday — regardless of the original schedule.
+The next due date is calculated **relative to when the task was last completed**. For example, if a task has a 7-day interval, and you complete it on a Wednesday, the next due date will be the following Wednesday — regardless of the original schedule.
 
 **Schedule configuration:** Choose a numeric interval and a unit (Day / Week / Month / Year).
 
-| Field | Description |
-|-------|-------------|
-| **Task Interval** | How many units between completions |
-| **Task Interval Unit** | Day, Week, Month, or Year |
+| Field                  | Description                        |
+|------------------------|------------------------------------|
+| **Task Interval**      | How many units between completions |
+| **Task Interval Unit** | Day, Week, Month, or Year          |
 
 ### Repeat every (fixed schedule)
 
@@ -91,14 +91,14 @@ The task repeats on a **fixed calendar schedule**, independent of when it was co
 
 **Schedule types:**
 
-| Schedule Type | Description | Example |
-|---------------|-------------|---------|
-| **Every Nth weekday** | Every *N* weeks on a chosen day of the week | Every week on Monday; Every 2 weeks on Friday |
-| **Every Nth day of the month** | A fixed day number every *N* months | Every 15th of the month; Every 15th every 3 months (quarterly) |
-| **Every Nth weekday of the month** | A specific occurrence of a weekday every *N* months | Every 2nd Tuesday; Every last Friday every 6 months |
-| **N days before month end** | A fixed number of days before the last day of the month, every *N* months | 3 days before month end; 0 days before month end every 12 months (last day of month, annually) |
+| Schedule Type                      | Description                                                               | Example                                                                                        |
+|------------------------------------|---------------------------------------------------------------------------|------------------------------------------------------------------------------------------------|
+| **Every Nth weekday**              | Every *N* weeks on a chosen day of the week                               | Every week on Monday; Every 2 weeks on Friday                                                  |
+| **Every Nth day of the month**     | A fixed day number every *N* months                                       | Every 15th of the month; Every 15th every 3 months (quarterly)                                 |
+| **Every Nth weekday of the month** | A specific occurrence of a weekday every *N* months                       | Every 2nd Tuesday; Every last Friday every 6 months                                            |
+| **N days before month end**        | A fixed number of days before the last day of the month, every *N* months | 3 days before month end; 0 days before month end every 12 months (last day of month, annually) |
 
-#### Mark as done behaviour for fixed schedules
+#### Mark as done behavior for fixed schedules
 
 - When a task is **due** (or overdue): marking it done records the most recent past occurrence as the completion date.
 - When a task is **due soon**: marking it done records the next upcoming occurrence, so no occurrence is accidentally skipped.
@@ -144,25 +144,25 @@ Access task settings through the cog icon ⚙️ on the integration page.
 
 **Options specific to *Repeat Every Nth Day of the Month*:**
 
-| Option               | Description                                               |
-|----------------------|-----------------------------------------------------------|
-| **Day Of Month**     | Modify the day number                                     |
-| **Every (months)**   | Modify the month interval (1 = every month, 3 = quarterly, 12 = annually) |
+| Option             | Description                                                               |
+|--------------------|---------------------------------------------------------------------------|
+| **Day Of Month**   | Modify the day number                                                     |
+| **Every (months)** | Modify the month interval (1 = every month, 3 = quarterly, 12 = annually) |
 
 **Options specific to *Repeat Every Nth weekday of the month*:**
 
-| Option             | Description                                                   |
-|--------------------|---------------------------------------------------------------|
-| **Weekday**        | Modify the weekday                                            |
-| **Occurrence**     | Modify the occurrence of the weekday                          |
+| Option             | Description                                                               |
+|--------------------|---------------------------------------------------------------------------|
+| **Weekday**        | Modify the weekday                                                        |
+| **Occurrence**     | Modify the occurrence of the weekday                                      |
 | **Every (months)** | Modify the month interval (1 = every month, 3 = quarterly, 12 = annually) |
 
 **Options specific to *Repeat Every N Days Before the End of the Month*:**
 
-| Option                    | Description                                                                 |
-|---------------------------|-----------------------------------------------------------------------------|
-| **Days Before Month end** | Modify the number of days before the month's end                            |
-| **Every (months)**        | Modify the month interval (1 = every month, 3 = quarterly, 12 = annually)  |
+| Option                    | Description                                                               |
+|---------------------------|---------------------------------------------------------------------------|
+| **Days Before Month end** | Modify the number of days before the month's end                          |
+| **Every (months)**        | Modify the month interval (1 = every month, 3 = quarterly, 12 = annually) |
 
 #### Due dependencies
 
@@ -175,7 +175,7 @@ Use **Dependencies** to make a task wait on other Task Tracker tasks:
 
 > **Note:** Tags and notification intervals require you to implement filtering logic in your own automations.
 >
-> **Override fields:** When an override helper is selected, its current value takes precedence over the configured option. If the helper is `unavailable` or `unknown`, the configured value is used as a fallback. Override values react to helper state changes in real time, allowing non-admin users to adjust task behaviour through dashboard tiles or scripts without needing access to integration settings.
+> **Override fields:** When an override helper is selected, its current value takes precedence over the configured option. If the helper is `unavailable` or `unknown`, the configured value is used as a fallback. Override values react to helper state changes in real time, allowing non-admin users to adjust task behavior through dashboard tiles or scripts without needing access to integration settings.
 
 ---
 
@@ -195,14 +195,15 @@ The card shows the schedule in a human-readable form that reflects the repeat mo
 
 #### Optional display fields
 
-By default the card shows only the core task data (schedule, last done, due date, days until/overdue).
+By default, the card shows only the core task data (schedule, last done, due date, days until/overdue).
 You can opt in to additional fields with the following config options (all default to `false`):
 
-| Option         | Description                                          |
-|----------------|------------------------------------------------------|
-| `show_area`    | Show the HA area the task device/entity belongs to   |
-| `show_tags`    | Show the tags configured for the task                |
-| `show_labels`  | Show the HA labels assigned to the task entity       |
+| Option                 | Description                                          |
+|------------------------|------------------------------------------------------|
+| `show_area`            | Show the HA area the task device/entity belongs to   |
+| `show_tags`            | Show the tags configured for the task                |
+| `show_labels`          | Show the HA labels assigned to the task entity       |
+| `show_times_completed` | Show the number of times the task has been completed |
 
 Example:
 
@@ -212,6 +213,7 @@ entity: sensor.task_tracker_mow_the_lawn
 show_area: true
 show_tags: true
 show_labels: true
+show_times_completed: true
 ```
 
 #### Card States
@@ -237,17 +239,17 @@ A **Task Tracker** entry is automatically added to your Home Assistant sidebar w
 
 The panel shows all tasks in one place with live state filtering:
 
-| Filter | Shows |
-|--------|-------|
-| **All** | Every task |
-| **Due** | Tasks that are due or overdue |
+| Filter       | Shows                                                           |
+|--------------|-----------------------------------------------------------------|
+| **All**      | Every task                                                      |
+| **Due**      | Tasks that are due or overdue                                   |
 | **Due soon** | Tasks that will be due within the configured Due Soon threshold |
-| **Done** | Tasks completed within their current interval |
-| **Inactive** | Tasks with the *Active* option turned off |
+| **Done**     | Tasks completed within their current interval                   |
+| **Inactive** | Tasks with the *Active* option turned off                       |
 
 Each task card displays the same information as the Lovelace card (status, schedule, last done date, due date, days until due / overdue by) and includes a ✓ button to mark the task as done immediately.
 
-Use the **Show** toggle buttons in the panel toolbar to optionally display each task's **Area**, **Tags**, and **Labels** alongside the core information.
+Use the **Show** toggle buttons in the panel toolbar to optionally display each task's **Area**, **Tags**, **Labels** and **Times Completed** alongside the core information.
 
 #### Disabling the sidebar panel
 
@@ -268,7 +270,7 @@ Task Tracker seamlessly integrates with Home Assistant's Local Todo lists:
 
 - **Auto-Add**:  Tasks appear `n` days before due (based on the Due Soon setting)
 - **Auto-Remove**: Completed tasks are removed from todo lists
-- **Bi-directional Sync**:  Completing a todo item marks the task done after 5 seconds (grace period for accidental clicks)
+- **Bidirectional Sync**:  Completing a todo item marks the task done after 5 seconds (grace period for accidental clicks)
 - **Smart Filtering**:  Inactive tasks won't be added to todo lists
 
 ---
@@ -315,6 +317,10 @@ data:
 > **Note:** After setting the last done date, the task's next due date will be automatically recalculated based on your configured interval.
 
 ---
+
+### 🗺️ Blueprint for automations
+
+A blueprint is automatically registered for Task Tracker. Just create a new automation and select the **Task Tracker** blueprint to get started.
 
 ### 🤖 Example Automation
 
