@@ -59,7 +59,7 @@ def _make_entry(
     notification_interval: int = 2,
     todo_lists: list | None = None,
     due_soon_days: int = 0,
-    tags: list | None = None,
+    tags: list | str | None = None,
     active: bool = True,
     icon: str = "mdi:water",
     active_override: str | None = None,
@@ -540,12 +540,11 @@ class TestTagsOption:
 
     async def test_legacy_comma_separated_string_still_works(self, hass: HomeAssistant) -> None:
         """Entries not yet migrated (string tags) are handled gracefully."""
-        entry = _make_entry(tags=["garden", "outdoor"])
+        entry = _make_entry(tags="garden,outdoor")
         await _setup_entry(hass, entry)
 
         state = hass.states.get("sensor.task_tracker_water_plants")
         assert state.attributes["tags"] == ["garden", "outdoor"]
-
 
 # ---------------------------------------------------------------------------
 # Icon option

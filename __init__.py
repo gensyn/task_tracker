@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import pathlib
+import re
 
 import voluptuous as vol
 from homeassistant.components import blueprint
@@ -286,11 +287,10 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     if entry.version == 1 and entry.minor_version == 8:
         # 1.8 → 1.9: Convert CONF_TAGS from comma-separated string to list.
-        import re as _re
         new_options = dict(entry.options)
         raw_tags = new_options.get(CONF_TAGS, "")
         if isinstance(raw_tags, str):
-            new_options[CONF_TAGS] = [t.strip() for t in _re.split(r'[;, ]+', raw_tags) if t.strip()]
+            new_options[CONF_TAGS] = [t.strip() for t in re.split(r'[;, ]+', raw_tags) if t.strip()]
 
         hass.config_entries.async_update_entry(
             entry,
