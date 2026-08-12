@@ -201,6 +201,24 @@ class TaskTrackerPanel extends HTMLElement {
     return `,\u00a0${this._t("every")}\u00a0${n}\u00a0${this._t(`month_${sp}`)}`;
   }
 
+  _todayInHassTimeZone() {
+    const now = new Date();
+    const timeZone = this._hass && this._hass.config && this._hass.config.time_zone;
+    try {
+      const parts = new Intl.DateTimeFormat("en-CA", {
+        timeZone: timeZone || undefined,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).formatToParts(now);
+      const year = parts.find((p) => p.type === "year")?.value;
+      const month = parts.find((p) => p.type === "month")?.value;
+      const day = parts.find((p) => p.type === "day")?.value;
+      if (year && month && day) return `${year}-${month}-${day}`;
+    } catch (_err) {}
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  }
+
   _scheduleStr(attrs) {
     const repeatMode = attrs.repeat_mode;
     if (repeatMode !== "repeat_every") {
@@ -260,8 +278,7 @@ class TaskTrackerPanel extends HTMLElement {
       dueValue = `${attrs.overdue_by}\u00a0${this._t(`day_${sp}`)}`;
     }
 
-    const now = new Date();
-    const todayStr = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+    const todayStr = this._todayInHassTimeZone();
     const completedTodayRepeatAfter = attrs.repeat_mode === "repeat_after" && attrs.last_done === todayStr;
     // "Mark as done" is a no-op for repeat_every tasks that are already done,
     // and for repeat_after tasks that were already completed today.
