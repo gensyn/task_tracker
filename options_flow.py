@@ -242,10 +242,10 @@ class TaskTrackerOptionsFlow(OptionsFlowWithReload):
         """
         reg = entity_registry.async_get(self.hass)
 
-        # Find the entity_id of the sensor for the current config entry.
+        # Find the entity_id of the status sensor for the current config entry.
         current_entity_id: str | None = None
         for e in entity_registry.async_entries_for_config_entry(reg, self.config_entry.entry_id):
-            if e.entity_id.startswith("sensor."):
+            if e.entity_id.startswith("sensor.") and not e.entity_id.endswith("_times_completed"):
                 current_entity_id = e.entity_id
                 break
 
@@ -254,11 +254,11 @@ class TaskTrackerOptionsFlow(OptionsFlowWithReload):
             # setup).  No cycle can exist.
             return False
 
-        # Build graph: sensor entity_id → list of dependency entity_ids.
+        # Build graph: status sensor entity_id → list of dependency entity_ids.
         graph: dict[str, list[str]] = {}
         for entry in self.hass.config_entries.async_entries(DOMAIN):
             for e in entity_registry.async_entries_for_config_entry(reg, entry.entry_id):
-                if e.entity_id.startswith("sensor."):
+                if e.entity_id.startswith("sensor.") and not e.entity_id.endswith("_times_completed"):
                     if entry.entry_id == self.config_entry.entry_id:
                         graph[e.entity_id] = new_dep_entity_ids
                     else:
@@ -290,6 +290,7 @@ class TaskTrackerOptionsFlow(OptionsFlowWithReload):
                 for entry in self.hass.config_entries.async_entries(DOMAIN)
                 for e in entity_registry.async_entries_for_config_entry(reg, entry.entry_id)
                 if e.entity_id.startswith("sensor.")
+                and not e.entity_id.endswith("_times_completed")
             }
             if any(dep not in task_tracker_entity_ids for dep in new_deps):
                 return {CONF_DEPENDENCIES: "invalid_dependency"}

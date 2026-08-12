@@ -34,12 +34,16 @@ class TaskTracker extends HTMLElement {
     const entityEntry = hass.entities && hass.entities[this.config?.entity];
     const deviceEntry = entityEntry && entityEntry.device_id &&
       hass.devices && hass.devices[entityEntry.device_id];
+    const tcEntityId = this.config?.entity && (this.config.entity + "_times_completed");
+    const tcEntity = tcEntityId ? hass.states[tcEntityId] : undefined;
     if (entity === this._entity &&
         entityEntry === this._entityEntry &&
-        deviceEntry === this._deviceEntry) return;
+        deviceEntry === this._deviceEntry &&
+        tcEntity === this._tcEntity) return;
     this._entity = entity;
     this._entityEntry = entityEntry;
     this._deviceEntry = deviceEntry;
+    this._tcEntity = tcEntity;
     this._render();
   }
 
@@ -48,10 +52,11 @@ class TaskTracker extends HTMLElement {
       throw new Error("You need to define an entity");
     }
     this.config = config;
-    // show_area, show_tags, show_labels default to false when omitted
-    this._showArea   = config.show_area   === true;
-    this._showTags   = config.show_tags   === true;
-    this._showLabels = config.show_labels === true;
+    // show_area, show_tags, show_labels, show_times_completed default to false when omitted
+    this._showArea           = config.show_area            === true;
+    this._showTags           = config.show_tags            === true;
+    this._showLabels         = config.show_labels          === true;
+    this._showTimesCompleted = config.show_times_completed === true;
   }
 
   _stateColor(state) {
@@ -162,6 +167,13 @@ class TaskTracker extends HTMLElement {
     }
 
     const tagsArr = this._showTags ? (attrs.tags || []) : [];
+
+    let timesCompletedValue = null;
+    if (this._showTimesCompleted) {
+      const tcEntityId = entityId + "_times_completed";
+      const tcState = this._hass.states[tcEntityId];
+      timesCompletedValue = tcState ? tcState.state : null;
+    }
 
     let labelItems = [];
     if (this._showLabels) {
@@ -289,6 +301,11 @@ class TaskTracker extends HTMLElement {
             <tr>
               <td>${this._t("labels")}</td>
               <td class="chips-cell">${labelItems.map((l) => `<span class="label-chip" style="background:${this._safeColor(l.color, "#616161")}">${this._esc(l.name)}</span>`).join(" ")}</td>
+            </tr>` : ""}
+            ${timesCompletedValue !== null ? `
+            <tr>
+              <td>${this._t("times_completed") || "Times completed"}</td>
+              <td>${this._esc(timesCompletedValue)}</td>
             </tr>` : ""}
           </table>
           ${showMarkDone ? `
