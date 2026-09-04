@@ -3,5 +3,7 @@ updates:
   - package-ecosystem: "pip"
     directory: "/"               # location of requirements.txt
     schedule:
-      interval: "weekly"         # "daily" | "weekly" | "monthly"
+      interval: "cron"
+      cronjob: "0 7 * * 1"
+      timezone: "CET"
     open-pull-requests-limit: 10
