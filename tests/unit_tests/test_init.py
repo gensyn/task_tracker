@@ -1,7 +1,7 @@
 import sys
 import unittest
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock
 
 absolute_mock_path = str(Path(__file__).parent / "homeassistant_mock")
 sys.path.insert(0, absolute_mock_path)
