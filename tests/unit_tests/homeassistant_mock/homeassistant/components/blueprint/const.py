@@ -1,1 +1,0 @@
-BLUEPRINT_FOLDER = "blueprints"
