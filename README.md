@@ -320,7 +320,7 @@ data:
 
 ### 🗺️ Blueprint for automations
 
-A blueprint is automatically registered for Task Tracker. Just create a new automation and select the **Task Tracker** blueprint to get started.
+A blueprint is available at [my blueprint repository](https://github.com/gensyn/home-assistant-blueprints/blob/main/task_tracker/task_tracker_notify.yaml). Just import the URL, create a new automation and select the **Task Tracker** blueprint to get started.
 
 ### 🤖 Example Automation
 
