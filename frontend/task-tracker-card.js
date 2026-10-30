@@ -287,7 +287,7 @@ class TaskTracker extends HTMLElement {
       </style>
       <ha-card>
         <div class="card-header">
-          <span class="task-name">${name}</span>
+          <span class="task-name">${this._esc(name)}</span>
           <span class="badge">${this._t(stateStr) || stateStr}</span>
         </div>
         <div class="card-content">

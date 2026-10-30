@@ -141,6 +141,7 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
         if any([self.active_override, self.task_interval_override, self.due_soon_override]):
             @callback
             def _async_override_state_changed(_event: Any) -> None:
+                self.coordinator.due_soon_days = self._resolve_due_soon_override()
                 self.async_schedule_update_ha_state(force_refresh=True)
 
             self.async_on_remove(
@@ -209,6 +210,7 @@ class TaskTrackerSensor(RestoreSensor, SensorEntity):
         effective_active = self._resolve_active_override()
         effective_task_interval_value, effective_task_interval_type = self._resolve_task_interval_override()
         effective_due_soon_days = self._resolve_due_soon_override()
+        self.coordinator.due_soon_days = effective_due_soon_days
 
         self.due_date = self.coordinator.calculate_due_date(effective_task_interval_value, effective_task_interval_type)
         today = dt_util.now().date()
