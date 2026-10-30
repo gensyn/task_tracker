@@ -610,7 +610,7 @@ async def validate_options(user_input: dict[str, Any]) -> dict[str, Any]:
     if user_input.get(CONF_TODO_LISTS) is None:
         user_input[CONF_TODO_LISTS] = []
 
-    if user_input.get(CONF_DUE_SOON_DAYS) is None:
+    if user_input.get(CONF_DUE_SOON_DAYS) is None or user_input[CONF_DUE_SOON_DAYS] < 0:
         user_input[CONF_DUE_SOON_DAYS] = 0
 
     if user_input.get(CONF_NOTIFICATION_INTERVAL, 0) < 1:

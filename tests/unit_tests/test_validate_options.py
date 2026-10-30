@@ -110,6 +110,10 @@ class TestValidateOptionsRepeatAfter(unittest.IsolatedAsyncioTestCase):
         result = await validate_options({**_BASE_REPEAT_AFTER, CONF_DUE_SOON_DAYS: 3})
         self.assertEqual(result[CONF_DUE_SOON_DAYS], 3)
 
+    async def test_due_soon_days_negative_becomes_zero(self):
+        result = await validate_options({**_BASE_REPEAT_AFTER, CONF_DUE_SOON_DAYS: -3})
+        self.assertEqual(result[CONF_DUE_SOON_DAYS], 0)
+
     async def test_notification_interval_minimum_is_one(self):
         result = await validate_options({**_BASE_REPEAT_AFTER, CONF_NOTIFICATION_INTERVAL: 0})
         self.assertEqual(result[CONF_NOTIFICATION_INTERVAL], 1)
