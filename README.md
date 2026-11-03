@@ -36,7 +36,7 @@ A powerful Home Assistant custom component for managing recurring tasks with aut
 ### Manual Installation
 
 1. Download or clone this repository
-2. Copy the `task_tracker` folder to your Home Assistant `config/custom_components` directory
+2. Copy the repository contents (including `manifest.json`) to `<HA config>/custom_components/task_tracker/`
 3. Restart Home Assistant
 4. Add the integration via `Settings > Devices & Services > Add Integration`
 
@@ -68,6 +68,8 @@ To create a new task:
 
 Depending on the chosen repeat mode, you will be guided through one or more additional steps to configure the schedule details (see [Repeat Modes](#-repeat-modes)).
 
+New tasks start in the **due** state. To initialize an existing task without treating it as newly due, use `task_tracker.set_last_done_date` to record its most recent completion.
+
 ---
 
 ## 🔄 Repeat Modes
@@ -97,6 +99,8 @@ The task repeats on a **fixed calendar schedule**, independent of when it was co
 | **Every Nth day of the month**     | A fixed day number every *N* months                                       | Every 15th of the month; Every 15th every 3 months (quarterly)                                 |
 | **Every Nth weekday of the month** | A specific occurrence of a weekday every *N* months                       | Every 2nd Tuesday; Every last Friday every 6 months                                            |
 | **N days before month end**        | A fixed number of days before the last day of the month, every *N* months | 3 days before month end; 0 days before month end every 12 months (last day of month, annually) |
+
+For a day-of-month schedule on the 29th, 30th, or 31st, months without that date use their last day. For a days-before-month-end schedule, the target is clamped to the first day in short months if necessary.
 
 #### Mark as done behavior for fixed schedules
 
@@ -245,7 +249,7 @@ The panel shows all tasks in one place with live state filtering:
 | **Due**      | Tasks that are due or overdue                                   |
 | **Due soon** | Tasks that will be due within the configured Due Soon threshold |
 | **Done**     | Tasks completed within their current interval                   |
-| **Inactive** | Tasks with the *Active* option turned off                       |
+| **Inactive** | Tasks disabled by the *Active* option or its runtime override    |
 
 Each task card displays the same information as the Lovelace card (status, schedule, last done date, due date, days until due / overdue by) and includes a ✓ button to mark the task as done immediately.
 
