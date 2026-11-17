@@ -322,7 +322,7 @@ class TaskTrackerPanel extends HTMLElement {
     return `
       <div class="task-card">
         <div class="task-card-header" style="background:${this._stateColor(state)}">
-          <span class="task-name">${name}</span>
+          <span class="task-name">${this._esc(name)}</span>
           <span class="state-badge">${this._t(state) || state}</span>
         </div>
         <div class="task-card-content">
@@ -680,7 +680,7 @@ class TaskTrackerPanel extends HTMLElement {
           <input class="name-filter-input"
                  type="text"
                  placeholder="${placeholder}"
-                 value="${this._nameFilter.replace(/"/g, "&quot;")}">
+                 value="${this._esc(this._nameFilter)}">
         </div>
         <div class="task-grid">${taskGrid}</div>
       </div>

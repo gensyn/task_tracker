@@ -13,6 +13,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_ICON
 
 from task_tracker import async_migrate_entry, _get_coordinator
+from task_tracker.frontend import TaskTrackerCardRegistration
 from task_tracker.const import (
     CONF_ACTIVE, CONF_TASK_INTERVAL_VALUE, CONF_TASK_INTERVAL_TYPE,
     CONF_TAGS, CONF_TODO_LISTS, CONF_DUE_SOON_DAYS, CONF_DUE_SOON_OVERRIDE,
@@ -477,3 +478,22 @@ class TestGetCoordinator(unittest.IsolatedAsyncioTestCase):
         )
         with self.assertRaises(ValueError):
             _get_coordinator(mock_hass, "sensor.task_tracker_my_task")
+
+
+class TestTaskTrackerCardResourceVersion(unittest.TestCase):
+
+    def test_unversioned_resource_returns_default_version(self):
+        registration = TaskTrackerCardRegistration.__new__(TaskTrackerCardRegistration)
+        self.assertEqual(
+            registration._get_resource_version("/task_tracker/task-tracker-card.js"),
+            "0",
+        )
+
+    def test_resource_version_is_read_from_query(self):
+        registration = TaskTrackerCardRegistration.__new__(TaskTrackerCardRegistration)
+        self.assertEqual(
+            registration._get_resource_version(
+                "/task_tracker/task-tracker-card.js?cache=1&v=2.1.0"
+            ),
+            "2.1.0",
+        )

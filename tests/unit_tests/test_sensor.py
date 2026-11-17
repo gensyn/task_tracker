@@ -564,6 +564,33 @@ class TestTaskTrackerSensorDueSoonOverride(unittest.IsolatedAsyncioTestCase):
         await self._run_update(sensor)
         self.assertEqual(sensor._attr_extra_state_attributes["due_soon_days"], 5)
 
+    async def test_due_soon_override_updates_fixed_schedule_completion_threshold(self):
+        from datetime import timedelta
+
+        today = date.today()
+        weekday = [
+            CONF_MONDAY, CONF_TUESDAY, CONF_WEDNESDAY, CONF_THURSDAY,
+            CONF_FRIDAY, CONF_SATURDAY, CONF_SUNDAY,
+        ][today.weekday()]
+        hass = MagicMock()
+        override_state = MagicMock()
+        override_state.state = "10"
+        hass.states.get.return_value = override_state
+        sensor = make_sensor(
+            due_soon_days=0,
+            due_soon_override="input_number.my_offset",
+            repeat_mode=CONF_REPEAT_EVERY,
+            repeat_every_type=CONF_REPEAT_EVERY_WEEKDAY,
+            repeat_weekday=weekday,
+        )
+        sensor.hass = hass
+        sensor.coordinator.last_done = today
+
+        await self._run_update(sensor)
+        await sensor.coordinator.async_mark_as_done(today)
+
+        self.assertEqual(sensor.coordinator.last_done, today + timedelta(days=7))
+
     async def test_due_soon_override_unavailable_falls_back_to_config(self):
         hass = MagicMock()
         override_state = MagicMock()

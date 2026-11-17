@@ -3,6 +3,7 @@
 import logging
 import os
 from pathlib import Path
+from urllib.parse import parse_qs, urlsplit
 
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.components.lovelace import MODE_STORAGE
@@ -106,9 +107,7 @@ class TaskTrackerCardRegistration:
         return url.split("?")[0]
 
     def _get_resource_version(self, url: str):
-        if version := url.split("?")[1].replace("v=", ""):
-            return version
-        return 0
+        return parse_qs(urlsplit(url).query).get("v", ["0"])[0]
 
     async def _async_register_panel(self):
         """Register the Task Tracker sidebar panel."""

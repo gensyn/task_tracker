@@ -14,6 +14,9 @@ from conftest import HA_URL
 _PANEL_JS_PATH = str(
     pathlib.Path(__file__).parent.parent.parent / "frontend" / "task-tracker-panel.js"
 )
+_CARD_JS_PATH = str(
+    pathlib.Path(__file__).parent.parent.parent / "frontend" / "task-tracker-card.js"
+)
 
 
 class TestFrontend:
@@ -82,6 +85,62 @@ class TestFrontend:
         assert result["hasNameBtn"], "Name sort button not found in task-tracker-panel"
         assert result["hasDueBtn"], "Due date sort button not found in task-tracker-panel"
         assert result["nameBtnActive"], "Name sort button should be active by default"
+
+    def test_task_names_render_as_text(self, page: Page) -> None:
+        """User-controlled task names must not be interpreted as HTML."""
+        page.set_content(
+            "<task-tracker-card></task-tracker-card>"
+            "<task-tracker-panel></task-tracker-panel>"
+        )
+        page.add_script_tag(path=_CARD_JS_PATH)
+        page.add_script_tag(path=_PANEL_JS_PATH)
+
+        result = page.evaluate("""() => {
+            const entityId = 'sensor.task_tracker_test';
+            const taskName = '<img src=x onerror="window.__taskTrackerXss = true">';
+            const entity = {
+                entity_id: entityId,
+                state: 'due',
+                attributes: {
+                    friendly_name: taskName,
+                    last_done: '2024-01-01',
+                    due_date: '2024-01-02',
+                    due_in: 0,
+                    overdue_by: 1,
+                    repeat_mode: 'repeat_after',
+                    task_interval_value: 1,
+                    task_interval_type: 'day'
+                }
+            };
+            const hass = {
+                states: { [entityId]: entity },
+                localize: (key) => key,
+                config: { time_zone: 'UTC' },
+                locale: { language: 'en' },
+                entities: {},
+                devices: {},
+                areas: {},
+                labels: {},
+                callService: () => {}
+            };
+            const card = document.querySelector('task-tracker-card');
+            card.setConfig({ entity: entityId });
+            card.hass = hass;
+            const panel = document.querySelector('task-tracker-panel');
+            panel.hass = hass;
+            return {
+                expectedName: taskName,
+                cardName: card.shadowRoot.querySelector('.task-name').textContent,
+                panelName: panel.shadowRoot.querySelector('.task-name').textContent,
+                cardInjected: !!card.shadowRoot.querySelector('.task-name img'),
+                panelInjected: !!panel.shadowRoot.querySelector('.task-name img')
+            };
+        }""")
+
+        assert result["cardName"] == result["expectedName"]
+        assert result["panelName"] == result["expectedName"]
+        assert not result["cardInjected"]
+        assert not result["panelInjected"]
 
     def test_service_call_via_developer_tools(self, page: Page, ensure_integration: Any) -> None:
         """It should be possible to navigate to the service call UI for task_tracker."""
