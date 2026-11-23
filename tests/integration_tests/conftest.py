@@ -1,4 +1,4 @@
-"""pytest-homeassistant-custom-component conftest for Task Tracker integration tests.
+"""pytest-homeassistant conftest for Task Tracker integration tests.
 
 This file wires the component (which lives at the repo root, not inside a
 conventional ``custom_components/`` sub-directory) into Home Assistant's custom
@@ -58,11 +58,6 @@ def expected_lingering_timers() -> bool:
     so PHCC logs a warning rather than failing the test.
     """
     return True
-
-
-@pytest.fixture(autouse=True)
-def auto_enable_custom_integrations(enable_custom_integrations):
-    """Enable custom integrations for every test in this package."""
 
 
 @pytest.fixture(autouse=True)
